@@ -1,4 +1,4 @@
-import { Home, CalendarDays, Users, Plus, Inbox } from 'lucide-react';
+import { Home, CalendarDays, Users, Plus, Inbox, Settings } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -9,6 +9,7 @@ const tabs = [
   { path: '/calendar', icon: CalendarDays, label: 'Calendar' },
   { path: '/people', icon: Users, label: 'People' },
   { path: '/requests', icon: Inbox, label: 'Requests' },
+  { path: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 export function BottomNav() {
@@ -34,7 +35,7 @@ export function BottomNav() {
               key={tab.path}
               onClick={() => navigate(tab.path)}
               className={cn(
-                'relative flex flex-col items-center gap-0.5 rounded-xl px-4 py-1.5 text-xs transition-colors',
+                'relative flex flex-col items-center gap-0.5 rounded-xl px-3 py-1.5 text-xs transition-colors',
                 active ? 'text-primary' : 'text-muted-foreground'
               )}
             >

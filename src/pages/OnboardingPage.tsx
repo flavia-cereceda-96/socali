@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Camera } from 'lucide-react';
 
 const usageOptions = [
   { value: 'spouse', label: 'With my partner', emoji: '💑' },
@@ -16,12 +17,22 @@ const usageOptions = [
 
 const OnboardingPage = () => {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [usage, setUsage] = useState('');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+
+  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
 
   const validate = () => {
     const errs: Record<string, string> = {};
@@ -41,7 +52,7 @@ const OnboardingPage = () => {
     if (!validate()) return;
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data: signUpData, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -53,6 +64,25 @@ const OnboardingPage = () => {
         toast.error(error.message);
         return;
       }
+
+      // Upload avatar if selected
+      if (avatarFile && signUpData.user) {
+        const ext = avatarFile.name.split('.').pop();
+        const path = `${signUpData.user.id}/avatar.${ext}`;
+
+        const { error: uploadErr } = await supabase.storage
+          .from('avatars')
+          .upload(path, avatarFile, { upsert: true });
+
+        if (!uploadErr) {
+          const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
+          await supabase
+            .from('profiles')
+            .update({ avatar_url: publicUrl })
+            .eq('user_id', signUpData.user.id);
+        }
+      }
+
       toast.success('Account created! 🎉');
       navigate('/');
     } catch (err: any) {
@@ -83,6 +113,40 @@ const OnboardingPage = () => {
         </div>
 
         <div className="space-y-5">
+          {/* Avatar upload */}
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="relative group"
+            >
+              {avatarPreview ? (
+                <img
+                  src={avatarPreview}
+                  alt="Avatar preview"
+                  className="h-20 w-20 rounded-full object-cover ring-2 ring-primary/20"
+                />
+              ) : (
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-secondary ring-2 ring-border">
+                  <Camera className="h-7 w-7 text-muted-foreground" />
+                </div>
+              )}
+              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera className="h-5 w-5 text-white" />
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarSelect}
+              />
+            </button>
+          </div>
+          <p className="text-center text-xs text-muted-foreground -mt-3">
+            {avatarPreview ? 'Tap to change' : 'Add a profile photo'}
+          </p>
+
           <div className="space-y-1.5">
             <Label htmlFor="username">Account name</Label>
             <Input
