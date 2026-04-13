@@ -153,3 +153,22 @@ export function useProfile() {
     },
   });
 }
+
+export function usePendingRequestCount() {
+  return useQuery({
+    queryKey: ['pending-request-count'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return 0;
+
+      const { count } = await supabase
+        .from('event_participants')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('status', 'suggested');
+
+      return count || 0;
+    },
+    refetchInterval: 30000, // poll every 30s
+  });
+}
