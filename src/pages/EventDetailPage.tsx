@@ -1,6 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEvents } from '@/hooks/useEvents';
 import { StatusBadge } from '@/components/StatusBadge';
+import { EventComments } from '@/components/EventComments';
+import { EventPhotos } from '@/components/EventPhotos';
 import { motion } from 'framer-motion';
 import { ArrowLeft, MapPin, Clock, Calendar, MessageSquare, User } from 'lucide-react';
 
