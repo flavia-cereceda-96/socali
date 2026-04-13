@@ -13,7 +13,6 @@ const Index = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: events = [], isLoading } = useEvents();
-  const [rsvpStates, setRsvpStates] = useState<Record<string, string>>({});
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,29 +26,51 @@ const Index = () => {
     return 'Good evening 🌙';
   })();
 
-  const { confirmedPlans, pendingRsvps } = useMemo(() => {
+  const { upcomingEvents, pendingRsvps, weekCount, monthCount } = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+
     const nextWeek = new Date(today);
     nextWeek.setDate(nextWeek.getDate() + 7);
 
-    const weekEvents = events.filter(e => {
-      const d = new Date(e.date);
-      return d >= today && d <= nextWeek;
+    const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    monthEnd.setHours(23, 59, 59, 999);
+
+    // All future events sorted by date
+    const future = events
+      .filter(e => new Date(e.date) >= today)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    // Pending RSVPs: events where MY participation is 'suggested'
+    const pending = future.filter(e => {
+      const myP = e.participants.find(p => p.user_id === userId);
+      return myP?.status === 'suggested';
     });
 
+    // Upcoming: next 7 events that are NOT pending for me
+    const nonPending = future.filter(e => {
+      const myP = e.participants.find(p => p.user_id === userId);
+      return !myP || myP.status !== 'suggested';
+    });
+
+    // Scorecards: count events in next 7 days / this month (excluding declined)
+    const countable = future.filter(e => {
+      const myP = e.participants.find(p => p.user_id === userId);
+      return !myP || myP.status !== 'declined';
+    });
+
+    const inWeek = countable.filter(e => new Date(e.date) <= nextWeek).length;
+    const inMonth = countable.filter(e => new Date(e.date) <= monthEnd).length;
+
     return {
-      confirmedPlans: weekEvents.filter(
-        e => e.participants.length === 0 || e.participants.every(p => p.status === 'confirmed')
-      ),
-      pendingRsvps: weekEvents.filter(e => {
-        return e.participants.some(p => p.status === 'suggested');
-      }),
+      upcomingEvents: nonPending.slice(0, 7),
+      pendingRsvps: pending,
+      weekCount: inWeek,
+      monthCount: inMonth,
     };
-  }, [events]);
+  }, [events, userId]);
 
   const handleRsvp = async (event: DbEvent, participantId: string, status: string) => {
-    setRsvpStates(prev => ({ ...prev, [event.id]: status }));
     const { error } = await supabase
       .from('event_participants')
       .update({ status })
@@ -57,8 +78,6 @@ const Index = () => {
     if (error) toast.error(error.message);
     else queryClient.invalidateQueries({ queryKey: ['events'] });
   };
-
-  const unresolvedRsvps = pendingRsvps.filter(e => !rsvpStates[e.id]);
 
   const formatTime = (t: string) => {
     const [h, m] = t.split(':');
@@ -90,44 +109,111 @@ const Index = () => {
           <h1 className="text-2xl font-bold text-foreground">Your Week</h1>
         </motion.div>
 
+        {/* Scorecards */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="mb-6 flex items-center gap-2 text-sm text-muted-foreground"
+          className="mb-6 grid grid-cols-2 gap-3"
         >
-          <CalendarDays className="h-4 w-4 text-primary" />
-          <span>{confirmedPlans.length} confirmed plan{confirmedPlans.length !== 1 ? 's' : ''} this week</span>
+          <div className="rounded-2xl bg-card p-4 shadow-card">
+            <div className="flex items-center gap-2 mb-1">
+              <CalendarDays className="h-4 w-4 text-primary" />
+              <span className="text-xs font-medium text-muted-foreground">Next 7 days</span>
+            </div>
+            <p className="text-2xl font-bold text-foreground">{weekCount}</p>
+            <p className="text-xs text-muted-foreground">plan{weekCount !== 1 ? 's' : ''} booked</p>
+          </div>
+          <div className="rounded-2xl bg-card p-4 shadow-card">
+            <div className="flex items-center gap-2 mb-1">
+              <CalendarDays className="h-4 w-4 text-primary" />
+              <span className="text-xs font-medium text-muted-foreground">This month</span>
+            </div>
+            <p className="text-2xl font-bold text-foreground">{monthCount}</p>
+            <p className="text-xs text-muted-foreground">plan{monthCount !== 1 ? 's' : ''} remaining</p>
+          </div>
         </motion.div>
 
+        {/* Pending RSVPs */}
+        {pendingRsvps.length > 0 && (
+          <>
+            <motion.h2
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground"
+            >
+              Pending RSVPs ({pendingRsvps.length})
+            </motion.h2>
+            <div className="flex flex-col gap-3 mb-8">
+              {pendingRsvps.map((event, i) => {
+                const myParticipation = event.participants.find(p => p.user_id === userId && p.status === 'suggested');
+                const timeDisplay = getTimeDisplay(event);
+                return (
+                  <motion.div
+                    key={event.id}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.12 + i * 0.06 }}
+                    className="rounded-2xl bg-card p-4 shadow-card"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-lg">{event.emoji}</span>
+                      <span className="font-semibold text-foreground">{event.title}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      {new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                      {timeDisplay && ` · ${timeDisplay}`}
+                      {event.location && ` · ${event.location}`}
+                    </p>
+                    {myParticipation && (
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="default" className="flex-1 gap-1" onClick={() => handleRsvp(event, myParticipation.id, 'confirmed')}>
+                          <Check className="h-3.5 w-3.5" /> Confirm
+                        </Button>
+                        <Button size="sm" variant="secondary" className="flex-1 gap-1" onClick={() => handleRsvp(event, myParticipation.id, 'maybe')}>
+                          <HelpCircle className="h-3.5 w-3.5" /> Maybe
+                        </Button>
+                        <Button size="sm" variant="ghost" className="flex-1 gap-1" onClick={() => handleRsvp(event, myParticipation.id, 'declined')}>
+                          <X className="h-3.5 w-3.5" /> Decline
+                        </Button>
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {/* Upcoming Events */}
         <motion.h2
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
+          transition={{ delay: 0.15 }}
           className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground"
         >
           Upcoming Plans
         </motion.h2>
         <div className="flex flex-col gap-3 mb-8">
-          {confirmedPlans.length > 0 ? (
-            confirmedPlans.map((event, i) => {
-              const ev = event as DbEventWithCreator;
+          {upcomingEvents.length > 0 ? (
+            upcomingEvents.map((event, i) => {
               const timeDisplay = getTimeDisplay(event);
               return (
                 <motion.div
                   key={event.id}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.12 + i * 0.06 }}
+                  transition={{ delay: 0.17 + i * 0.06 }}
                   onClick={() => navigate(`/event/${event.id}`)}
                   className="flex gap-3 rounded-2xl bg-card p-4 shadow-card cursor-pointer transition-shadow hover:shadow-elevated active:scale-[0.99]"
                 >
                   <div className="flex flex-col items-center justify-center rounded-xl bg-primary/10 px-3 py-2 min-w-[52px]">
                     <span className="text-xs font-semibold uppercase text-primary">
-                      {new Date(event.date).toLocaleDateString('en-US', { weekday: 'short' })}
+                      {new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
                     </span>
                     <span className="text-lg font-bold text-primary">
-                      {new Date(event.date).getDate()}
+                      {new Date(event.date + 'T00:00:00').getDate()}
                     </span>
                   </div>
                   <div className="flex flex-1 flex-col gap-1.5 min-w-0">
@@ -160,60 +246,9 @@ const Index = () => {
               );
             })
           ) : (
-            <p className="text-sm text-muted-foreground">No confirmed plans yet — time to create one! ✨</p>
+            <p className="text-sm text-muted-foreground">No upcoming plans — time to create one! ✨</p>
           )}
         </div>
-
-        {unresolvedRsvps.length > 0 && (
-          <>
-            <motion.h2
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground"
-            >
-              Pending RSVPs
-            </motion.h2>
-            <div className="flex flex-col gap-3">
-              {unresolvedRsvps.map((event, i) => {
-                const myParticipation = event.participants.find(p => p.status === 'suggested');
-                const timeDisplay = getTimeDisplay(event);
-                return (
-                  <motion.div
-                    key={event.id}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.22 + i * 0.06 }}
-                    className="rounded-2xl bg-card p-4 shadow-card"
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-lg">{event.emoji}</span>
-                      <span className="font-semibold text-foreground">{event.title}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      {new Date(event.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                      {timeDisplay && ` · ${timeDisplay}`}
-                      {event.location && ` · ${event.location}`}
-                    </p>
-                    {myParticipation && (
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="default" className="flex-1 gap-1" onClick={() => handleRsvp(event, myParticipation.id, 'confirmed')}>
-                          <Check className="h-3.5 w-3.5" /> Confirm
-                        </Button>
-                        <Button size="sm" variant="secondary" className="flex-1 gap-1" onClick={() => handleRsvp(event, myParticipation.id, 'maybe')}>
-                          <HelpCircle className="h-3.5 w-3.5" /> Maybe
-                        </Button>
-                        <Button size="sm" variant="ghost" className="flex-1 gap-1" onClick={() => handleRsvp(event, myParticipation.id, 'declined')}>
-                          <X className="h-3.5 w-3.5" /> Decline
-                        </Button>
-                      </div>
-                    )}
-                  </motion.div>
-                );
-              })}
-            </div>
-          </>
-        )}
       </div>
     </div>
   );
