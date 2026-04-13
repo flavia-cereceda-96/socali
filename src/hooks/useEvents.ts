@@ -8,6 +8,7 @@ export interface DbEvent {
   date: string;
   end_date: string | null;
   time: string | null;
+  end_time: string | null;
   location: string | null;
   notes: string | null;
   is_trip: boolean;
@@ -20,6 +21,7 @@ export interface DbParticipant {
   id: string;
   user_id: string;
   status: string;
+  decline_note: string | null;
   profile?: {
     username: string;
     email: string;
