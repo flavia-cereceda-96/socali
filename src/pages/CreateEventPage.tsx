@@ -1,24 +1,31 @@
 import { useState } from 'react';
 import { friends, Friend } from '@/data/mockData';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Send } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { ArrowLeft } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 const quickEmojis = ['🍝', '🎬', '🏃', '🎮', '🍕', '☕', '🎉', '🎵', '🏕️'];
 
 const CreateEventPage = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(0);
-  const [input, setInput] = useState('');
+  const [searchParams] = useSearchParams();
+  const prefilledDate = searchParams.get('date') || '';
+
   const [title, setTitle] = useState('');
   const [emoji, setEmoji] = useState('🎉');
   const [isMultiDay, setIsMultiDay] = useState(false);
   const [selectedFriends, setSelectedFriends] = useState<Friend[]>([]);
-  const [dateStr, setDateStr] = useState('');
+  const [dateStr, setDateStr] = useState(prefilledDate);
   const [endDateStr, setEndDateStr] = useState('');
   const [timeStr, setTimeStr] = useState('');
+  const [location, setLocation] = useState('');
+  const [notes, setNotes] = useState('');
 
   const toggleFriend = (f: Friend) => {
     setSelectedFriends(prev =>
@@ -26,193 +33,144 @@ const CreateEventPage = () => {
     );
   };
 
-  const handleSend = () => {
-    toast.success('Plan sent! 🎉', { description: `${title || 'New plan'} with ${selectedFriends.map(f => f.name).join(', ')}` });
+  const canSubmit = title.trim() && selectedFriends.length > 0 && dateStr && (isMultiDay ? endDateStr : timeStr);
+
+  const handleSubmit = () => {
+    toast.success('Plan created! 🎉', {
+      description: `${emoji} ${title} with ${selectedFriends.map(f => f.name).join(', ')}`,
+    });
     navigate('/');
   };
 
-  const messages: { from: 'bot' | 'user'; text: string }[] = [];
-
-  if (step >= 0) messages.push({ from: 'bot', text: "What are you planning? 🤩" });
-  if (step >= 1) {
-    messages.push({ from: 'user', text: `${emoji} ${title}` });
-    messages.push({ from: 'bot', text: "Who's joining?" });
-  }
-  if (step >= 2) {
-    messages.push({ from: 'user', text: selectedFriends.map(f => f.emoji + ' ' + f.name).join(', ') });
-    messages.push({ from: 'bot', text: isMultiDay ? "When does it start and end?" : "When works?" });
-  }
-  if (step >= 3) {
-    const dateText = isMultiDay ? `${dateStr} → ${endDateStr}` : `${dateStr} at ${timeStr}`;
-    messages.push({ from: 'user', text: dateText });
-    messages.push({ from: 'bot', text: "Looks great! Send it? 🚀" });
-  }
-
   return (
-    <div className="flex min-h-screen flex-col pb-24">
-      <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-4 pt-12">
+    <div className="min-h-screen pb-24">
+      <div className="mx-auto max-w-md px-4 pt-12">
         {/* Header */}
         <div className="mb-6 flex items-center gap-3">
-          <button onClick={() => step > 0 ? setStep(step - 1) : navigate(-1)} className="rounded-lg p-2 text-muted-foreground hover:bg-secondary">
+          <button onClick={() => navigate(-1)} className="rounded-lg p-2 text-muted-foreground hover:bg-secondary">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-xl font-bold text-foreground">Plan Something</h1>
         </div>
 
-        {/* Chat Messages */}
-        <div className="flex flex-1 flex-col gap-3 overflow-y-auto">
-          <AnimatePresence>
-            {messages.map((msg, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className={cn(
-                  'max-w-[80%] rounded-2xl px-4 py-2.5 text-sm',
-                  msg.from === 'bot'
-                    ? 'self-start bg-secondary text-secondary-foreground'
-                    : 'self-end bg-primary text-primary-foreground'
-                )}
-              >
-                {msg.text}
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-6"
+        >
+          {/* Emoji + Title */}
+          <div className="space-y-2">
+            <Label>What are you planning?</Label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {quickEmojis.map(e => (
+                <button
+                  key={e}
+                  type="button"
+                  onClick={() => setEmoji(e)}
+                  className={cn(
+                    'flex h-10 w-10 items-center justify-center rounded-xl text-lg transition-all',
+                    emoji === e ? 'bg-primary/20 scale-110 ring-2 ring-primary/40' : 'bg-secondary hover:bg-secondary/80'
+                  )}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+            <Input
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder={isMultiDay ? "e.g. Weekend Trip, Camping..." : "e.g. Dinner, Movie Night..."}
+            />
+          </div>
 
-        {/* Input Area */}
-        <div className="mt-4">
-          {step === 0 && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-              <div className="flex flex-wrap gap-2">
-                {quickEmojis.map(e => (
+          {/* Multi-day toggle */}
+          <button
+            type="button"
+            onClick={() => setIsMultiDay(!isMultiDay)}
+            className={cn(
+              'flex items-center gap-2 rounded-full px-3 py-2 text-xs font-medium transition-all',
+              isMultiDay ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
+            )}
+          >
+            🏕️ Multi-day / Trip
+          </button>
+
+          {/* Friends */}
+          <div className="space-y-2">
+            <Label>Who's joining?</Label>
+            <div className="flex flex-wrap gap-2">
+              {friends.map(f => {
+                const selected = selectedFriends.find(s => s.id === f.id);
+                return (
                   <button
-                    key={e}
-                    onClick={() => setEmoji(e)}
+                    key={f.id}
+                    type="button"
+                    onClick={() => toggleFriend(f)}
                     className={cn(
-                      'flex h-10 w-10 items-center justify-center rounded-xl text-lg transition-all',
-                      emoji === e ? 'bg-primary/20 scale-110' : 'bg-secondary hover:bg-secondary/80'
+                      'flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-all',
+                      selected ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
                     )}
                   >
-                    {e}
+                    {f.emoji} {f.name}
                   </button>
-                ))}
-              </div>
-              <button
-                onClick={() => setIsMultiDay(!isMultiDay)}
-                className={cn(
-                  'flex items-center gap-2 rounded-full px-3 py-2 text-xs font-medium transition-all',
-                  isMultiDay ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
-                )}
-              >
-                🏕️ Multi-day / Trip
-              </button>
-              <div className="flex gap-2">
-                <input
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                  placeholder={isMultiDay ? "e.g. Weekend Trip, Camping..." : "e.g. Dinner, Movie Night..."}
-                  className="flex-1 rounded-xl border border-input bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
-                <button
-                  onClick={() => title.trim() && setStep(1)}
-                  disabled={!title.trim()}
-                  className="rounded-xl bg-primary px-4 py-3 text-primary-foreground disabled:opacity-40"
-                >
-                  <Send className="h-4 w-4" />
-                </button>
-              </div>
-            </motion.div>
-          )}
+                );
+              })}
+            </div>
+          </div>
 
-          {step === 1 && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-              <div className="flex flex-wrap gap-2">
-                {friends.map(f => {
-                  const selected = selectedFriends.find(s => s.id === f.id);
-                  return (
-                    <button
-                      key={f.id}
-                      onClick={() => toggleFriend(f)}
-                      className={cn(
-                        'flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-all',
-                        selected ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                      )}
-                    >
-                      {f.emoji} {f.name}
-                    </button>
-                  );
-                })}
-              </div>
-              <button
-                onClick={() => selectedFriends.length > 0 && setStep(2)}
-                disabled={selectedFriends.length === 0}
-                className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-40"
-              >
-                Next →
-              </button>
-            </motion.div>
-          )}
-
-          {step === 2 && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-              {isMultiDay ? (
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-muted-foreground">Start date</label>
-                  <input
-                    type="date"
-                    value={dateStr}
-                    onChange={e => setDateStr(e.target.value)}
-                    className="w-full rounded-xl border border-input bg-card px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  />
-                  <label className="text-xs font-medium text-muted-foreground">End date</label>
-                  <input
-                    type="date"
-                    value={endDateStr}
-                    onChange={e => setEndDateStr(e.target.value)}
-                    className="w-full rounded-xl border border-input bg-card px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  />
+          {/* Date & Time */}
+          <div className="space-y-2">
+            <Label>{isMultiDay ? 'Dates' : 'Date & Time'}</Label>
+            {isMultiDay ? (
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-xs text-muted-foreground">Start</span>
+                  <Input type="date" value={dateStr} onChange={e => setDateStr(e.target.value)} />
                 </div>
-              ) : (
-                <div className="flex gap-2">
-                  <input
-                    type="date"
-                    value={dateStr}
-                    onChange={e => setDateStr(e.target.value)}
-                    className="flex-1 rounded-xl border border-input bg-card px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  />
-                  <input
-                    type="time"
-                    value={timeStr}
-                    onChange={e => setTimeStr(e.target.value)}
-                    className="w-28 rounded-xl border border-input bg-card px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  />
+                <div>
+                  <span className="text-xs text-muted-foreground">End</span>
+                  <Input type="date" value={endDateStr} onChange={e => setEndDateStr(e.target.value)} />
                 </div>
-              )}
-              <button
-                onClick={() => {
-                  if (isMultiDay ? (dateStr && endDateStr) : (dateStr && timeStr)) setStep(3);
-                }}
-                disabled={isMultiDay ? (!dateStr || !endDateStr) : (!dateStr || !timeStr)}
-                className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-40"
-              >
-                Next →
-              </button>
-            </motion.div>
-          )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                <Input type="date" value={dateStr} onChange={e => setDateStr(e.target.value)} />
+                <Input type="time" value={timeStr} onChange={e => setTimeStr(e.target.value)} />
+              </div>
+            )}
+          </div>
 
-          {step === 3 && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-              <button
-                onClick={handleSend}
-                className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-elevated transition-transform active:scale-[0.98]"
-              >
-                Send Plan 🚀
-              </button>
-            </motion.div>
-          )}
-        </div>
+          {/* Location */}
+          <div className="space-y-2">
+            <Label>Location (optional)</Label>
+            <Input
+              value={location}
+              onChange={e => setLocation(e.target.value)}
+              placeholder="e.g. Central Park, Café Bloom..."
+            />
+          </div>
+
+          {/* Notes */}
+          <div className="space-y-2">
+            <Label>Notes (optional)</Label>
+            <Textarea
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              placeholder="Any extra details..."
+              rows={3}
+            />
+          </div>
+
+          {/* Submit */}
+          <Button
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            className="w-full font-semibold"
+            size="lg"
+          >
+            Create Plan 🚀
+          </Button>
+        </motion.div>
       </div>
     </div>
   );
