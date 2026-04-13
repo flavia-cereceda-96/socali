@@ -1,3 +1,10 @@
+import avatarAlex from '@/assets/avatar-alex.jpg';
+import avatarJordan from '@/assets/avatar-jordan.jpg';
+import avatarSam from '@/assets/avatar-sam.jpg';
+import avatarTaylor from '@/assets/avatar-taylor.jpg';
+import avatarCasey from '@/assets/avatar-casey.jpg';
+import avatarMorgan from '@/assets/avatar-morgan.jpg';
+
 export type EventStatus = 'suggested' | 'maybe' | 'confirmed' | 'declined';
 
 export interface Friend {
@@ -19,17 +26,19 @@ export interface SocialEvent {
   date: Date;
   time: string;
   location?: string;
+  address?: string;
+  notes?: string;
   participants: EventParticipant[];
   createdBy: string;
 }
 
 export const friends: Friend[] = [
-  { id: '1', name: 'Alex', avatar: '', emoji: '😎' },
-  { id: '2', name: 'Jordan', avatar: '', emoji: '🎨' },
-  { id: '3', name: 'Sam', avatar: '', emoji: '🏃' },
-  { id: '4', name: 'Taylor', avatar: '', emoji: '🎵' },
-  { id: '5', name: 'Casey', avatar: '', emoji: '📚' },
-  { id: '6', name: 'Morgan', avatar: '', emoji: '🍳' },
+  { id: '1', name: 'Alex', avatar: avatarAlex, emoji: '😎' },
+  { id: '2', name: 'Jordan', avatar: avatarJordan, emoji: '🎨' },
+  { id: '3', name: 'Sam', avatar: avatarSam, emoji: '🏃' },
+  { id: '4', name: 'Taylor', avatar: avatarTaylor, emoji: '🎵' },
+  { id: '5', name: 'Casey', avatar: avatarCasey, emoji: '📚' },
+  { id: '6', name: 'Morgan', avatar: avatarMorgan, emoji: '🍳' },
 ];
 
 const today = new Date();
@@ -47,6 +56,8 @@ export const events: SocialEvent[] = [
     date: day(0),
     time: '7:30 PM',
     location: 'Little Italy',
+    address: '123 Mulberry St, New York, NY',
+    notes: 'Try the truffle pasta!',
     participants: [
       { friend: friends[0], status: 'confirmed' },
       { friend: friends[1], status: 'confirmed' },
@@ -61,6 +72,7 @@ export const events: SocialEvent[] = [
     date: day(1),
     time: '7:00 AM',
     location: 'Central Park',
+    address: 'West 72nd St entrance',
     participants: [
       { friend: friends[2], status: 'confirmed' },
     ],
@@ -72,6 +84,9 @@ export const events: SocialEvent[] = [
     emoji: '🎬',
     date: day(2),
     time: '8:00 PM',
+    location: 'AMC Theater',
+    address: '234 W 42nd St, New York, NY',
+    notes: 'Watching the new sci-fi release',
     participants: [
       { friend: friends[0], status: 'suggested' },
       { friend: friends[1], status: 'maybe' },
@@ -86,6 +101,7 @@ export const events: SocialEvent[] = [
     date: day(4),
     time: '11:00 AM',
     location: 'Café Bloom',
+    address: '89 Bedford Ave, Brooklyn, NY',
     participants: [
       { friend: friends[5], status: 'suggested' },
       { friend: friends[3], status: 'suggested' },
@@ -98,6 +114,8 @@ export const events: SocialEvent[] = [
     emoji: '🎮',
     date: day(6),
     time: '6:00 PM',
+    location: "Sam's place",
+    notes: 'Bring snacks! 🍿',
     participants: [
       { friend: friends[0], status: 'confirmed' },
       { friend: friends[2], status: 'confirmed' },
