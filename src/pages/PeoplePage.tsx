@@ -16,6 +16,7 @@ const PeoplePage = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
   const [adding, setAdding] = useState<string | null>(null);
+  const [searchDone, setSearchDone] = useState(false);
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ['friends'] });
@@ -26,22 +27,34 @@ const PeoplePage = () => {
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     setSearching(true);
+    setSearchDone(false);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      const query = searchQuery.trim();
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .ilike('username', `%${searchQuery.trim()}%`)
+        .or(`username.ilike.%${query}%,email.ilike.%${query}%`)
         .neq('user_id', user.id)
         .limit(10);
 
       if (error) { toast.error(error.message); return; }
 
+      // Get outgoing pending requests too
+      const { data: sentRequests } = await supabase
+        .from('friends')
+        .select('friend_id')
+        .eq('user_id', user.id)
+        .eq('status', 'pending');
+
       const friendIds = friends.map(f => f.user_id);
-      const pendingIds = friendRequests.map(r => r.user_id);
-      setSearchResults((data || []).filter(p => !friendIds.includes(p.user_id) && !pendingIds.includes(p.user_id)));
+      const pendingIncomingIds = friendRequests.map(r => r.user_id);
+      const pendingSentIds = (sentRequests || []).map(r => r.friend_id);
+      const excludeIds = new Set([...friendIds, ...pendingIncomingIds, ...pendingSentIds]);
+      setSearchResults((data || []).filter(p => !excludeIds.has(p.user_id)));
+      setSearchDone(true);
     } finally {
       setSearching(false);
     }
@@ -161,6 +174,9 @@ const PeoplePage = () => {
             </Button>
           </div>
 
+          {searchDone && searchResults.length === 0 && (
+            <p className="mt-3 text-sm text-muted-foreground">No results found</p>
+          )}
           {searchResults.length > 0 && (
             <div className="mt-3 flex flex-col gap-2">
               <p className="text-xs font-medium text-muted-foreground">Results</p>
