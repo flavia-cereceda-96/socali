@@ -2,8 +2,10 @@ import { useState, useMemo, useRef } from 'react';
 import { events, friends } from '@/data/mockData';
 import { EventCard } from '@/components/EventCard';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -47,6 +49,7 @@ function getFriendBusyDays(friendId: string): Date[] {
 }
 
 const CalendarPage = () => {
+  const navigate = useNavigate();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
@@ -291,6 +294,13 @@ const CalendarPage = () => {
               ) : (
                 <p className="text-sm text-muted-foreground">No plans yet — a perfect day to plan something! ✨</p>
               )}
+
+              <Button
+                onClick={() => navigate(`/create?date=${selectedDate.toISOString().split('T')[0]}`)}
+                className="mt-4 w-full gap-2"
+              >
+                <Plus className="h-4 w-4" /> Create event on this day
+              </Button>
             </motion.div>
           )}
         </AnimatePresence>
