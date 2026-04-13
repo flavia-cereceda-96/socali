@@ -33,6 +33,7 @@ const CreateEventPage = () => {
   const [location, setLocation] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [friendSearch, setFriendSearch] = useState('');
 
   const toggleFriend = (f: DbProfile) => {
     setSelectedFriends(prev =>
