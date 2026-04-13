@@ -17,6 +17,8 @@ const RequestsPage = () => {
   const { data: events = [], isLoading: eventsLoading } = useEvents();
   const { data: activities = [], isLoading: activitiesLoading } = useActivityFeed();
   const [userId, setUserId] = useState<string | null>(null);
+  const [decliningId, setDecliningId] = useState<string | null>(null);
+  const [declineNote, setDeclineNote] = useState('');
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id || null));
@@ -41,16 +43,22 @@ const RequestsPage = () => {
     e.created_by !== userId && e.participants.some(p => p.user_id === userId && p.status === 'suggested')
   );
 
-  const handleRsvp = async (participantId: string, status: string) => {
+  const handleRsvp = async (participantId: string, status: string, note?: string) => {
+    const updateData: any = { status };
+    if (status === 'declined' && note) {
+      updateData.decline_note = note;
+    }
     const { error } = await supabase
       .from('event_participants')
-      .update({ status })
+      .update(updateData)
       .eq('id', participantId);
     if (error) toast.error(error.message);
     else {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['unread-activity-count'] });
     }
+    setDecliningId(null);
+    setDeclineNote('');
   };
 
   const isLoading = eventsLoading || activitiesLoading;
