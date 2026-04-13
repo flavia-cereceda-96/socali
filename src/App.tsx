@@ -8,6 +8,7 @@ import Index from "./pages/Index.tsx";
 import CalendarPage from "./pages/CalendarPage.tsx";
 import PeoplePage from "./pages/PeoplePage.tsx";
 import CreateEventPage from "./pages/CreateEventPage.tsx";
+import EventDetailPage from "./pages/EventDetailPage.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
