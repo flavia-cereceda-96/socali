@@ -1,21 +1,27 @@
 import { useState } from 'react';
-import { useFriends } from '@/hooks/useEvents';
+import { useFriends, useFriendRequests } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
-import { Search, UserPlus, X } from 'lucide-react';
+import { Search, UserPlus, Check, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
 const PeoplePage = () => {
   const queryClient = useQueryClient();
   const { data: friends = [], isLoading } = useFriends();
+  const { data: friendRequests = [] } = useFriendRequests();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
   const [adding, setAdding] = useState<string | null>(null);
+
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['friends'] });
+    queryClient.invalidateQueries({ queryKey: ['friend-requests'] });
+    queryClient.invalidateQueries({ queryKey: ['pending-friend-count'] });
+  };
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -31,14 +37,11 @@ const PeoplePage = () => {
         .neq('user_id', user.id)
         .limit(10);
 
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
+      if (error) { toast.error(error.message); return; }
 
-      // Filter out existing friends
       const friendIds = friends.map(f => f.user_id);
-      setSearchResults((data || []).filter(p => !friendIds.includes(p.user_id)));
+      const pendingIds = friendRequests.map(r => r.user_id);
+      setSearchResults((data || []).filter(p => !friendIds.includes(p.user_id) && !pendingIds.includes(p.user_id)));
     } finally {
       setSearching(false);
     }
@@ -55,17 +58,26 @@ const PeoplePage = () => {
         friend_id: friendUserId,
       });
 
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
+      if (error) { toast.error(error.message); return; }
 
-      toast.success('Friend added! 🎉');
-      queryClient.invalidateQueries({ queryKey: ['friends'] });
+      toast.success('Friend request sent! 📨');
+      invalidateAll();
       setSearchResults(prev => prev.filter(p => p.user_id !== friendUserId));
     } finally {
       setAdding(null);
     }
+  };
+
+  const respondToRequest = async (requestId: string, status: 'accepted' | 'declined') => {
+    const { error } = await supabase
+      .from('friends')
+      .update({ status })
+      .eq('id', requestId);
+
+    if (error) { toast.error(error.message); return; }
+
+    toast.success(status === 'accepted' ? 'Friend added! 🎉' : 'Request declined');
+    invalidateAll();
   };
 
   return (
@@ -78,6 +90,53 @@ const PeoplePage = () => {
         >
           Your People
         </motion.h1>
+
+        {/* Incoming Friend Requests */}
+        {friendRequests.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Friend Requests ({friendRequests.length})
+            </h2>
+            <div className="flex flex-col gap-2">
+              {friendRequests.map(req => (
+                <div
+                  key={req.id}
+                  className="flex items-center gap-3 rounded-2xl bg-card p-3 shadow-card"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-lg">
+                    👤
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground">{req.profile?.username || 'Unknown'}</p>
+                    <p className="text-xs text-muted-foreground">{req.profile?.email}</p>
+                  </div>
+                  <div className="flex gap-1.5">
+                    <Button
+                      size="sm"
+                      variant="default"
+                      onClick={() => respondToRequest(req.id, 'accepted')}
+                      className="gap-1 h-8 px-2.5"
+                    >
+                      <Check className="h-3.5 w-3.5" /> Accept
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => respondToRequest(req.id, 'declined')}
+                      className="gap-1 h-8 px-2.5 text-muted-foreground"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Search to add friends */}
         <motion.div
@@ -102,7 +161,6 @@ const PeoplePage = () => {
             </Button>
           </div>
 
-          {/* Search Results */}
           {searchResults.length > 0 && (
             <div className="mt-3 flex flex-col gap-2">
               <p className="text-xs font-medium text-muted-foreground">Results</p>
@@ -142,25 +200,30 @@ const PeoplePage = () => {
             No friends yet — search by username above to add some! 👆
           </p>
         ) : (
-          <div className="flex flex-col gap-3">
-            {friends.map((friend, i) => (
-              <motion.div
-                key={friend.user_id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="flex items-center gap-4 rounded-2xl bg-card p-4 shadow-card"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-xl">
-                  👤
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-foreground">{friend.username}</p>
-                  <p className="text-xs text-muted-foreground">{friend.email}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+          <>
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Friends ({friends.length})
+            </h2>
+            <div className="flex flex-col gap-3">
+              {friends.map((friend, i) => (
+                <motion.div
+                  key={friend.user_id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="flex items-center gap-4 rounded-2xl bg-card p-4 shadow-card"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-xl">
+                    👤
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground">{friend.username}</p>
+                    <p className="text-xs text-muted-foreground">{friend.email}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
