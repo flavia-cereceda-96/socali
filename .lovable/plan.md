@@ -1,33 +1,40 @@
 
 
-## Plan: Multi-Day Events + Home Screen Scorecard
+## Plan: Friend Availability View + Plan Requests Section
 
-### 1. Support Multi-Day Events (e.g., Trips)
+### 1. Friend Availability Overlay on Calendar
 
-**Data model changes** (`src/data/mockData.ts`):
-- Add optional `endDate` field to `SocialEvent` interface
-- Add a mock multi-day event (e.g., "Weekend Trip 🏕️" spanning 2-3 days)
+Add a feature to the Calendar page where users can select friends and see their busy days overlaid on the calendar grid.
 
-**Event creation** (`src/pages/CreateEventPage.tsx`):
-- Add a toggle/option at step 0 for "Multi-day" planning
-- When multi-day is selected, show start date and end date inputs at step 2 instead of single date + time
+**Changes to `src/pages/CalendarPage.tsx`:**
+- Add a friend selector panel (toggleable) at the top of the calendar — shows friend avatars as tappable chips
+- When friends are selected, highlight their busy days on the calendar grid with colored indicators (each friend gets a distinct color dot)
+- The calendar cells show stacked dots for multiple friends' events on the same day
+- Selecting a day shows both your events and selected friends' events
+- This helps users visually find free windows to plan something
 
-**Event detail** (`src/pages/EventDetailPage.tsx`):
-- Display date range (e.g., "Friday Apr 17 – Sunday Apr 19") when `endDate` exists
+**Mock data approach:** Since there's no real backend, generate mock "busy" schedules for each friend using their existing event participation data from `events[]`. Friends are "busy" on days they have events.
 
-**Event card** (`src/components/EventCard.tsx`):
-- Show date range indicator for multi-day events (e.g., "3 days" label)
+### 2. Plan Requests / Invitations Page
 
-### 2. Home Screen Scorecard + 7-Day Filter
+A new page showing all events where you've been invited (events not created by "you") with RSVP actions.
 
-**Home page** (`src/pages/Index.tsx`):
-- Remove the feed insights section
-- Add a scorecard summary card at the top showing: "X events coming up this week" with confirmed/pending counts
-- Filter the events list to only show next 7 days (already the case with mock data, but add explicit filtering logic)
+**New file `src/pages/RequestsPage.tsx`:**
+- Filter events where `createdBy !== 'you'` (these are invitations from friends)
+- Each invitation card shows: event details, who invited you, participant list, your current status
+- RSVP buttons: Confirm, Maybe, Decline — updates status locally with state
+- Visual distinction between pending (suggested) and already-responded invitations
+
+**Changes to `src/components/BottomNav.tsx`:**
+- Add a "Requests" tab (using `Mail` or `Inbox` icon) to the bottom nav
+
+**Changes to `src/App.tsx`:**
+- Add route `/requests` for the new page
 
 ### Technical Details
 
-- `SocialEvent.endDate?: Date` — optional, only set for multi-day events
-- Scorecard uses the same `events` array, filtered to `date <= today + 7 days`
-- Create event flow adds a "Multi-day / Trip" toggle that swaps the date input UI
+- Friend availability uses existing `events` data — a friend is busy on any day they appear as a participant
+- Multi-day events: friend is busy on all days in the range
+- RSVP state managed with `useState` locally (no persistence yet)
+- Friend color assignment: a small palette mapped by friend index
 
