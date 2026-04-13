@@ -49,13 +49,70 @@ export const EventComments = ({ eventId }: EventCommentsProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase.from('event_comments').insert({
+      const { data: comment, error } = await supabase.from('event_comments').insert({
         event_id: eventId,
         user_id: user.id,
         content: newComment.trim(),
-      });
+      }).select().single();
 
       if (error) { toast.error(error.message); return; }
+
+      // Create activity for all other participants/creator
+      const { data: participants } = await supabase
+        .from('event_participants')
+        .select('user_id')
+        .eq('event_id', eventId);
+
+      const { data: eventData } = await supabase
+        .from('events')
+        .select('created_by')
+        .eq('id', eventId)
+        .single();
+
+      const allUserIds = new Set([
+        ...(participants || []).map(p => p.user_id),
+        ...(eventData ? [eventData.created_by] : []),
+      ]);
+      allUserIds.delete(user.id); // Don't notify yourself
+
+      // Check for @mentions in comment
+      const mentionRegex = /@(\w+)/g;
+      const mentions = [...newComment.matchAll(mentionRegex)].map(m => m[1]);
+
+      if (allUserIds.size > 0) {
+        const activityItems = [...allUserIds].map(uid => ({
+          user_id: uid,
+          type: 'comment' as const,
+          event_id: eventId,
+          source_user_id: user.id,
+          comment_id: comment.id,
+        }));
+        await supabase.from('activity_feed').insert(activityItems);
+      }
+
+      // Create mention-specific activity items
+      if (mentions.length > 0) {
+        const { data: mentionedProfiles } = await supabase
+          .from('profiles')
+          .select('user_id, username')
+          .in('username', mentions);
+
+        if (mentionedProfiles && mentionedProfiles.length > 0) {
+          const mentionActivities = mentionedProfiles
+            .filter(p => p.user_id !== user.id)
+            .map(p => ({
+              user_id: p.user_id,
+              type: 'mention' as const,
+              event_id: eventId,
+              source_user_id: user.id,
+              comment_id: comment.id,
+            }));
+          if (mentionActivities.length > 0) {
+            await supabase.from('activity_feed').insert(mentionActivities);
+          }
+        }
+      }
+
       setNewComment('');
       queryClient.invalidateQueries({ queryKey: ['event-comments', eventId] });
     } finally {

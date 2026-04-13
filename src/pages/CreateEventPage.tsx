@@ -68,7 +68,7 @@ const CreateEventPage = () => {
         return;
       }
 
-      // Add participants
+      // Add participants and create activity
       if (selectedFriends.length > 0 && event) {
         const { error: pError } = await supabase.from('event_participants').insert(
           selectedFriends.map(f => ({
@@ -78,10 +78,20 @@ const CreateEventPage = () => {
           }))
         );
         if (pError) toast.error('Event created but failed to add participants');
+
+        // Create activity feed items for each invited friend
+        await supabase.from('activity_feed').insert(
+          selectedFriends.map(f => ({
+            user_id: f.user_id,
+            type: 'invitation',
+            event_id: event.id,
+            source_user_id: user.id,
+          }))
+        );
       }
 
       queryClient.invalidateQueries({ queryKey: ['events'] });
-      queryClient.invalidateQueries({ queryKey: ['pending-request-count'] });
+      queryClient.invalidateQueries({ queryKey: ['unread-activity-count'] });
       toast.success('Plan created! 🎉', {
         description: `${emoji} ${title}${selectedFriends.length > 0 ? ` with ${selectedFriends.map(f => f.username).join(', ')}` : ''}`,
       });
