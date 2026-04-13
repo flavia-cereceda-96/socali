@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react';
-import { events, friends, Friend } from '@/data/mockData';
+import { useState, useMemo, useRef } from 'react';
+import { events, friends } from '@/data/mockData';
 import { EventCard } from '@/components/EventCard';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -50,7 +50,9 @@ const CalendarPage = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
-  const [showFriendPanel, setShowFriendPanel] = useState(false);
+  const [query, setQuery] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
@@ -66,10 +68,29 @@ const CalendarPage = () => {
     return map;
   }, [selectedFriends]);
 
-  const toggleFriend = (id: string) => {
-    setSelectedFriends(prev =>
-      prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
+  const filteredFriends = useMemo(() => {
+    const atIndex = query.lastIndexOf('@');
+    if (atIndex === -1) return [];
+    const search = query.slice(atIndex + 1).toLowerCase();
+    return friends.filter(
+      f => !selectedFriends.includes(f.id) && f.name.toLowerCase().includes(search)
     );
+  }, [query, selectedFriends]);
+
+  const selectFriend = (id: string) => {
+    setSelectedFriends(prev => [...prev, id]);
+    setQuery('');
+    setShowDropdown(false);
+    inputRef.current?.focus();
+  };
+
+  const removeFriend = (id: string) => {
+    setSelectedFriends(prev => prev.filter(f => f !== id));
+  };
+
+  const handleInputChange = (value: string) => {
+    setQuery(value);
+    setShowDropdown(value.includes('@'));
   };
 
   const shift = (dir: number) => {
@@ -87,67 +108,79 @@ const CalendarPage = () => {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-4 flex items-center justify-between"
+          className="mb-4"
         >
-          <h1 className="text-2xl font-bold text-foreground">Calendar</h1>
-          <button
-            onClick={() => setShowFriendPanel(!showFriendPanel)}
-            className={cn(
-              'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors',
-              showFriendPanel || selectedFriends.length > 0
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-secondary text-muted-foreground hover:text-foreground'
-            )}
-          >
-            <Users className="h-4 w-4" />
-            {selectedFriends.length > 0 ? selectedFriends.length : 'Availability'}
-          </button>
-        </motion.div>
+          <h1 className="text-2xl font-bold text-foreground mb-4">Calendar</h1>
 
-        {/* Friend Selector Panel */}
-        <AnimatePresence>
-          {showFriendPanel && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mb-4 overflow-hidden"
-            >
-              <div className="rounded-2xl bg-card p-3 shadow-card">
-                <p className="mb-2 text-xs font-medium text-muted-foreground">Select friends to see their busy days</p>
-                <div className="flex flex-wrap gap-2">
-                  {friends.map((friend, idx) => {
-                    const isActive = selectedFriends.includes(friend.id);
-                    return (
-                      <button
-                        key={friend.id}
-                        onClick={() => toggleFriend(friend.id)}
-                        className={cn(
-                          'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all',
-                          isActive
-                            ? 'bg-primary text-primary-foreground shadow-sm'
-                            : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
+          {/* @-mention input */}
+          <div className="relative mb-3">
+            <input
+              ref={inputRef}
+              value={query}
+              onChange={e => handleInputChange(e.target.value)}
+              onFocus={() => { if (query.includes('@')) setShowDropdown(true); }}
+              onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+              placeholder="Type @name to check availability..."
+              className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+            <AnimatePresence>
+              {showDropdown && filteredFriends.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  className="absolute left-0 right-0 top-full z-20 mt-1 rounded-xl border border-border bg-card shadow-lg overflow-hidden"
+                >
+                  {filteredFriends.map(friend => (
+                    <button
+                      key={friend.id}
+                      onMouseDown={e => { e.preventDefault(); selectFriend(friend.id); }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
+                    >
+                      <div className="h-6 w-6 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                        {friend.avatar ? (
+                          <img src={friend.avatar} alt={friend.name} className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="text-xs">{friend.emoji}</span>
                         )}
-                      >
-                        <div className="h-5 w-5 rounded-full overflow-hidden">
-                          {friend.avatar ? (
-                            <img src={friend.avatar} alt={friend.name} className="h-full w-full object-cover" />
-                          ) : (
-                            <span>{friend.emoji}</span>
-                          )}
-                        </div>
-                        {friend.name}
-                        {isActive && (
-                          <span className={cn('h-2 w-2 rounded-full', FRIEND_COLORS[idx % FRIEND_COLORS.length])} />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </motion.div>
+                      </div>
+                      <span>{friend.name}</span>
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Selected friend pills */}
+          {selectedFriends.length > 0 && (
+            <div className="mb-3 flex flex-wrap gap-2">
+              {selectedFriends.map(fId => {
+                const friend = friends.find(f => f.id === fId)!;
+                const idx = friends.findIndex(f => f.id === fId);
+                return (
+                  <span
+                    key={fId}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-sm font-medium text-foreground"
+                  >
+                    <div className="h-5 w-5 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                      {friend.avatar ? (
+                        <img src={friend.avatar} alt={friend.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-xs">{friend.emoji}</span>
+                      )}
+                    </div>
+                    {friend.name}
+                    <span className={cn('h-2 w-2 rounded-full', FRIEND_COLORS[idx % FRIEND_COLORS.length])} />
+                    <button onClick={() => removeFriend(fId)} className="ml-0.5 text-muted-foreground hover:text-foreground">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                );
+              })}
+            </div>
           )}
-        </AnimatePresence>
+        </motion.div>
 
         {/* Month Header */}
         <div className="mb-4 flex items-center justify-between">
@@ -180,7 +213,6 @@ const CalendarPage = () => {
             const hasEvent = events.some(e => isDateInRange(date, e.date, e.endDate));
             const isSelected = selectedDate && isSameDay(date, selectedDate);
 
-            // Get which selected friends are busy on this day
             const busyFriends = selectedFriends.filter(fId =>
               friendBusyMap[fId]?.some(bd => isSameDay(bd, date))
             );
@@ -230,7 +262,6 @@ const CalendarPage = () => {
                 {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
               </h3>
 
-              {/* Friend busy indicators */}
               {selectedFriends.length > 0 && (
                 <div className="mb-3 flex flex-wrap gap-2">
                   {selectedFriends.map(fId => {
