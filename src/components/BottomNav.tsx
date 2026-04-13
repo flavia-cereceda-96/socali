@@ -1,25 +1,26 @@
-import { Home, CalendarDays, Users, Plus, Inbox, Settings } from 'lucide-react';
+import { Home, CalendarDays, Users, Plus, Bell, Settings } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { usePendingRequestCount, usePendingFriendCount } from '@/hooks/useEvents';
+import { usePendingFriendCount } from '@/hooks/useEvents';
+import { useUnreadActivityCount } from '@/hooks/useActivity';
 
 const tabs = [
   { path: '/', icon: Home, label: 'Home' },
   { path: '/calendar', icon: CalendarDays, label: 'Calendar' },
   { path: '/people', icon: Users, label: 'People' },
-  { path: '/requests', icon: Inbox, label: 'Requests' },
+  { path: '/requests', icon: Bell, label: 'Activity' },
   { path: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 export function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { data: pendingRequests = 0 } = usePendingRequestCount();
+  const { data: unreadActivity = 0 } = useUnreadActivityCount();
   const { data: pendingFriends = 0 } = usePendingFriendCount();
 
   const getBadgeCount = (path: string) => {
-    if (path === '/requests') return pendingRequests;
+    if (path === '/requests') return unreadActivity;
     if (path === '/people') return pendingFriends;
     return 0;
   };
