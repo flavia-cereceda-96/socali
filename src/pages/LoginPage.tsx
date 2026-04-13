@@ -77,6 +77,12 @@ const LoginPage = () => {
           {loading ? 'Logging in...' : 'Log In'}
         </Button>
 
+        <div className="flex items-center justify-between text-sm">
+          <Link to="/forgot-password" className="text-primary font-medium hover:underline">
+            Forgot password?
+          </Link>
+        </div>
+
         <p className="text-center text-sm text-muted-foreground">
           Don't have an account?{' '}
           <Link to="/onboarding" className="text-primary font-medium hover:underline">
