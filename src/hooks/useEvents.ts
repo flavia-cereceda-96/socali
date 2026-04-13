@@ -24,6 +24,14 @@ export interface DbParticipant {
     username: string;
     email: string;
     user_id: string;
+    avatar_url: string | null;
+  };
+}
+
+export interface DbEventWithCreator extends DbEvent {
+  creator_profile?: {
+    username: string;
+    avatar_url: string | null;
   };
 }
 
@@ -84,28 +92,33 @@ export function useEvents() {
         participants = data || [];
       }
 
-      // Fetch profiles for all participant user_ids
-      const participantUserIds = [...new Set(participants.map(p => p.user_id))];
+      // Fetch profiles for all participant user_ids + creator user_ids
+      const creatorUserIds = events.map(e => e.created_by);
+      const allUserIds = [...new Set([...participants.map(p => p.user_id), ...creatorUserIds])];
       let profiles: any[] = [];
-      if (participantUserIds.length > 0) {
+      if (allUserIds.length > 0) {
         const { data } = await supabase
           .from('profiles')
-          .select('user_id, username, email')
-          .in('user_id', participantUserIds);
+          .select('user_id, username, email, avatar_url')
+          .in('user_id', allUserIds);
         profiles = data || [];
       }
 
       const profileMap = new Map(profiles.map(p => [p.user_id, p]));
 
-      return events.map(e => ({
-        ...e,
-        participants: participants
-          .filter(p => p.event_id === e.id)
-          .map(p => ({
-            ...p,
-            profile: profileMap.get(p.user_id),
-          })),
-      })) as DbEvent[];
+      return events.map(e => {
+        const creatorProfile = profileMap.get(e.created_by);
+        return {
+          ...e,
+          creator_profile: creatorProfile ? { username: creatorProfile.username, avatar_url: creatorProfile.avatar_url } : undefined,
+          participants: participants
+            .filter(p => p.event_id === e.id)
+            .map(p => ({
+              ...p,
+              profile: profileMap.get(p.user_id),
+            })),
+        };
+      }) as DbEventWithCreator[];
     },
   });
 }
