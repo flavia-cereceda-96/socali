@@ -24,6 +24,7 @@ const App = () => (
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/people" element={<PeoplePage />} />
           <Route path="/create" element={<CreateEventPage />} />
+          <Route path="/event/:id" element={<EventDetailPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <BottomNav />
