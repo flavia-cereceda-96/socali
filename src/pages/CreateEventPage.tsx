@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useFriends, DbProfile } from '@/hooks/useEvents';
+import { UserAvatar } from '@/components/UserAvatar';
 import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -27,7 +28,8 @@ const CreateEventPage = () => {
   const [selectedFriends, setSelectedFriends] = useState<DbProfile[]>([]);
   const [dateStr, setDateStr] = useState(prefilledDate);
   const [endDateStr, setEndDateStr] = useState('');
-  const [timeStr, setTimeStr] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
   const [location, setLocation] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -38,7 +40,7 @@ const CreateEventPage = () => {
     );
   };
 
-  const canSubmit = title.trim() && dateStr && (isMultiDay ? endDateStr : timeStr);
+  const canSubmit = title.trim() && dateStr && (isMultiDay ? endDateStr : startTime);
 
   const handleSubmit = async () => {
     if (!canSubmit || submitting) return;
@@ -56,7 +58,8 @@ const CreateEventPage = () => {
         emoji,
         date: dateStr,
         end_date: isMultiDay ? endDateStr : null,
-        time: isMultiDay ? null : timeStr,
+        time: isMultiDay ? null : (startTime || null),
+        end_time: isMultiDay ? null : (endTime || null),
         location: location || null,
         notes: notes || null,
         is_trip: isMultiDay,
@@ -169,7 +172,8 @@ const CreateEventPage = () => {
                         selected ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
                       )}
                     >
-                      👤 {f.username}
+                      <UserAvatar avatarUrl={f.avatar_url} username={f.username} size="sm" className="h-5 w-5 text-[10px]" />
+                      {f.username}
                     </button>
                   );
                 })}
@@ -191,9 +195,18 @@ const CreateEventPage = () => {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-2">
                 <Input type="date" value={dateStr} onChange={e => setDateStr(e.target.value)} />
-                <Input type="time" value={timeStr} onChange={e => setTimeStr(e.target.value)} />
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-xs text-muted-foreground">Start time</span>
+                    <Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} />
+                  </div>
+                  <div>
+                    <span className="text-xs text-muted-foreground">End time (optional)</span>
+                    <Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} />
+                  </div>
+                </div>
               </div>
             )}
           </div>

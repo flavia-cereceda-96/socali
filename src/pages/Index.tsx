@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
-import { useEvents, DbEvent } from '@/hooks/useEvents';
+import { useState, useMemo, useEffect } from 'react';
+import { useEvents, DbEvent, DbEventWithCreator } from '@/hooks/useEvents';
+import { UserAvatar } from '@/components/UserAvatar';
 import { motion } from 'framer-motion';
 import { CalendarDays, Check, X, HelpCircle, MapPin, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,11 @@ const Index = () => {
   const queryClient = useQueryClient();
   const { data: events = [], isLoading } = useEvents();
   const [rsvpStates, setRsvpStates] = useState<Record<string, string>>({});
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id || null));
+  }, []);
 
   const greeting = (() => {
     const h = new Date().getHours();
@@ -37,7 +43,6 @@ const Index = () => {
         e => e.participants.length === 0 || e.participants.every(p => p.status === 'confirmed')
       ),
       pendingRsvps: weekEvents.filter(e => {
-        // Events where current user is a participant with status 'suggested'
         return e.participants.some(p => p.status === 'suggested');
       }),
     };
@@ -54,6 +59,20 @@ const Index = () => {
   };
 
   const unresolvedRsvps = pendingRsvps.filter(e => !rsvpStates[e.id]);
+
+  const formatTime = (t: string) => {
+    const [h, m] = t.split(':');
+    const hour = parseInt(h);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const h12 = hour % 12 || 12;
+    return `${h12}:${m} ${ampm}`;
+  };
+
+  const getTimeDisplay = (event: any) => {
+    if (!event.time) return null;
+    if (event.end_time) return `${formatTime(event.time)} – ${formatTime(event.end_time)}`;
+    return formatTime(event.time);
+  };
 
   if (isLoading) {
     return (
@@ -91,40 +110,55 @@ const Index = () => {
         </motion.h2>
         <div className="flex flex-col gap-3 mb-8">
           {confirmedPlans.length > 0 ? (
-            confirmedPlans.map((event, i) => (
-              <motion.div
-                key={event.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.12 + i * 0.06 }}
-                onClick={() => navigate(`/event/${event.id}`)}
-                className="flex gap-3 rounded-2xl bg-card p-4 shadow-card cursor-pointer transition-shadow hover:shadow-elevated active:scale-[0.99]"
-              >
-                <div className="flex flex-col items-center justify-center rounded-xl bg-primary/10 px-3 py-2 min-w-[52px]">
-                  <span className="text-xs font-semibold uppercase text-primary">
-                    {new Date(event.date).toLocaleDateString('en-US', { weekday: 'short' })}
-                  </span>
-                  <span className="text-lg font-bold text-primary">
-                    {new Date(event.date).getDate()}
-                  </span>
-                </div>
-                <div className="flex flex-1 flex-col gap-1.5 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">{event.emoji}</span>
-                    <span className="font-semibold text-foreground truncate">{event.title}</span>
+            confirmedPlans.map((event, i) => {
+              const ev = event as DbEventWithCreator;
+              const timeDisplay = getTimeDisplay(event);
+              return (
+                <motion.div
+                  key={event.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.12 + i * 0.06 }}
+                  onClick={() => navigate(`/event/${event.id}`)}
+                  className="flex gap-3 rounded-2xl bg-card p-4 shadow-card cursor-pointer transition-shadow hover:shadow-elevated active:scale-[0.99]"
+                >
+                  <div className="flex flex-col items-center justify-center rounded-xl bg-primary/10 px-3 py-2 min-w-[52px]">
+                    <span className="text-xs font-semibold uppercase text-primary">
+                      {new Date(event.date).toLocaleDateString('en-US', { weekday: 'short' })}
+                    </span>
+                    <span className="text-lg font-bold text-primary">
+                      {new Date(event.date).getDate()}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    {event.time && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{event.time}</span>}
-                    {event.location && <span className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3" />{event.location}</span>}
+                  <div className="flex flex-1 flex-col gap-1.5 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{event.emoji}</span>
+                      <span className="font-semibold text-foreground truncate">{event.title}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      {timeDisplay && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{timeDisplay}</span>}
+                      {event.location && <span className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3" />{event.location}</span>}
+                    </div>
+                    {event.participants.length > 0 && (
+                      <div className="flex items-center gap-1 mt-0.5">
+                        {event.participants.slice(0, 5).map(p => (
+                          <UserAvatar
+                            key={p.id}
+                            avatarUrl={p.profile?.avatar_url}
+                            username={p.profile?.username}
+                            size="sm"
+                            className="h-6 w-6 text-[10px] -ml-1 first:ml-0 ring-2 ring-card"
+                          />
+                        ))}
+                        {event.participants.length > 5 && (
+                          <span className="ml-1 text-[10px] text-muted-foreground">+{event.participants.length - 5}</span>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  {event.participants.length > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      {event.participants.map(p => p.profile?.username || 'Unknown').join(', ')}
-                    </p>
-                  )}
-                </div>
-              </motion.div>
-            ))
+                </motion.div>
+              );
+            })
           ) : (
             <p className="text-sm text-muted-foreground">No confirmed plans yet — time to create one! ✨</p>
           )}
@@ -143,6 +177,7 @@ const Index = () => {
             <div className="flex flex-col gap-3">
               {unresolvedRsvps.map((event, i) => {
                 const myParticipation = event.participants.find(p => p.status === 'suggested');
+                const timeDisplay = getTimeDisplay(event);
                 return (
                   <motion.div
                     key={event.id}
@@ -157,7 +192,7 @@ const Index = () => {
                     </div>
                     <p className="text-xs text-muted-foreground mb-3">
                       {new Date(event.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                      {event.time && ` · ${event.time}`}
+                      {timeDisplay && ` · ${timeDisplay}`}
                       {event.location && ` · ${event.location}`}
                     </p>
                     {myParticipation && (
