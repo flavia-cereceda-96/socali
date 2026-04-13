@@ -3,6 +3,7 @@ import { AvatarGroup } from './AvatarGroup';
 import { StatusBadge } from './StatusBadge';
 import { motion } from 'framer-motion';
 import { MapPin, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 function getOverallStatus(event: SocialEvent) {
   const statuses = event.participants.map(p => p.status);
@@ -12,6 +13,7 @@ function getOverallStatus(event: SocialEvent) {
 }
 
 export function EventCard({ event, index = 0 }: { event: SocialEvent; index?: number }) {
+  const navigate = useNavigate();
   const dayName = event.date.toLocaleDateString('en-US', { weekday: 'short' });
   const dayNum = event.date.getDate();
 
@@ -20,7 +22,8 @@ export function EventCard({ event, index = 0 }: { event: SocialEvent; index?: nu
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.06, duration: 0.35 }}
-      className="flex gap-3 rounded-2xl bg-card p-4 shadow-card"
+      onClick={() => navigate(`/event/${event.id}`)}
+      className="flex gap-3 rounded-2xl bg-card p-4 shadow-card cursor-pointer transition-shadow hover:shadow-elevated active:scale-[0.99]"
     >
       <div className="flex flex-col items-center justify-center rounded-xl bg-primary/10 px-3 py-2 min-w-[52px]">
         <span className="text-xs font-semibold uppercase text-primary">{dayName}</span>
