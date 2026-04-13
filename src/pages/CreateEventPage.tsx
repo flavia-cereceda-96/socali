@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useFriends, DbProfile } from '@/hooks/useEvents';
 import { UserAvatar } from '@/components/UserAvatar';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Check } from 'lucide-react';
+import { ArrowLeft, Check, X } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
