@@ -16,6 +16,10 @@ export function EventCard({ event, index = 0 }: { event: SocialEvent; index?: nu
   const navigate = useNavigate();
   const dayName = event.date.toLocaleDateString('en-US', { weekday: 'short' });
   const dayNum = event.date.getDate();
+  const isMultiDay = !!event.endDate;
+  const dayCount = isMultiDay
+    ? Math.ceil((event.endDate!.getTime() - event.date.getTime()) / (1000 * 60 * 60 * 24)) + 1
+    : null;
 
   return (
     <motion.div
@@ -28,6 +32,9 @@ export function EventCard({ event, index = 0 }: { event: SocialEvent; index?: nu
       <div className="flex flex-col items-center justify-center rounded-xl bg-primary/10 px-3 py-2 min-w-[52px]">
         <span className="text-xs font-semibold uppercase text-primary">{dayName}</span>
         <span className="text-lg font-bold text-primary">{dayNum}</span>
+        {dayCount && (
+          <span className="text-[10px] font-medium text-primary/70 mt-0.5">{dayCount} days</span>
+        )}
       </div>
       <div className="flex flex-1 flex-col gap-1.5 min-w-0">
         <div className="flex items-center gap-2">

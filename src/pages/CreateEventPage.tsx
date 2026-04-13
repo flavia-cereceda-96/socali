@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-const quickEmojis = ['🍝', '🎬', '🏃', '🎮', '🍕', '☕', '🎉', '🎵'];
+const quickEmojis = ['🍝', '🎬', '🏃', '🎮', '🍕', '☕', '🎉', '🎵', '🏕️'];
 
 const CreateEventPage = () => {
   const navigate = useNavigate();
@@ -14,8 +14,10 @@ const CreateEventPage = () => {
   const [input, setInput] = useState('');
   const [title, setTitle] = useState('');
   const [emoji, setEmoji] = useState('🎉');
+  const [isMultiDay, setIsMultiDay] = useState(false);
   const [selectedFriends, setSelectedFriends] = useState<Friend[]>([]);
   const [dateStr, setDateStr] = useState('');
+  const [endDateStr, setEndDateStr] = useState('');
   const [timeStr, setTimeStr] = useState('');
 
   const toggleFriend = (f: Friend) => {
@@ -38,10 +40,11 @@ const CreateEventPage = () => {
   }
   if (step >= 2) {
     messages.push({ from: 'user', text: selectedFriends.map(f => f.emoji + ' ' + f.name).join(', ') });
-    messages.push({ from: 'bot', text: "When works?" });
+    messages.push({ from: 'bot', text: isMultiDay ? "When does it start and end?" : "When works?" });
   }
   if (step >= 3) {
-    messages.push({ from: 'user', text: `${dateStr} at ${timeStr}` });
+    const dateText = isMultiDay ? `${dateStr} → ${endDateStr}` : `${dateStr} at ${timeStr}`;
+    messages.push({ from: 'user', text: dateText });
     messages.push({ from: 'bot', text: "Looks great! Send it? 🚀" });
   }
 
@@ -96,11 +99,20 @@ const CreateEventPage = () => {
                   </button>
                 ))}
               </div>
+              <button
+                onClick={() => setIsMultiDay(!isMultiDay)}
+                className={cn(
+                  'flex items-center gap-2 rounded-full px-3 py-2 text-xs font-medium transition-all',
+                  isMultiDay ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
+                )}
+              >
+                🏕️ Multi-day / Trip
+              </button>
               <div className="flex gap-2">
                 <input
                   value={title}
                   onChange={e => setTitle(e.target.value)}
-                  placeholder="e.g. Dinner, Movie Night..."
+                  placeholder={isMultiDay ? "e.g. Weekend Trip, Camping..." : "e.g. Dinner, Movie Night..."}
                   className="flex-1 rounded-xl border border-input bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
                 <button
@@ -145,23 +157,44 @@ const CreateEventPage = () => {
 
           {step === 2 && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-              <div className="flex gap-2">
-                <input
-                  type="date"
-                  value={dateStr}
-                  onChange={e => setDateStr(e.target.value)}
-                  className="flex-1 rounded-xl border border-input bg-card px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
-                <input
-                  type="time"
-                  value={timeStr}
-                  onChange={e => setTimeStr(e.target.value)}
-                  className="w-28 rounded-xl border border-input bg-card px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
+              {isMultiDay ? (
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground">Start date</label>
+                  <input
+                    type="date"
+                    value={dateStr}
+                    onChange={e => setDateStr(e.target.value)}
+                    className="w-full rounded-xl border border-input bg-card px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                  <label className="text-xs font-medium text-muted-foreground">End date</label>
+                  <input
+                    type="date"
+                    value={endDateStr}
+                    onChange={e => setEndDateStr(e.target.value)}
+                    className="w-full rounded-xl border border-input bg-card px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="date"
+                    value={dateStr}
+                    onChange={e => setDateStr(e.target.value)}
+                    className="flex-1 rounded-xl border border-input bg-card px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                  <input
+                    type="time"
+                    value={timeStr}
+                    onChange={e => setTimeStr(e.target.value)}
+                    className="w-28 rounded-xl border border-input bg-card px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                </div>
+              )}
               <button
-                onClick={() => dateStr && timeStr && setStep(3)}
-                disabled={!dateStr || !timeStr}
+                onClick={() => {
+                  if (isMultiDay ? (dateStr && endDateStr) : (dateStr && timeStr)) setStep(3);
+                }}
+                disabled={isMultiDay ? (!dateStr || !endDateStr) : (!dateStr || !timeStr)}
                 className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-40"
               >
                 Next →
