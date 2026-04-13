@@ -1,26 +1,18 @@
 
 
-## Plan: @-mention Input for Friend Availability
+## Plan: Simplify Home Screen + Add Pending RSVP Section
 
-### What changes
+### Changes to `src/pages/Index.tsx`:
 
-**`src/pages/CalendarPage.tsx`:**
-- Replace the chip-based friend selector with a text input field that supports `@name` mentions
-- Input shows a dropdown/autocomplete of matching friends when user types `@`
-- Selected friends appear as removable tags/pills below the input (with their avatar + colored dot)
-- Move the entire availability section (input + selected friends) to sit **above** the calendar month header, always visible (no toggle button needed)
-- Remove the "Availability" toggle button from the header — the input is always present
-- Keep the existing busy-day dot logic and selected-day friend status indicators unchanged
-
-### UX flow
-1. User sees an input field above the calendar: placeholder `"Type @name to check availability..."`
-2. Typing `@` or `@al` shows a filtered dropdown of friends from the `friends` array
-3. Selecting a friend adds them as a pill/tag and triggers the busy-day overlay
-4. Tags are removable with an × button
+1. **Remove the scorecard** — drop the confirmed/maybe/pending breakdown card entirely as it adds no value
+2. **Filter "Upcoming Plans" to confirmed only** — show events where at least one participant (or the user's own status) is confirmed; keep the simple count in the header if useful (e.g., "X plans this week")
+3. **Add "Pending RSVPs" section** — below the upcoming plans, show a new section listing events where `createdBy !== 'you'` and the user hasn't responded yet (status is `'suggested'`). Each card links to the event detail or the Requests page. Include RSVP action buttons (Confirm, Maybe, Decline) inline.
 
 ### Technical details
-- Local state: `query` string, `showDropdown` boolean
-- Filter `friends` by name match when query contains `@`
-- Reuse existing `selectedFriends`, `friendBusyMap`, and color dot logic
-- No new dependencies needed
+- Confirmed events: filter `weekEvents` where `createdBy === 'you'` OR the user's participant status is `'confirmed'` — since there's no real "current user" participant entry, use `createdBy === 'you'` as proxy for "your confirmed plans" plus events where all participants are confirmed
+- Pending RSVPs: filter `events` where `createdBy !== 'you'` (invitations from others) — reuse the same card style but add inline RSVP buttons with local state
+- RSVP state managed with `useState` (same pattern as `RequestsPage.tsx`)
+
+### Files modified
+- `src/pages/Index.tsx` — remove scorecard, split events into confirmed vs pending RSVP sections
 
