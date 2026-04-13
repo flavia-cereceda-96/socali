@@ -13,6 +13,7 @@ import PeoplePage from "./pages/PeoplePage.tsx";
 import CreateEventPage from "./pages/CreateEventPage.tsx";
 import EventDetailPage from "./pages/EventDetailPage.tsx";
 import RequestsPage from "./pages/RequestsPage.tsx";
+import SettingsPage from "./pages/SettingsPage.tsx";
 import OnboardingPage from "./pages/OnboardingPage.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage.tsx";
@@ -66,6 +67,7 @@ const App = () => {
             <Route path="/create" element={authed ? <CreateEventPage /> : <Navigate to="/login" replace />} />
             <Route path="/requests" element={authed ? <RequestsPage /> : <Navigate to="/login" replace />} />
             <Route path="/event/:id" element={authed ? <EventDetailPage /> : <Navigate to="/login" replace />} />
+            <Route path="/settings" element={authed ? <SettingsPage /> : <Navigate to="/login" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           {authed && <BottomNav />}
