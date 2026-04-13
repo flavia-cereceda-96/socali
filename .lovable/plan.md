@@ -1,40 +1,26 @@
 
 
-## Plan: Friend Availability View + Plan Requests Section
+## Plan: @-mention Input for Friend Availability
 
-### 1. Friend Availability Overlay on Calendar
+### What changes
 
-Add a feature to the Calendar page where users can select friends and see their busy days overlaid on the calendar grid.
+**`src/pages/CalendarPage.tsx`:**
+- Replace the chip-based friend selector with a text input field that supports `@name` mentions
+- Input shows a dropdown/autocomplete of matching friends when user types `@`
+- Selected friends appear as removable tags/pills below the input (with their avatar + colored dot)
+- Move the entire availability section (input + selected friends) to sit **above** the calendar month header, always visible (no toggle button needed)
+- Remove the "Availability" toggle button from the header — the input is always present
+- Keep the existing busy-day dot logic and selected-day friend status indicators unchanged
 
-**Changes to `src/pages/CalendarPage.tsx`:**
-- Add a friend selector panel (toggleable) at the top of the calendar — shows friend avatars as tappable chips
-- When friends are selected, highlight their busy days on the calendar grid with colored indicators (each friend gets a distinct color dot)
-- The calendar cells show stacked dots for multiple friends' events on the same day
-- Selecting a day shows both your events and selected friends' events
-- This helps users visually find free windows to plan something
+### UX flow
+1. User sees an input field above the calendar: placeholder `"Type @name to check availability..."`
+2. Typing `@` or `@al` shows a filtered dropdown of friends from the `friends` array
+3. Selecting a friend adds them as a pill/tag and triggers the busy-day overlay
+4. Tags are removable with an × button
 
-**Mock data approach:** Since there's no real backend, generate mock "busy" schedules for each friend using their existing event participation data from `events[]`. Friends are "busy" on days they have events.
-
-### 2. Plan Requests / Invitations Page
-
-A new page showing all events where you've been invited (events not created by "you") with RSVP actions.
-
-**New file `src/pages/RequestsPage.tsx`:**
-- Filter events where `createdBy !== 'you'` (these are invitations from friends)
-- Each invitation card shows: event details, who invited you, participant list, your current status
-- RSVP buttons: Confirm, Maybe, Decline — updates status locally with state
-- Visual distinction between pending (suggested) and already-responded invitations
-
-**Changes to `src/components/BottomNav.tsx`:**
-- Add a "Requests" tab (using `Mail` or `Inbox` icon) to the bottom nav
-
-**Changes to `src/App.tsx`:**
-- Add route `/requests` for the new page
-
-### Technical Details
-
-- Friend availability uses existing `events` data — a friend is busy on any day they appear as a participant
-- Multi-day events: friend is busy on all days in the range
-- RSVP state managed with `useState` locally (no persistence yet)
-- Friend color assignment: a small palette mapped by friend index
+### Technical details
+- Local state: `query` string, `showDropdown` boolean
+- Filter `friends` by name match when query contains `@`
+- Reuse existing `selectedFriends`, `friendBusyMap`, and color dot logic
+- No new dependencies needed
 
