@@ -81,6 +81,7 @@ const CreateEventPage = () => {
       }
 
       queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-request-count'] });
       toast.success('Plan created! 🎉', {
         description: `${emoji} ${title}${selectedFriends.length > 0 ? ` with ${selectedFriends.map(f => f.username).join(', ')}` : ''}`,
       });
