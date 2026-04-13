@@ -33,6 +33,8 @@ export interface DbProfile {
   username: string;
   email: string;
   usage: string;
+  avatar_url: string | null;
+  bio: string | null;
   created_at: string;
 }
 
