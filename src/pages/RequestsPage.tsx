@@ -7,6 +7,7 @@ import { UserAvatar } from '@/components/UserAvatar';
 import { motion } from 'framer-motion';
 import { MapPin, Clock, Check, HelpCircle, X, MessageSquare, UserPlus, AtSign, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
@@ -161,26 +162,52 @@ const RequestsPage = () => {
                       )}
                     </div>
 
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleRsvp(myP.id, 'confirmed')}
-                        className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-secondary py-2 text-sm font-medium text-muted-foreground transition-all hover:bg-green-500/10 hover:text-green-600"
-                      >
-                        <Check className="h-4 w-4" /> Going
-                      </button>
-                      <button
-                        onClick={() => handleRsvp(myP.id, 'maybe')}
-                        className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-secondary py-2 text-sm font-medium text-muted-foreground transition-all hover:bg-amber-500/10 hover:text-amber-600"
-                      >
-                        <HelpCircle className="h-4 w-4" /> Maybe
-                      </button>
-                      <button
-                        onClick={() => handleRsvp(myP.id, 'declined')}
-                        className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-secondary py-2 text-sm font-medium text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <X className="h-4 w-4" /> Decline
-                      </button>
-                    </div>
+                    {decliningId === myP.id ? (
+                      <div className="space-y-2">
+                        <Input
+                          placeholder="Add a note (optional) e.g. Sorry, busy that day!"
+                          value={declineNote}
+                          onChange={e => setDeclineNote(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && handleRsvp(myP.id, 'declined', declineNote)}
+                          autoFocus
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleRsvp(myP.id, 'declined', declineNote)}
+                            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-destructive/10 py-2 text-sm font-medium text-destructive transition-all hover:bg-destructive hover:text-destructive-foreground"
+                          >
+                            <X className="h-4 w-4" /> Confirm Decline
+                          </button>
+                          <button
+                            onClick={() => { setDecliningId(null); setDeclineNote(''); }}
+                            className="flex items-center justify-center gap-1 rounded-xl bg-secondary px-3 py-2 text-sm font-medium text-muted-foreground"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleRsvp(myP.id, 'confirmed')}
+                          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-secondary py-2 text-sm font-medium text-muted-foreground transition-all hover:bg-green-500/10 hover:text-green-600"
+                        >
+                          <Check className="h-4 w-4" /> Going
+                        </button>
+                        <button
+                          onClick={() => handleRsvp(myP.id, 'maybe')}
+                          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-secondary py-2 text-sm font-medium text-muted-foreground transition-all hover:bg-amber-500/10 hover:text-amber-600"
+                        >
+                          <HelpCircle className="h-4 w-4" /> Maybe
+                        </button>
+                        <button
+                          onClick={() => setDecliningId(myP.id)}
+                          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-secondary py-2 text-sm font-medium text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <X className="h-4 w-4" /> Decline
+                        </button>
+                      </div>
+                    )}
                   </motion.div>
                 );
               })}
