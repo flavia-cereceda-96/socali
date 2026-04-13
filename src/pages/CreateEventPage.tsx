@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { supabase } from '@/integrations/supabase/client';
 
 const quickEmojis = ['🍝', '🎬', '🏃', '🎮', '🍕', '☕', '🎉', '🎵', '🏕️'];
 
@@ -26,6 +27,7 @@ const CreateEventPage = () => {
   const [timeStr, setTimeStr] = useState('');
   const [location, setLocation] = useState('');
   const [notes, setNotes] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const toggleFriend = (f: Friend) => {
     setSelectedFriends(prev =>
@@ -35,11 +37,43 @@ const CreateEventPage = () => {
 
   const canSubmit = title.trim() && selectedFriends.length > 0 && dateStr && (isMultiDay ? endDateStr : timeStr);
 
-  const handleSubmit = () => {
-    toast.success('Plan created! 🎉', {
-      description: `${emoji} ${title} with ${selectedFriends.map(f => f.name).join(', ')}`,
-    });
-    navigate('/');
+  const handleSubmit = async () => {
+    if (!canSubmit || submitting) return;
+    setSubmitting(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('You must be logged in');
+        return;
+      }
+
+      const { data: event, error } = await supabase.from('events').insert({
+        title,
+        emoji,
+        date: dateStr,
+        end_date: isMultiDay ? endDateStr : null,
+        time: isMultiDay ? null : timeStr,
+        location: location || null,
+        notes: notes || null,
+        is_trip: isMultiDay,
+        created_by: user.id,
+      }).select().single();
+
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      toast.success('Plan created! 🎉', {
+        description: `${emoji} ${title} with ${selectedFriends.map(f => f.name).join(', ')}`,
+      });
+      navigate('/');
+    } catch (err: any) {
+      toast.error(err.message || 'Something went wrong');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -164,11 +198,11 @@ const CreateEventPage = () => {
           {/* Submit */}
           <Button
             onClick={handleSubmit}
-            disabled={!canSubmit}
+            disabled={!canSubmit || submitting}
             className="w-full font-semibold"
             size="lg"
           >
-            Create Plan 🚀
+            {submitting ? 'Creating...' : 'Create Plan 🚀'}
           </Button>
         </motion.div>
       </div>
