@@ -24,6 +24,7 @@ export interface SocialEvent {
   title: string;
   emoji: string;
   date: Date;
+  endDate?: Date;
   time: string;
   location?: string;
   address?: string;
@@ -123,6 +124,24 @@ export const events: SocialEvent[] = [
       { friend: friends[5], status: 'suggested' },
     ],
     createdBy: friends[2].name,
+  },
+  {
+    id: '6',
+    title: 'Weekend Trip',
+    emoji: '🏕️',
+    date: day(3),
+    endDate: day(5),
+    time: '9:00 AM',
+    location: 'Lake House',
+    address: '456 Lakeside Dr, Upstate NY',
+    notes: 'Pack hiking boots and sunscreen! 🌲',
+    participants: [
+      { friend: friends[0], status: 'confirmed' },
+      { friend: friends[1], status: 'confirmed' },
+      { friend: friends[2], status: 'maybe' },
+      { friend: friends[5], status: 'suggested' },
+    ],
+    createdBy: 'you',
   },
 ];
 

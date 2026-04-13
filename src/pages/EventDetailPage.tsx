@@ -17,11 +17,10 @@ const EventDetailPage = () => {
     );
   }
 
-  const dateStr = event.date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  });
+  const fmt = (d: Date) => d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  const dateStr = event.endDate
+    ? `${fmt(event.date)} – ${fmt(event.endDate)}`
+    : fmt(event.date);
 
   return (
     <div className="min-h-screen pb-24">
