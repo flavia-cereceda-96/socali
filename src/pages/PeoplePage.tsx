@@ -28,6 +28,7 @@ const PeoplePage = () => {
     if (!searchQuery.trim()) return;
     setSearching(true);
     setSearchDone(false);
+    try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
