@@ -30,14 +30,15 @@ export const EventComments = ({ eventId }: EventCommentsProps) => {
       const userIds = [...new Set(data.map(c => c.user_id))];
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('user_id, username')
+        .select('user_id, username, avatar_url')
         .in('user_id', userIds);
 
-      const profileMap = new Map((profiles || []).map(p => [p.user_id, p.username]));
+      const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
 
       return data.map(c => ({
         ...c,
-        username: profileMap.get(c.user_id) || 'Unknown',
+        username: profileMap.get(c.user_id)?.username || 'Unknown',
+        avatar_url: profileMap.get(c.user_id)?.avatar_url || null,
       }));
     },
   });
