@@ -1,6 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEvents } from '@/hooks/useEvents';
 import { StatusBadge } from '@/components/StatusBadge';
+import { EventComments } from '@/components/EventComments';
+import { EventPhotos } from '@/components/EventPhotos';
 import { motion } from 'framer-motion';
 import { ArrowLeft, MapPin, Clock, Calendar, MessageSquare, User } from 'lucide-react';
 
@@ -108,6 +110,26 @@ const EventDetailPage = () => {
             </div>
           </motion.div>
         )}
+
+        {/* Photos */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="mt-6"
+        >
+          <EventPhotos eventId={event.id} />
+        </motion.div>
+
+        {/* Comments */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mt-6"
+        >
+          <EventComments eventId={event.id} />
+        </motion.div>
       </div>
     </div>
   );
