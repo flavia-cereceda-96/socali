@@ -118,6 +118,7 @@ export function useFriends() {
       const { data: friendRows } = await supabase
         .from('friends')
         .select('*')
+        .eq('status', 'accepted')
         .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`);
 
       if (!friendRows || friendRows.length === 0) return [];
@@ -133,6 +134,66 @@ export function useFriends() {
 
       return (profiles || []) as DbProfile[];
     },
+  });
+}
+
+export interface FriendRequest {
+  id: string;
+  user_id: string;
+  friend_id: string;
+  status: string;
+  created_at: string;
+  profile: { username: string; email: string } | null;
+}
+
+export function useFriendRequests() {
+  return useQuery({
+    queryKey: ['friend-requests'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      // Incoming pending requests where I'm the friend_id
+      const { data: requests } = await supabase
+        .from('friends')
+        .select('*')
+        .eq('friend_id', user.id)
+        .eq('status', 'pending');
+
+      if (!requests || requests.length === 0) return [];
+
+      const senderIds = requests.map(r => r.user_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, username, email')
+        .in('user_id', senderIds);
+
+      const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+
+      return requests.map(r => ({
+        ...r,
+        profile: profileMap.get(r.user_id) || null,
+      })) as FriendRequest[];
+    },
+  });
+}
+
+export function usePendingFriendCount() {
+  return useQuery({
+    queryKey: ['pending-friend-count'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return 0;
+
+      const { count } = await supabase
+        .from('friends')
+        .select('*', { count: 'exact', head: true })
+        .eq('friend_id', user.id)
+        .eq('status', 'pending');
+
+      return count || 0;
+    },
+    refetchInterval: 30000,
   });
 }
 
