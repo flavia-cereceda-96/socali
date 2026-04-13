@@ -159,7 +159,7 @@ const CreateEventPage = () => {
           {friends.length > 0 && (
             <div className="space-y-2">
               <Label>Who's joining?</Label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col gap-2">
                 {friends.map(f => {
                   const selected = selectedFriends.find(s => s.user_id === f.user_id);
                   return (
@@ -168,12 +168,25 @@ const CreateEventPage = () => {
                       type="button"
                       onClick={() => toggleFriend(f)}
                       className={cn(
-                        'flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-all',
-                        selected ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                        'flex items-center gap-3 rounded-2xl p-3 text-left transition-all border',
+                        selected ? 'border-primary bg-primary/10' : 'border-border bg-card hover:bg-secondary/50'
                       )}
                     >
-                      <UserAvatar avatarUrl={f.avatar_url} username={f.username} size="sm" className="h-5 w-5 text-[10px]" />
-                      {f.username}
+                      <UserAvatar avatarUrl={f.avatar_url} username={f.username} size="md" />
+                      <div className="flex-1 min-w-0">
+                        <p className={cn('text-sm font-semibold', selected ? 'text-primary' : 'text-foreground')}>
+                          {f.username}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">{f.email}</p>
+                        {f.bio && (
+                          <p className="text-xs text-muted-foreground/80 truncate mt-0.5 italic">"{f.bio}"</p>
+                        )}
+                      </div>
+                      {selected && (
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                          <Check className="h-3.5 w-3.5" />
+                        </div>
+                      )}
                     </button>
                   );
                 })}

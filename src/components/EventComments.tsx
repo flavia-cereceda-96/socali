@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { Send, Trash2 } from 'lucide-react';
+import { UserAvatar } from '@/components/UserAvatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -160,9 +161,7 @@ export const EventComments = ({ eventId }: EventCommentsProps) => {
               transition={{ delay: i * 0.03 }}
               className="group flex gap-3 rounded-xl bg-card p-3 shadow-card"
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-sm">
-                👤
-              </div>
+              <UserAvatar avatarUrl={c.avatar_url} username={c.username} size="sm" className="shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-foreground">{c.username}</span>
