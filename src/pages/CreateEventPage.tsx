@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { friends, Friend } from '@/data/mockData';
+import { useFriends, DbProfile } from '@/hooks/useEvents';
 import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -10,18 +10,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 
 const quickEmojis = ['🍝', '🎬', '🏃', '🎮', '🍕', '☕', '🎉', '🎵', '🏕️'];
 
 const CreateEventPage = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const prefilledDate = searchParams.get('date') || '';
+  const { data: friends = [] } = useFriends();
 
   const [title, setTitle] = useState('');
   const [emoji, setEmoji] = useState('🎉');
   const [isMultiDay, setIsMultiDay] = useState(false);
-  const [selectedFriends, setSelectedFriends] = useState<Friend[]>([]);
+  const [selectedFriends, setSelectedFriends] = useState<DbProfile[]>([]);
   const [dateStr, setDateStr] = useState(prefilledDate);
   const [endDateStr, setEndDateStr] = useState('');
   const [timeStr, setTimeStr] = useState('');
@@ -29,13 +32,13 @@ const CreateEventPage = () => {
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const toggleFriend = (f: Friend) => {
+  const toggleFriend = (f: DbProfile) => {
     setSelectedFriends(prev =>
-      prev.find(p => p.id === f.id) ? prev.filter(p => p.id !== f.id) : [...prev, f]
+      prev.find(p => p.user_id === f.user_id) ? prev.filter(p => p.user_id !== f.user_id) : [...prev, f]
     );
   };
 
-  const canSubmit = title.trim() && selectedFriends.length > 0 && dateStr && (isMultiDay ? endDateStr : timeStr);
+  const canSubmit = title.trim() && dateStr && (isMultiDay ? endDateStr : timeStr);
 
   const handleSubmit = async () => {
     if (!canSubmit || submitting) return;
@@ -65,8 +68,21 @@ const CreateEventPage = () => {
         return;
       }
 
+      // Add participants
+      if (selectedFriends.length > 0 && event) {
+        const { error: pError } = await supabase.from('event_participants').insert(
+          selectedFriends.map(f => ({
+            event_id: event.id,
+            user_id: f.user_id,
+            status: 'suggested',
+          }))
+        );
+        if (pError) toast.error('Event created but failed to add participants');
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['events'] });
       toast.success('Plan created! 🎉', {
-        description: `${emoji} ${title} with ${selectedFriends.map(f => f.name).join(', ')}`,
+        description: `${emoji} ${title}${selectedFriends.length > 0 ? ` with ${selectedFriends.map(f => f.username).join(', ')}` : ''}`,
       });
       navigate('/');
     } catch (err: any) {
@@ -79,7 +95,6 @@ const CreateEventPage = () => {
   return (
     <div className="min-h-screen pb-24">
       <div className="mx-auto max-w-md px-4 pt-12">
-        {/* Header */}
         <div className="mb-6 flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="rounded-lg p-2 text-muted-foreground hover:bg-secondary">
             <ArrowLeft className="h-5 w-5" />
@@ -92,7 +107,6 @@ const CreateEventPage = () => {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
-          {/* Emoji + Title */}
           <div className="space-y-2">
             <Label>What are you planning?</Label>
             <div className="flex flex-wrap gap-2 mb-2">
@@ -117,7 +131,6 @@ const CreateEventPage = () => {
             />
           </div>
 
-          {/* Multi-day toggle */}
           <button
             type="button"
             onClick={() => setIsMultiDay(!isMultiDay)}
@@ -129,30 +142,30 @@ const CreateEventPage = () => {
             🏕️ Multi-day / Trip
           </button>
 
-          {/* Friends */}
-          <div className="space-y-2">
-            <Label>Who's joining?</Label>
-            <div className="flex flex-wrap gap-2">
-              {friends.map(f => {
-                const selected = selectedFriends.find(s => s.id === f.id);
-                return (
-                  <button
-                    key={f.id}
-                    type="button"
-                    onClick={() => toggleFriend(f)}
-                    className={cn(
-                      'flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-all',
-                      selected ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                    )}
-                  >
-                    {f.emoji} {f.name}
-                  </button>
-                );
-              })}
+          {friends.length > 0 && (
+            <div className="space-y-2">
+              <Label>Who's joining?</Label>
+              <div className="flex flex-wrap gap-2">
+                {friends.map(f => {
+                  const selected = selectedFriends.find(s => s.user_id === f.user_id);
+                  return (
+                    <button
+                      key={f.user_id}
+                      type="button"
+                      onClick={() => toggleFriend(f)}
+                      className={cn(
+                        'flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-all',
+                        selected ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                      )}
+                    >
+                      👤 {f.username}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Date & Time */}
           <div className="space-y-2">
             <Label>{isMultiDay ? 'Dates' : 'Date & Time'}</Label>
             {isMultiDay ? (
@@ -174,7 +187,6 @@ const CreateEventPage = () => {
             )}
           </div>
 
-          {/* Location */}
           <div className="space-y-2">
             <Label>Location (optional)</Label>
             <Input
@@ -184,7 +196,6 @@ const CreateEventPage = () => {
             />
           </div>
 
-          {/* Notes */}
           <div className="space-y-2">
             <Label>Notes (optional)</Label>
             <Textarea
@@ -195,7 +206,6 @@ const CreateEventPage = () => {
             />
           </div>
 
-          {/* Submit */}
           <Button
             onClick={handleSubmit}
             disabled={!canSubmit || submitting}

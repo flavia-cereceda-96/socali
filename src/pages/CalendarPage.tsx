@@ -1,11 +1,11 @@
 import { useState, useMemo, useRef } from 'react';
-import { events, friends } from '@/data/mockData';
-import { EventCard } from '@/components/EventCard';
+import { useEvents, useFriends, DbEvent } from '@/hooks/useEvents';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, X, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { MapPin, Clock } from 'lucide-react';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const FRIEND_COLORS = [
@@ -19,30 +19,12 @@ function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-function isDateInRange(date: Date, start: Date, end?: Date) {
-  if (!end) return isSameDay(date, start);
+function isDateInRange(date: Date, startStr: string, endStr?: string | null) {
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-  const s = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
-  const e = new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime();
+  const s = new Date(startStr + 'T00:00:00').getTime();
+  if (!endStr) return d === s;
+  const e = new Date(endStr + 'T00:00:00').getTime();
   return d >= s && d <= e;
-}
-
-function getFriendBusyDays(friendId: string): Date[] {
-  const busyDays: Date[] = [];
-  events.forEach(event => {
-    const isParticipant = event.participants.some(p => p.friend.id === friendId);
-    if (!isParticipant) return;
-    if (event.endDate) {
-      const current = new Date(event.date);
-      while (current <= event.endDate) {
-        busyDays.push(new Date(current));
-        current.setDate(current.getDate() + 1);
-      }
-    } else {
-      busyDays.push(new Date(event.date));
-    }
-  });
-  return busyDays;
 }
 
 function getWeekDays(date: Date): Date[] {
@@ -55,12 +37,11 @@ function getWeekDays(date: Date): Date[] {
   });
 }
 
-function getEventsForDate(date: Date) {
-  return events.filter(e => isDateInRange(date, e.date, e.endDate));
-}
-
 const CalendarPage = () => {
   const navigate = useNavigate();
+  const { data: events = [] } = useEvents();
+  const { data: friends = [] } = useFriends();
+
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
@@ -75,30 +56,27 @@ const CalendarPage = () => {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const today = new Date();
 
-  const friendBusyMap = useMemo(() => {
-    const map: Record<string, Date[]> = {};
-    selectedFriends.forEach(fId => { map[fId] = getFriendBusyDays(fId); });
-    return map;
-  }, [selectedFriends]);
+  const getEventsForDate = (date: Date) =>
+    events.filter(e => isDateInRange(date, e.date, e.end_date));
 
   const filteredFriends = useMemo(() => {
     const atIndex = query.lastIndexOf('@');
     if (atIndex === -1) return [];
     const search = query.slice(atIndex + 1).toLowerCase();
     return friends.filter(
-      f => !selectedFriends.includes(f.id) && f.name.toLowerCase().includes(search)
+      f => !selectedFriends.includes(f.user_id) && f.username.toLowerCase().includes(search)
     );
-  }, [query, selectedFriends]);
+  }, [query, selectedFriends, friends]);
 
-  const selectFriend = (id: string) => {
-    setSelectedFriends(prev => [...prev, id]);
+  const selectFriend = (userId: string) => {
+    setSelectedFriends(prev => [...prev, userId]);
     setQuery('');
     setShowDropdown(false);
     inputRef.current?.focus();
   };
 
-  const removeFriend = (id: string) => {
-    setSelectedFriends(prev => prev.filter(f => f !== id));
+  const removeFriend = (userId: string) => {
+    setSelectedFriends(prev => prev.filter(f => f !== userId));
   };
 
   const handleInputChange = (value: string) => {
@@ -124,10 +102,38 @@ const CalendarPage = () => {
   };
 
   const weekDays = useMemo(() => getWeekDays(selectedDate || today), [selectedDate]);
-
   const dayEvents = selectedDate ? getEventsForDate(selectedDate) : [];
-
   const activeDate = selectedDate || today;
+
+  const renderEventCard = (event: DbEvent, i: number) => (
+    <motion.div
+      key={event.id}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: i * 0.06 }}
+      onClick={() => navigate(`/event/${event.id}`)}
+      className="flex gap-3 rounded-2xl bg-card p-4 shadow-card cursor-pointer transition-shadow hover:shadow-elevated active:scale-[0.99]"
+    >
+      <div className="flex flex-col items-center justify-center rounded-xl bg-primary/10 px-3 py-2 min-w-[52px]">
+        <span className="text-xs font-semibold uppercase text-primary">
+          {new Date(event.date).toLocaleDateString('en-US', { weekday: 'short' })}
+        </span>
+        <span className="text-lg font-bold text-primary">
+          {new Date(event.date).getDate()}
+        </span>
+      </div>
+      <div className="flex flex-1 flex-col gap-1.5 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">{event.emoji}</span>
+          <span className="font-semibold text-foreground truncate">{event.title}</span>
+        </div>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          {event.time && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{event.time}</span>}
+          {event.location && <span className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3" />{event.location}</span>}
+        </div>
+      </div>
+    </motion.div>
+  );
 
   return (
     <div className="min-h-screen pb-24">
@@ -156,18 +162,14 @@ const CalendarPage = () => {
                 >
                   {filteredFriends.map(friend => (
                     <button
-                      key={friend.id}
-                      onMouseDown={e => { e.preventDefault(); selectFriend(friend.id); }}
+                      key={friend.user_id}
+                      onMouseDown={e => { e.preventDefault(); selectFriend(friend.user_id); }}
                       className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
                     >
-                      <div className="h-6 w-6 rounded-full overflow-hidden bg-muted flex items-center justify-center">
-                        {friend.avatar ? (
-                          <img src={friend.avatar} alt={friend.name} className="h-full w-full object-cover" />
-                        ) : (
-                          <span className="text-xs">{friend.emoji}</span>
-                        )}
+                      <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center">
+                        <span className="text-xs">👤</span>
                       </div>
-                      <span>{friend.name}</span>
+                      <span>{friend.username}</span>
                     </button>
                   ))}
                 </motion.div>
@@ -178,19 +180,14 @@ const CalendarPage = () => {
           {/* Selected friend pills */}
           {selectedFriends.length > 0 && (
             <div className="mb-3 flex flex-wrap gap-2">
-              {selectedFriends.map(fId => {
-                const friend = friends.find(f => f.id === fId)!;
-                const idx = friends.findIndex(f => f.id === fId);
+              {selectedFriends.map((fId, idx) => {
+                const friend = friends.find(f => f.user_id === fId);
                 return (
                   <span key={fId} className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-sm font-medium text-foreground">
-                    <div className="h-5 w-5 rounded-full overflow-hidden bg-muted flex items-center justify-center">
-                      {friend.avatar ? (
-                        <img src={friend.avatar} alt={friend.name} className="h-full w-full object-cover" />
-                      ) : (
-                        <span className="text-xs">{friend.emoji}</span>
-                      )}
+                    <div className="h-5 w-5 rounded-full bg-muted flex items-center justify-center">
+                      <span className="text-xs">👤</span>
                     </div>
-                    {friend.name}
+                    {friend?.username || 'Unknown'}
                     <span className={cn('h-2 w-2 rounded-full', FRIEND_COLORS[idx % FRIEND_COLORS.length])} />
                     <button onClick={() => removeFriend(fId)} className="ml-0.5 text-muted-foreground hover:text-foreground">
                       <X className="h-3 w-3" />
@@ -232,8 +229,7 @@ const CalendarPage = () => {
             {viewMode === 'day' && activeDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
             {viewMode === 'week' && (() => {
               const wk = getWeekDays(activeDate);
-              const s = wk[0];
-              const e = wk[6];
+              const s = wk[0]; const e = wk[6];
               if (s.getMonth() === e.getMonth()) {
                 return `${s.toLocaleDateString('en-US', { month: 'long' })} ${s.getDate()}–${e.getDate()}, ${s.getFullYear()}`;
               }
@@ -257,11 +253,8 @@ const CalendarPage = () => {
               {Array.from({ length: daysInMonth }).map((_, i) => {
                 const date = new Date(year, month, i + 1);
                 const isToday = isSameDay(date, today);
-                const hasEvent = events.some(e => isDateInRange(date, e.date, e.endDate));
+                const hasEvent = events.some(e => isDateInRange(date, e.date, e.end_date));
                 const isSelected = selectedDate && isSameDay(date, selectedDate);
-                const busyFriends = selectedFriends.filter(fId =>
-                  friendBusyMap[fId]?.some(bd => isSameDay(bd, date))
-                );
                 return (
                   <button
                     key={i}
@@ -274,13 +267,11 @@ const CalendarPage = () => {
                     )}
                   >
                     {i + 1}
-                    <div className="absolute bottom-0.5 flex gap-0.5">
-                      {hasEvent && !isSelected && <span className="h-1 w-1 rounded-full bg-primary" />}
-                      {busyFriends.map(fId => {
-                        const idx = friends.findIndex(f => f.id === fId);
-                        return <span key={fId} className={cn('h-1 w-1 rounded-full', FRIEND_COLORS[idx % FRIEND_COLORS.length])} />;
-                      })}
-                    </div>
+                    {hasEvent && !isSelected && (
+                      <div className="absolute bottom-0.5 flex gap-0.5">
+                        <span className="h-1 w-1 rounded-full bg-primary" />
+                      </div>
+                    )}
                   </button>
                 );
               })}
@@ -297,11 +288,8 @@ const CalendarPage = () => {
             <div className="grid grid-cols-7 gap-1 mb-4">
               {weekDays.map((date, i) => {
                 const isToday = isSameDay(date, today);
-                const hasEvent = events.some(e => isDateInRange(date, e.date, e.endDate));
+                const hasEvent = events.some(e => isDateInRange(date, e.date, e.end_date));
                 const isSelected = selectedDate && isSameDay(date, selectedDate);
-                const busyFriends = selectedFriends.filter(fId =>
-                  friendBusyMap[fId]?.some(bd => isSameDay(bd, date))
-                );
                 return (
                   <button
                     key={i}
@@ -314,18 +302,15 @@ const CalendarPage = () => {
                     )}
                   >
                     {date.getDate()}
-                    <div className="absolute bottom-0.5 flex gap-0.5">
-                      {hasEvent && !isSelected && <span className="h-1 w-1 rounded-full bg-primary" />}
-                      {busyFriends.map(fId => {
-                        const idx = friends.findIndex(f => f.id === fId);
-                        return <span key={fId} className={cn('h-1 w-1 rounded-full', FRIEND_COLORS[idx % FRIEND_COLORS.length])} />;
-                      })}
-                    </div>
+                    {hasEvent && !isSelected && (
+                      <div className="absolute bottom-0.5 flex gap-0.5">
+                        <span className="h-1 w-1 rounded-full bg-primary" />
+                      </div>
+                    )}
                   </button>
                 );
               })}
             </div>
-            {/* Week events list */}
             {selectedDate && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 <h3 className="mb-3 text-sm font-semibold text-muted-foreground">
@@ -333,7 +318,7 @@ const CalendarPage = () => {
                 </h3>
                 {dayEvents.length > 0 ? (
                   <div className="flex flex-col gap-3">
-                    {dayEvents.map((e, i) => <EventCard key={e.id} event={e} index={i} />)}
+                    {dayEvents.map((e, i) => renderEventCard(e, i))}
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">No plans yet ✨</p>
@@ -356,32 +341,9 @@ const CalendarPage = () => {
               const dayEvts = getEventsForDate(activeDate);
               return (
                 <>
-                  {/* Friend availability for the day */}
-                  {selectedFriends.length > 0 && (
-                    <div className="mb-4 flex flex-wrap gap-2">
-                      {selectedFriends.map(fId => {
-                        const friend = friends.find(f => f.id === fId)!;
-                        const idx = friends.findIndex(f => f.id === fId);
-                        const isBusy = friendBusyMap[fId]?.some(bd => isSameDay(bd, activeDate));
-                        return (
-                          <span
-                            key={fId}
-                            className={cn(
-                              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
-                              isBusy ? 'bg-destructive/10 text-destructive' : 'bg-green-500/10 text-green-600'
-                            )}
-                          >
-                            <span className={cn('h-1.5 w-1.5 rounded-full', FRIEND_COLORS[idx % FRIEND_COLORS.length])} />
-                            {friend.name}: {isBusy ? 'Busy' : 'Free'}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  )}
-
                   {dayEvts.length > 0 ? (
                     <div className="flex flex-col gap-3">
-                      {dayEvts.map((e, i) => <EventCard key={e.id} event={e} index={i} />)}
+                      {dayEvts.map((e, i) => renderEventCard(e, i))}
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground">No plans for this day ✨</p>
@@ -412,37 +374,13 @@ const CalendarPage = () => {
                 <h3 className="mb-3 text-sm font-semibold text-muted-foreground">
                   {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
                 </h3>
-
-                {selectedFriends.length > 0 && (
-                  <div className="mb-3 flex flex-wrap gap-2">
-                    {selectedFriends.map(fId => {
-                      const friend = friends.find(f => f.id === fId)!;
-                      const idx = friends.findIndex(f => f.id === fId);
-                      const isBusy = friendBusyMap[fId]?.some(bd => isSameDay(bd, selectedDate!));
-                      return (
-                        <span
-                          key={fId}
-                          className={cn(
-                            'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
-                            isBusy ? 'bg-destructive/10 text-destructive' : 'bg-green-500/10 text-green-600'
-                          )}
-                        >
-                          <span className={cn('h-1.5 w-1.5 rounded-full', FRIEND_COLORS[idx % FRIEND_COLORS.length])} />
-                          {friend.name}: {isBusy ? 'Busy' : 'Free'}
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
-
                 {dayEvents.length > 0 ? (
                   <div className="flex flex-col gap-3">
-                    {dayEvents.map((e, i) => <EventCard key={e.id} event={e} index={i} />)}
+                    {dayEvents.map((e, i) => renderEventCard(e, i))}
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">No plans yet — a perfect day to plan something! ✨</p>
                 )}
-
                 <Button
                   onClick={() => navigate(`/create?date=${selectedDate.toISOString().split('T')[0]}`)}
                   className="mt-4 w-full gap-2"
