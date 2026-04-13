@@ -97,6 +97,7 @@ export type Database = {
       event_participants: {
         Row: {
           created_at: string
+          decline_note: string | null
           event_id: string
           id: string
           status: string
@@ -104,6 +105,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          decline_note?: string | null
           event_id: string
           id?: string
           status?: string
@@ -111,6 +113,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          decline_note?: string | null
           event_id?: string
           id?: string
           status?: string
@@ -165,6 +168,7 @@ export type Database = {
           date: string
           emoji: string
           end_date: string | null
+          end_time: string | null
           id: string
           is_trip: boolean
           location: string | null
@@ -179,6 +183,7 @@ export type Database = {
           date: string
           emoji?: string
           end_date?: string | null
+          end_time?: string | null
           id?: string
           is_trip?: boolean
           location?: string | null
@@ -193,6 +198,7 @@ export type Database = {
           date?: string
           emoji?: string
           end_date?: string | null
+          end_time?: string | null
           id?: string
           is_trip?: boolean
           location?: string | null
