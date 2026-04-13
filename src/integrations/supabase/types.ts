@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_feed: {
+        Row: {
+          comment_id: string | null
+          created_at: string
+          event_id: string | null
+          id: string
+          is_read: boolean
+          source_user_id: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          is_read?: boolean
+          source_user_id?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          is_read?: boolean
+          source_user_id?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_feed_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "event_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_feed_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_comments: {
         Row: {
           content: string
