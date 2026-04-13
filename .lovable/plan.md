@@ -1,23 +1,27 @@
 
 
-## Fix: Infinite Recursion in Events/Participants RLS Policies
+## Fix Friend Search
 
-### Root Cause
-The `events` SELECT policy ("Users can view invited events") queries `event_participants`, and the `event_participants` INSERT policy queries `events`. This creates a circular dependency that triggers infinite recursion during inserts.
+### Problem
+1. The search query itself uses `ilike` with wildcards which should do partial matching, but it only searches the `username` field. Adding email search would help.
+2. More critically: the search filters out existing friends and incoming friend requests, but does NOT filter out **outgoing** pending requests (people you already sent a request to). This could cause confusion but isn't the "nothing shows up" bug.
+3. The actual bug is likely that the search works but results get filtered out incorrectly, OR there's a timing issue with the `friends`/`friendRequests` data not being loaded.
 
-Additionally, the "view invited events" policy has a bug: it compares `event_participants.event_id = event_participants.id` (self-referencing) instead of `event_participants.event_id = events.id`.
+### Investigation
+I verified the database has 3 profiles (Susi, flaviacereza96!, Charlottel7) and 1 accepted friendship. The `ilike` query and RLS policies look correct.
 
-### Fix
-1. Create a `SECURITY DEFINER` function `is_event_creator` that checks if a user created an event — bypasses RLS.
-2. Create a `SECURITY DEFINER` function `is_event_participant` that checks if a user is a participant — bypasses RLS.
-3. Drop and recreate the problematic policies to use these functions instead of subqueries, breaking the circular dependency.
+### Plan
 
-### Migration SQL (single migration)
-- `CREATE FUNCTION public.is_event_creator(event_id uuid, user_id uuid)` — checks `events.created_by`
-- `CREATE FUNCTION public.is_event_participant(event_id uuid, user_id uuid)` — checks `event_participants.user_id`
-- Replace `events` "view invited" policy to use `is_event_participant`
-- Replace `event_participants` "creators can add/delete/view" policies to use `is_event_creator`
+**File: `src/pages/PeoplePage.tsx`**
+1. Search both `username` and `email` fields using `.or()` with `ilike` patterns for broader matching
+2. Also fetch **outgoing** pending requests (where current user is `user_id` and status is `pending`) to filter those out of search results too
+3. Add a "no results found" message when search completes with 0 results
+4. Show a loading state during search
 
-### Files Changed
-- One new database migration only — no application code changes needed.
+**File: `src/hooks/useEvents.ts`**
+1. Add a `useSentFriendRequests()` hook that fetches outgoing pending requests (where `user_id = currentUser` and `status = 'pending'`) so search can exclude those users
+
+### Technical Details
+- Replace `.ilike('username', ...)` with `.or(`username.ilike.%query%,email.ilike.%query%`)` for broader matching
+- Fetch sent requests alongside incoming ones to properly filter all already-connected/pending users from search results
 
