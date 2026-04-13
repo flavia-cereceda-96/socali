@@ -26,7 +26,10 @@ const RequestsPage = () => {
       .update({ status })
       .eq('id', participantId);
     if (error) toast.error(error.message);
-    else queryClient.invalidateQueries({ queryKey: ['events'] });
+    else {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-request-count'] });
+    }
   };
 
   const pending = invitations.filter(e => {
