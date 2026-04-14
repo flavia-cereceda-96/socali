@@ -5,6 +5,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { EventComments } from '@/components/EventComments';
 import { EventPhotos } from '@/components/EventPhotos';
 import { UserAvatar } from '@/components/UserAvatar';
+import { ClickableName } from '@/components/ClickableName';
 import { motion } from 'framer-motion';
 import { ArrowLeft, MapPin, Clock, Calendar, MessageSquare, Crown, Pencil, Check, X, UserPlus, UserMinus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -311,9 +312,7 @@ const EventDetailPage = () => {
               >
                 <div className="flex items-center gap-3">
                   <UserAvatar avatarUrl={a.avatar_url} username={a.username} size="md" />
-                  <span className="flex-1 font-medium text-foreground">
-                    {a.username}
-                  </span>
+                  <ClickableName userId={a.user_id} name={a.username} className="flex-1" />
                   {a.isCreator ? (
                     <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                       <Crown className="h-3 w-3" /> Organizer
