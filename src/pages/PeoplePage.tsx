@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFriends, useFriendRequests } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Search, UserPlus, Check, X } from 'lucide-react';
+import { Search, UserPlus, Check, X, Calendar } from 'lucide-react';
 import { ClickableName } from '@/components/ClickableName';
+import { UserAvatar } from '@/components/UserAvatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -18,6 +20,40 @@ const PeoplePage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
+
+  // Fetch shared event counts for all friends
+  const { data: sharedCounts = {} } = useQuery({
+    queryKey: ['friend-shared-counts', friends.map(f => f.user_id).join(',')],
+    queryFn: async () => {
+      if (friends.length === 0) return {};
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return {};
+
+      // My events (created + participating)
+      const { data: myCreated } = await supabase.from('events').select('id').eq('created_by', user.id);
+      const { data: myParts } = await supabase.from('event_participants').select('event_id').eq('user_id', user.id);
+      const myEventIds = new Set([...(myCreated || []).map(e => e.id), ...(myParts || []).map(p => p.event_id)]);
+
+      // For each friend, get their events
+      const friendIds = friends.map(f => f.user_id);
+      const { data: theirCreated } = await supabase.from('events').select('id, created_by').in('created_by', friendIds);
+      const { data: theirParts } = await supabase.from('event_participants').select('event_id, user_id').in('user_id', friendIds);
+
+      const counts: Record<string, number> = {};
+      for (const fid of friendIds) {
+        const theirEventIds = new Set([
+          ...(theirCreated || []).filter(e => e.created_by === fid).map(e => e.id),
+          ...(theirParts || []).filter(p => p.user_id === fid).map(p => p.event_id),
+        ]);
+        counts[fid] = [...myEventIds].filter(id => theirEventIds.has(id)).length;
+      }
+      return counts;
+    },
+    enabled: friends.length > 0,
+  });
+
+  // Sort friends by shared event count descending
+  const sortedFriends = [...friends].sort((a, b) => (sharedCounts[b.user_id] || 0) - (sharedCounts[a.user_id] || 0));
   const [adding, setAdding] = useState<string | null>(null);
   const [searchDone, setSearchDone] = useState(false);
 
@@ -224,7 +260,7 @@ const PeoplePage = () => {
               Friends ({friends.length})
             </h2>
             <div className="flex flex-col gap-3">
-              {friends.map((friend, i) => (
+              {sortedFriends.map((friend, i) => (
                 <motion.div
                   key={friend.user_id}
                   initial={{ opacity: 0, y: 10 }}
@@ -233,12 +269,15 @@ const PeoplePage = () => {
                   onClick={() => navigate(`/person/${friend.user_id}`)}
                   className="flex items-center gap-4 rounded-2xl bg-card p-4 shadow-card cursor-pointer hover:bg-accent/50 transition-colors"
                 >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-xl">
-                    👤
-                  </div>
+                  <UserAvatar avatarUrl={friend.avatar_url} username={friend.username} size="lg" />
                   <div className="flex-1 min-w-0">
                     <ClickableName userId={friend.user_id} name={friend.username} className="font-semibold" />
                     <p className="text-xs text-muted-foreground">{friend.email}</p>
+                  </div>
+                  <div className="flex flex-col items-center gap-0.5 text-muted-foreground">
+                    <Calendar className="h-4 w-4" />
+                    <span className="text-sm font-bold text-foreground">{sharedCounts[friend.user_id] || 0}</span>
+                    <span className="text-[10px] leading-tight">events</span>
                   </div>
                 </motion.div>
               ))}
