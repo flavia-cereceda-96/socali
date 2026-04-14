@@ -341,6 +341,58 @@ const EventDetailPage = () => {
               </motion.div>
             ))}
           </div>
+
+          {/* Invite friends - organizer only */}
+          {isCreator && (
+            <div className="mt-3 space-y-2">
+              <button
+                onClick={() => setManagingPeople(!managingPeople)}
+                className="flex items-center gap-2 text-xs font-medium text-primary hover:underline"
+              >
+                <UserPlus className="h-3.5 w-3.5" /> Invite more people
+              </button>
+              {managingPeople && (
+                <div className="space-y-2">
+                  <Input
+                    value={friendSearch}
+                    onChange={e => setFriendSearch(e.target.value)}
+                    placeholder="@username to search friends..."
+                    className="text-sm"
+                  />
+                  {friendSearch.length > 0 && (() => {
+                    const query = friendSearch.startsWith('@') ? friendSearch.slice(1).toLowerCase() : friendSearch.toLowerCase();
+                    const existingUserIds = new Set(attendees.map(a => a.user_id));
+                    const filtered = friends.filter(f =>
+                      !existingUserIds.has(f.user_id) &&
+                      (f.username.toLowerCase().includes(query) || f.email.toLowerCase().includes(query))
+                    );
+                    return filtered.length > 0 ? (
+                      <div className="flex flex-col gap-1 max-h-48 overflow-y-auto rounded-xl border border-border bg-card p-1">
+                        {filtered.map(f => (
+                          <button
+                            key={f.user_id}
+                            type="button"
+                            onClick={() => handleInviteFriend(f)}
+                            className="flex items-center gap-3 rounded-xl p-2.5 text-left transition-all hover:bg-secondary/50"
+                          >
+                            <UserAvatar avatarUrl={f.avatar_url} username={f.username} size="md" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-foreground">@{f.username}</p>
+                              <p className="text-xs text-muted-foreground truncate">{f.email}</p>
+                              {f.bio && <p className="text-xs text-muted-foreground/80 truncate mt-0.5 italic">"{f.bio}"</p>}
+                            </div>
+                            <UserPlus className="h-4 w-4 text-primary" />
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">No matching friends found</p>
+                    );
+                  })()}
+                </div>
+              )}
+            </div>
+          )}
         </motion.div>
 
         {/* Photos */}
