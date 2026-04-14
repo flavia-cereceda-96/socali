@@ -143,7 +143,23 @@ const PeoplePage = () => {
           Your People
         </motion.h1>
 
-        {/* Incoming Friend Requests */}
+        {/* Invite friends to join */}
+        <motion.button
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          onClick={() => {
+            const url = window.location.origin + '/onboarding';
+            const msg = `Hey! Join me on SyncCircle so we can plan things together 🗓️✨\n\nSign up here: ${url}`;
+            navigator.clipboard.writeText(msg);
+            toast.success('Invite message copied to clipboard! 📋');
+          }}
+          className="mb-6 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-primary/30 bg-primary/5 p-3.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+        >
+          <Share2 className="h-4 w-4" />
+          Invite friends to join SyncCircle
+        </motion.button>
+
         {friendRequests.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
