@@ -3,7 +3,7 @@ import { useFriends, DbProfile } from '@/hooks/useEvents';
 import { UserAvatar } from '@/components/UserAvatar';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Check, X } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -19,8 +19,13 @@ const CreateEventPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const prefilledDate = searchParams.get('date') || '';
   const { data: friends = [] } = useFriends();
+
+  // Pre-invite a friend if navigated from PersonPage
+  const inviteFriendId = (location.state as any)?.inviteFriendId;
+  const inviteFriendName = (location.state as any)?.inviteFriendName;
 
   const [title, setTitle] = useState('');
   const [emoji, setEmoji] = useState('🎉');
