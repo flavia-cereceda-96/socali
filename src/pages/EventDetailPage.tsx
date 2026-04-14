@@ -1,27 +1,31 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useEvents, DbEventWithCreator } from '@/hooks/useEvents';
+import { useEvents, DbEventWithCreator, useFriends, DbProfile } from '@/hooks/useEvents';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EventComments } from '@/components/EventComments';
 import { EventPhotos } from '@/components/EventPhotos';
 import { UserAvatar } from '@/components/UserAvatar';
 import { motion } from 'framer-motion';
-import { ArrowLeft, MapPin, Clock, Calendar, MessageSquare, Crown, Pencil, Check, X } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Calendar, MessageSquare, Crown, Pencil, Check, X, UserPlus, UserMinus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { cn } from '@/lib/utils';
 
 const EventDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: events = [], isLoading } = useEvents();
+  const { data: friends = [] } = useFriends();
   const event = events.find(e => e.id === id) as DbEventWithCreator | undefined;
   const [userId, setUserId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  const [managingPeople, setManagingPeople] = useState(false);
+  const [friendSearch, setFriendSearch] = useState('');
 
   // Edit form state
   const [editTitle, setEditTitle] = useState('');
@@ -31,6 +35,7 @@ const EventDetailPage = () => {
   const [editEndTime, setEditEndTime] = useState('');
   const [editLocation, setEditLocation] = useState('');
   const [editNotes, setEditNotes] = useState('');
+  const [editCoverImage, setEditCoverImage] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -46,6 +51,7 @@ const EventDetailPage = () => {
       setEditEndTime((event as any).end_time || '');
       setEditLocation(event.location || '');
       setEditNotes(event.notes || '');
+      setEditCoverImage((event as any).cover_image || '');
     }
   }, [event]);
 
@@ -80,6 +86,7 @@ const EventDetailPage = () => {
           end_time: editEndTime || null,
           location: editLocation.trim() || null,
           notes: editNotes.trim() || null,
+          cover_image: editCoverImage.trim() || null,
         })
         .eq('id', event.id);
 
@@ -90,6 +97,37 @@ const EventDetailPage = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleInviteFriend = async (friend: DbProfile) => {
+    if (!event) return;
+    const { error } = await supabase.from('event_participants').insert({
+      event_id: event.id,
+      user_id: friend.user_id,
+      status: 'suggested',
+    });
+    if (error) { toast.error(error.message); return; }
+    await supabase.from('activity_feed').insert({
+      user_id: friend.user_id,
+      type: 'invitation',
+      event_id: event.id,
+      source_user_id: userId,
+    });
+    toast.success(`Invited @${friend.username}`);
+    queryClient.invalidateQueries({ queryKey: ['events'] });
+    setFriendSearch('');
+  };
+
+  const handleRemoveParticipant = async (participantUserId: string) => {
+    if (!event) return;
+    const { error } = await supabase
+      .from('event_participants')
+      .delete()
+      .eq('event_id', event.id)
+      .eq('user_id', participantUserId);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Participant removed');
+    queryClient.invalidateQueries({ queryKey: ['events'] });
   };
 
   const fmt = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
@@ -198,6 +236,13 @@ const EventDetailPage = () => {
               <span className="text-xs font-medium text-muted-foreground">Notes</span>
               <Textarea value={editNotes} onChange={e => setEditNotes(e.target.value)} rows={2} />
             </div>
+            <div>
+              <span className="text-xs font-medium text-muted-foreground">Cover Image URL</span>
+              <Input value={editCoverImage} onChange={e => setEditCoverImage(e.target.value)} placeholder="Paste image URL..." />
+              {editCoverImage.trim() && (
+                <img src={editCoverImage} alt="Cover preview" className="mt-1 w-full h-24 object-cover rounded-lg" onError={e => (e.currentTarget.style.display = 'none')} />
+              )}
+            </div>
             <div className="flex gap-2">
               <Button onClick={handleSave} disabled={saving} className="flex-1 gap-1">
                 <Check className="h-4 w-4" /> {saving ? 'Saving...' : 'Save'}
@@ -208,35 +253,42 @@ const EventDetailPage = () => {
             </div>
           </motion.div>
         ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            className="mb-4 rounded-2xl bg-card p-5 shadow-card space-y-4"
-          >
-            <div className="flex items-center gap-3 text-sm text-foreground">
-              <Calendar className="h-4 w-4 text-primary" />
-              <span>{dateStr}</span>
-            </div>
-            {timeStr && (
+          <>
+            {(event as any).cover_image && (
+              <div className="mb-4 rounded-2xl overflow-hidden">
+                <img src={(event as any).cover_image} alt="Event cover" className="w-full h-40 object-cover" />
+              </div>
+            )}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="mb-4 rounded-2xl bg-card p-5 shadow-card space-y-4"
+            >
               <div className="flex items-center gap-3 text-sm text-foreground">
-                <Clock className="h-4 w-4 text-primary" />
-                <span>{timeStr}</span>
+                <Calendar className="h-4 w-4 text-primary" />
+                <span>{dateStr}</span>
               </div>
-            )}
-            {event.location && (
-              <div className="flex items-start gap-3 text-sm text-foreground">
-                <MapPin className="h-4 w-4 mt-0.5 text-primary" />
-                <p className="font-medium">{event.location}</p>
-              </div>
-            )}
-            {event.notes && (
-              <div className="flex items-start gap-3 text-sm text-foreground">
-                <MessageSquare className="h-4 w-4 mt-0.5 text-primary" />
-                <p>{event.notes}</p>
-              </div>
-            )}
-          </motion.div>
+              {timeStr && (
+                <div className="flex items-center gap-3 text-sm text-foreground">
+                  <Clock className="h-4 w-4 text-primary" />
+                  <span>{timeStr}</span>
+                </div>
+              )}
+              {event.location && (
+                <div className="flex items-start gap-3 text-sm text-foreground">
+                  <MapPin className="h-4 w-4 mt-0.5 text-primary" />
+                  <p className="font-medium">{event.location}</p>
+                </div>
+              )}
+              {event.notes && (
+                <div className="flex items-start gap-3 text-sm text-foreground">
+                  <MessageSquare className="h-4 w-4 mt-0.5 text-primary" />
+                  <p>{event.notes}</p>
+                </div>
+              )}
+            </motion.div>
+          </>
         )}
 
         {/* Attendees */}
@@ -267,7 +319,18 @@ const EventDetailPage = () => {
                       <Crown className="h-3 w-3" /> Organizer
                     </span>
                   ) : (
-                    <StatusBadge status={a.status as any} size="md" />
+                    <div className="flex items-center gap-2">
+                      <StatusBadge status={a.status as any} size="md" />
+                      {isCreator && (
+                        <button
+                          onClick={() => handleRemoveParticipant(a.user_id)}
+                          className="rounded-full p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          title="Remove participant"
+                        >
+                          <UserMinus className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
                 {a.status === 'declined' && a.decline_note && (
@@ -278,6 +341,58 @@ const EventDetailPage = () => {
               </motion.div>
             ))}
           </div>
+
+          {/* Invite friends - organizer only */}
+          {isCreator && (
+            <div className="mt-3 space-y-2">
+              <button
+                onClick={() => setManagingPeople(!managingPeople)}
+                className="flex items-center gap-2 text-xs font-medium text-primary hover:underline"
+              >
+                <UserPlus className="h-3.5 w-3.5" /> Invite more people
+              </button>
+              {managingPeople && (
+                <div className="space-y-2">
+                  <Input
+                    value={friendSearch}
+                    onChange={e => setFriendSearch(e.target.value)}
+                    placeholder="@username to search friends..."
+                    className="text-sm"
+                  />
+                  {friendSearch.length > 0 && (() => {
+                    const query = friendSearch.startsWith('@') ? friendSearch.slice(1).toLowerCase() : friendSearch.toLowerCase();
+                    const existingUserIds = new Set(attendees.map(a => a.user_id));
+                    const filtered = friends.filter(f =>
+                      !existingUserIds.has(f.user_id) &&
+                      (f.username.toLowerCase().includes(query) || f.email.toLowerCase().includes(query))
+                    );
+                    return filtered.length > 0 ? (
+                      <div className="flex flex-col gap-1 max-h-48 overflow-y-auto rounded-xl border border-border bg-card p-1">
+                        {filtered.map(f => (
+                          <button
+                            key={f.user_id}
+                            type="button"
+                            onClick={() => handleInviteFriend(f)}
+                            className="flex items-center gap-3 rounded-xl p-2.5 text-left transition-all hover:bg-secondary/50"
+                          >
+                            <UserAvatar avatarUrl={f.avatar_url} username={f.username} size="md" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-foreground">@{f.username}</p>
+                              <p className="text-xs text-muted-foreground truncate">{f.email}</p>
+                              {f.bio && <p className="text-xs text-muted-foreground/80 truncate mt-0.5 italic">"{f.bio}"</p>}
+                            </div>
+                            <UserPlus className="h-4 w-4 text-primary" />
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">No matching friends found</p>
+                    );
+                  })()}
+                </div>
+              )}
+            </div>
+          )}
         </motion.div>
 
         {/* Photos */}
