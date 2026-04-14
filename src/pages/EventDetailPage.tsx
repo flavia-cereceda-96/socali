@@ -100,6 +100,15 @@ const EventDetailPage = () => {
     }
   };
 
+  const handleDelete = async () => {
+    if (!event || !window.confirm('Are you sure you want to delete this event? This cannot be undone.')) return;
+    const { error } = await supabase.from('events').delete().eq('id', event.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Event deleted');
+    queryClient.invalidateQueries({ queryKey: ['events'] });
+    navigate('/');
+  };
+
   const handleInviteFriend = async (friend: DbProfile) => {
     if (!event) return;
     const { error } = await supabase.from('event_participants').insert({
