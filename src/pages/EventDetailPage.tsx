@@ -86,6 +86,7 @@ const EventDetailPage = () => {
           end_time: editEndTime || null,
           location: editLocation.trim() || null,
           notes: editNotes.trim() || null,
+          cover_image: editCoverImage.trim() || null,
         })
         .eq('id', event.id);
 
@@ -96,6 +97,37 @@ const EventDetailPage = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleInviteFriend = async (friend: DbProfile) => {
+    if (!event) return;
+    const { error } = await supabase.from('event_participants').insert({
+      event_id: event.id,
+      user_id: friend.user_id,
+      status: 'suggested',
+    });
+    if (error) { toast.error(error.message); return; }
+    await supabase.from('activity_feed').insert({
+      user_id: friend.user_id,
+      type: 'invitation',
+      event_id: event.id,
+      source_user_id: userId,
+    });
+    toast.success(`Invited @${friend.username}`);
+    queryClient.invalidateQueries({ queryKey: ['events'] });
+    setFriendSearch('');
+  };
+
+  const handleRemoveParticipant = async (participantUserId: string) => {
+    if (!event) return;
+    const { error } = await supabase
+      .from('event_participants')
+      .delete()
+      .eq('event_id', event.id)
+      .eq('user_id', participantUserId);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Participant removed');
+    queryClient.invalidateQueries({ queryKey: ['events'] });
   };
 
   const fmt = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
