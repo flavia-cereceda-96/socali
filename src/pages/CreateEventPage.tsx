@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useFriends, DbProfile } from '@/hooks/useEvents';
 import { UserAvatar } from '@/components/UserAvatar';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Check, X } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -19,8 +19,13 @@ const CreateEventPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
+  const routeLocation = useLocation();
   const prefilledDate = searchParams.get('date') || '';
   const { data: friends = [] } = useFriends();
+
+  // Pre-invite a friend if navigated from PersonPage
+  const inviteFriendId = (routeLocation.state as any)?.inviteFriendId;
+  const inviteFriendName = (routeLocation.state as any)?.inviteFriendName;
 
   const [title, setTitle] = useState('');
   const [emoji, setEmoji] = useState('🎉');
@@ -35,6 +40,16 @@ const CreateEventPage = () => {
   const [coverImage, setCoverImage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [friendSearch, setFriendSearch] = useState('');
+
+  // Auto-select friend if navigated from PersonPage
+  useEffect(() => {
+    if (inviteFriendId && friends.length > 0) {
+      const friend = friends.find(f => f.user_id === inviteFriendId);
+      if (friend && !selectedFriends.find(f => f.user_id === inviteFriendId)) {
+        setSelectedFriends(prev => [...prev, friend]);
+      }
+    }
+  }, [inviteFriendId, friends]);
 
   const toggleFriend = (f: DbProfile) => {
     setSelectedFriends(prev =>

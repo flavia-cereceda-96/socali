@@ -18,6 +18,7 @@ import OnboardingPage from "./pages/OnboardingPage.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage.tsx";
 import ResetPasswordPage from "./pages/ResetPasswordPage.tsx";
+import PersonPage from "./pages/PersonPage.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -67,6 +68,7 @@ const App = () => {
             <Route path="/create" element={authed ? <CreateEventPage /> : <Navigate to="/login" replace />} />
             <Route path="/requests" element={authed ? <RequestsPage /> : <Navigate to="/login" replace />} />
             <Route path="/event/:id" element={authed ? <EventDetailPage /> : <Navigate to="/login" replace />} />
+            <Route path="/person/:userId" element={authed ? <PersonPage /> : <Navigate to="/login" replace />} />
             <Route path="/settings" element={authed ? <SettingsPage /> : <Navigate to="/login" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
