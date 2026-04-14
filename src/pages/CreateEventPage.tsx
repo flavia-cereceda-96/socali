@@ -32,6 +32,7 @@ const CreateEventPage = () => {
   const [endTime, setEndTime] = useState('');
   const [location, setLocation] = useState('');
   const [notes, setNotes] = useState('');
+  const [coverImage, setCoverImage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [friendSearch, setFriendSearch] = useState('');
 
