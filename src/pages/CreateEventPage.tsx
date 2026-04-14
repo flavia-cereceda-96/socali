@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useFriends, DbProfile } from '@/hooks/useEvents';
 import { UserAvatar } from '@/components/UserAvatar';
 import { motion } from 'framer-motion';
@@ -41,7 +41,16 @@ const CreateEventPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [friendSearch, setFriendSearch] = useState('');
 
-  const toggleFriend = (f: DbProfile) => {
+  // Auto-select friend if navigated from PersonPage
+  useEffect(() => {
+    if (inviteFriendId && friends.length > 0) {
+      const friend = friends.find(f => f.user_id === inviteFriendId);
+      if (friend && !selectedFriends.find(f => f.user_id === inviteFriendId)) {
+        setSelectedFriends(prev => [...prev, friend]);
+      }
+    }
+  }, [inviteFriendId, friends]);
+
     setSelectedFriends(prev =>
       prev.find(p => p.user_id === f.user_id) ? prev.filter(p => p.user_id !== f.user_id) : [...prev, f]
     );
