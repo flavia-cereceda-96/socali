@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Camera } from 'lucide-react';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 
 const usageOptions = [
   { value: 'spouse', label: 'With my partner', emoji: '💑' },
@@ -26,6 +27,11 @@ const OnboardingPage = () => {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+
+  // OTP verification state
+  const [step, setStep] = useState<'form' | 'otp'>('form');
+  const [otp, setOtp] = useState('');
+  const [verifying, setVerifying] = useState(false);
 
   const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -52,7 +58,7 @@ const OnboardingPage = () => {
     if (!validate()) return;
     setLoading(true);
     try {
-      const { data: signUpData, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -64,33 +70,122 @@ const OnboardingPage = () => {
         toast.error(error.message);
         return;
       }
-
-      // Upload avatar if selected
-      if (avatarFile && signUpData.user) {
-        const ext = avatarFile.name.split('.').pop();
-        const path = `${signUpData.user.id}/avatar.${ext}`;
-
-        const { error: uploadErr } = await supabase.storage
-          .from('avatars')
-          .upload(path, avatarFile, { upsert: true });
-
-        if (!uploadErr) {
-          const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
-          await supabase
-            .from('profiles')
-            .update({ avatar_url: publicUrl })
-            .eq('user_id', signUpData.user.id);
-        }
-      }
-
-      toast.success('Account created! 🎉');
-      navigate('/');
+      toast.success('Verification code sent to your email! 📧');
+      setStep('otp');
     } catch (err: any) {
       toast.error(err.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
   };
+
+  const handleVerifyOtp = async () => {
+    if (otp.length < 6) {
+      toast.error('Please enter the full 6-digit code');
+      return;
+    }
+    setVerifying(true);
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token: otp,
+        type: 'signup',
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      // Upload avatar if selected
+      if (avatarFile && data.user) {
+        const ext = avatarFile.name.split('.').pop();
+        const path = `${data.user.id}/avatar.${ext}`;
+        const { error: uploadErr } = await supabase.storage
+          .from('avatars')
+          .upload(path, avatarFile, { upsert: true });
+        if (!uploadErr) {
+          const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
+          await supabase
+            .from('profiles')
+            .update({ avatar_url: publicUrl })
+            .eq('user_id', data.user.id);
+        }
+      }
+
+      toast.success('Account verified! 🎉');
+      navigate('/');
+    } catch (err: any) {
+      toast.error(err.message || 'Verification failed');
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success('New code sent! Check your email 📧');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // OTP Step
+  if (step === 'otp') {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-sm space-y-8 text-center"
+        >
+          <div>
+            <div className="mb-3 text-5xl">✉️</div>
+            <h1 className="text-2xl font-bold text-foreground">Verify Your Email</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              We sent a 6-digit code to <strong className="text-foreground">{email}</strong>
+            </p>
+          </div>
+
+          <div className="flex justify-center">
+            <InputOTP maxLength={6} value={otp} onChange={setOtp}>
+              <InputOTPGroup>
+                <InputOTPSlot index={0} />
+                <InputOTPSlot index={1} />
+                <InputOTPSlot index={2} />
+                <InputOTPSlot index={3} />
+                <InputOTPSlot index={4} />
+                <InputOTPSlot index={5} />
+              </InputOTPGroup>
+            </InputOTP>
+          </div>
+
+          <Button onClick={handleVerifyOtp} disabled={verifying || otp.length < 6} className="w-full font-semibold" size="lg">
+            {verifying ? 'Verifying...' : 'Verify & Continue 🚀'}
+          </Button>
+
+          <p className="text-sm text-muted-foreground">
+            Didn't receive it?{' '}
+            <button onClick={handleResendOtp} disabled={loading} className="text-primary font-medium hover:underline">
+              {loading ? 'Sending...' : 'Resend code'}
+            </button>
+          </p>
+
+          <button onClick={() => setStep('form')} className="text-sm text-muted-foreground hover:text-foreground">
+            ← Back to form
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
