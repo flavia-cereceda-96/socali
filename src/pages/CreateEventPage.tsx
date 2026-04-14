@@ -254,6 +254,25 @@ const CreateEventPage = () => {
           </div>
 
           <div className="space-y-2">
+            <Label>Cover Image URL (optional)</Label>
+            <Input
+              value={coverImage}
+              onChange={e => setCoverImage(e.target.value)}
+              placeholder="Paste an image URL..."
+            />
+            {coverImage.trim() && (
+              <div className="relative rounded-xl overflow-hidden border border-border">
+                <img
+                  src={coverImage}
+                  alt="Cover preview"
+                  className="w-full h-32 object-cover"
+                  onError={(e) => (e.currentTarget.style.display = 'none')}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
             <Label>Notes (optional)</Label>
             <Textarea
               value={notes}
