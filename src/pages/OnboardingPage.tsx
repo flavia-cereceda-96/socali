@@ -296,10 +296,10 @@ const OnboardingPage = () => {
                 <button
                   key={opt.value}
                   type="button"
-                  onClick={() => setUsage(opt.value)}
+                  onClick={() => setUsage(prev => prev.includes(opt.value) ? prev.filter(v => v !== opt.value) : [...prev, opt.value])}
                   className={cn(
                     'flex flex-col items-center gap-1.5 rounded-xl px-2 py-3 text-xs font-medium transition-all border',
-                    usage === opt.value
+                    usage.includes(opt.value)
                       ? 'border-primary bg-primary/10 text-foreground'
                       : 'border-border bg-card text-muted-foreground hover:bg-secondary'
                   )}
