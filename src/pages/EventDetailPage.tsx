@@ -51,6 +51,7 @@ const EventDetailPage = () => {
       setEditEndTime((event as any).end_time || '');
       setEditLocation(event.location || '');
       setEditNotes(event.notes || '');
+      setEditCoverImage((event as any).cover_image || '');
     }
   }, [event]);
 
