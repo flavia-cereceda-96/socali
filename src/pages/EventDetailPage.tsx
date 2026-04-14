@@ -236,6 +236,13 @@ const EventDetailPage = () => {
               <span className="text-xs font-medium text-muted-foreground">Notes</span>
               <Textarea value={editNotes} onChange={e => setEditNotes(e.target.value)} rows={2} />
             </div>
+            <div>
+              <span className="text-xs font-medium text-muted-foreground">Cover Image URL</span>
+              <Input value={editCoverImage} onChange={e => setEditCoverImage(e.target.value)} placeholder="Paste image URL..." />
+              {editCoverImage.trim() && (
+                <img src={editCoverImage} alt="Cover preview" className="mt-1 w-full h-24 object-cover rounded-lg" onError={e => (e.currentTarget.style.display = 'none')} />
+              )}
+            </div>
             <div className="flex gap-2">
               <Button onClick={handleSave} disabled={saving} className="flex-1 gap-1">
                 <Check className="h-4 w-4" /> {saving ? 'Saving...' : 'Save'}
@@ -246,35 +253,42 @@ const EventDetailPage = () => {
             </div>
           </motion.div>
         ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            className="mb-4 rounded-2xl bg-card p-5 shadow-card space-y-4"
-          >
-            <div className="flex items-center gap-3 text-sm text-foreground">
-              <Calendar className="h-4 w-4 text-primary" />
-              <span>{dateStr}</span>
-            </div>
-            {timeStr && (
+          <>
+            {(event as any).cover_image && (
+              <div className="mb-4 rounded-2xl overflow-hidden">
+                <img src={(event as any).cover_image} alt="Event cover" className="w-full h-40 object-cover" />
+              </div>
+            )}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="mb-4 rounded-2xl bg-card p-5 shadow-card space-y-4"
+            >
               <div className="flex items-center gap-3 text-sm text-foreground">
-                <Clock className="h-4 w-4 text-primary" />
-                <span>{timeStr}</span>
+                <Calendar className="h-4 w-4 text-primary" />
+                <span>{dateStr}</span>
               </div>
-            )}
-            {event.location && (
-              <div className="flex items-start gap-3 text-sm text-foreground">
-                <MapPin className="h-4 w-4 mt-0.5 text-primary" />
-                <p className="font-medium">{event.location}</p>
-              </div>
-            )}
-            {event.notes && (
-              <div className="flex items-start gap-3 text-sm text-foreground">
-                <MessageSquare className="h-4 w-4 mt-0.5 text-primary" />
-                <p>{event.notes}</p>
-              </div>
-            )}
-          </motion.div>
+              {timeStr && (
+                <div className="flex items-center gap-3 text-sm text-foreground">
+                  <Clock className="h-4 w-4 text-primary" />
+                  <span>{timeStr}</span>
+                </div>
+              )}
+              {event.location && (
+                <div className="flex items-start gap-3 text-sm text-foreground">
+                  <MapPin className="h-4 w-4 mt-0.5 text-primary" />
+                  <p className="font-medium">{event.location}</p>
+                </div>
+              )}
+              {event.notes && (
+                <div className="flex items-start gap-3 text-sm text-foreground">
+                  <MessageSquare className="h-4 w-4 mt-0.5 text-primary" />
+                  <p>{event.notes}</p>
+                </div>
+              )}
+            </motion.div>
+          </>
         )}
 
         {/* Attendees */}
