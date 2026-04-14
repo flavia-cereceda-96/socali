@@ -19,13 +19,13 @@ const CreateEventPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
-  const location = useLocation();
+  const routeLocation = useLocation();
   const prefilledDate = searchParams.get('date') || '';
   const { data: friends = [] } = useFriends();
 
   // Pre-invite a friend if navigated from PersonPage
-  const inviteFriendId = (location.state as any)?.inviteFriendId;
-  const inviteFriendName = (location.state as any)?.inviteFriendName;
+  const inviteFriendId = (routeLocation.state as any)?.inviteFriendId;
+  const inviteFriendName = (routeLocation.state as any)?.inviteFriendName;
 
   const [title, setTitle] = useState('');
   const [emoji, setEmoji] = useState('🎉');
