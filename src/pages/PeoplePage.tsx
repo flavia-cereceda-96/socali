@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useFriends, useFriendRequests } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
@@ -9,6 +10,7 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
 const PeoplePage = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: friends = [], isLoading } = useFriends();
   const { data: friendRequests = [] } = useFriendRequests();
@@ -227,7 +229,8 @@ const PeoplePage = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  className="flex items-center gap-4 rounded-2xl bg-card p-4 shadow-card"
+                  onClick={() => navigate(`/person/${friend.user_id}`)}
+                  className="flex items-center gap-4 rounded-2xl bg-card p-4 shadow-card cursor-pointer hover:bg-accent/50 transition-colors"
                 >
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-xl">
                     👤
