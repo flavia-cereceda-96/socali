@@ -51,6 +51,7 @@ const CreateEventPage = () => {
     }
   }, [inviteFriendId, friends]);
 
+  const toggleFriend = (f: DbProfile) => {
     setSelectedFriends(prev =>
       prev.find(p => p.user_id === f.user_id) ? prev.filter(p => p.user_id !== f.user_id) : [...prev, f]
     );
