@@ -4,7 +4,7 @@ import { useFriends, useFriendRequests } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Search, UserPlus, Check, X, Calendar } from 'lucide-react';
+import { Search, UserPlus, Check, X, Calendar, Share2 } from 'lucide-react';
 import { ClickableName } from '@/components/ClickableName';
 import { UserAvatar } from '@/components/UserAvatar';
 import { Input } from '@/components/ui/input';
