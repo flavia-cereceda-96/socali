@@ -113,6 +113,14 @@ const OnboardingPage = () => {
         }
       }
 
+      // Save bio if provided
+      if (bio.trim() && data.user) {
+        await supabase
+          .from('profiles')
+          .update({ bio: bio.trim() })
+          .eq('user_id', data.user.id);
+      }
+
       toast.success('Account verified! 🎉');
       navigate('/');
     } catch (err: any) {
