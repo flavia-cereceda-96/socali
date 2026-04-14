@@ -104,6 +104,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen pb-24">
+      <WelcomeTour />
       <div className="mx-auto max-w-md px-4 pt-12">
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
           <p className="text-sm font-medium text-muted-foreground">{greeting}</p>
