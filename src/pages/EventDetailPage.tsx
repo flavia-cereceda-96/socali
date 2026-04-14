@@ -261,6 +261,9 @@ const EventDetailPage = () => {
                 <X className="h-4 w-4" /> Cancel
               </Button>
             </div>
+            <Button variant="destructive" onClick={handleDelete} className="w-full gap-1 mt-2">
+              <Trash2 className="h-4 w-4" /> Delete Event
+            </Button>
           </motion.div>
         ) : (
           <>
