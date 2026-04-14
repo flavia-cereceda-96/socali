@@ -319,7 +319,18 @@ const EventDetailPage = () => {
                       <Crown className="h-3 w-3" /> Organizer
                     </span>
                   ) : (
-                    <StatusBadge status={a.status as any} size="md" />
+                    <div className="flex items-center gap-2">
+                      <StatusBadge status={a.status as any} size="md" />
+                      {isCreator && (
+                        <button
+                          onClick={() => handleRemoveParticipant(a.user_id)}
+                          className="rounded-full p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          title="Remove participant"
+                        >
+                          <UserMinus className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
                 {a.status === 'declined' && a.decline_note && (
