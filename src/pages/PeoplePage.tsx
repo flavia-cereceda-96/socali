@@ -4,6 +4,7 @@ import { useFriends, useFriendRequests } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { Search, UserPlus, Check, X } from 'lucide-react';
+import { ClickableName } from '@/components/ClickableName';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -236,7 +237,7 @@ const PeoplePage = () => {
                     👤
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground">{friend.username}</p>
+                    <ClickableName userId={friend.user_id} name={friend.username} className="font-semibold" />
                     <p className="text-xs text-muted-foreground">{friend.email}</p>
                   </div>
                 </motion.div>
