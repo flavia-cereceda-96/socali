@@ -20,6 +20,40 @@ const PeoplePage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
+
+  // Fetch shared event counts for all friends
+  const { data: sharedCounts = {} } = useQuery({
+    queryKey: ['friend-shared-counts', friends.map(f => f.user_id).join(',')],
+    queryFn: async () => {
+      if (friends.length === 0) return {};
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return {};
+
+      // My events (created + participating)
+      const { data: myCreated } = await supabase.from('events').select('id').eq('created_by', user.id);
+      const { data: myParts } = await supabase.from('event_participants').select('event_id').eq('user_id', user.id);
+      const myEventIds = new Set([...(myCreated || []).map(e => e.id), ...(myParts || []).map(p => p.event_id)]);
+
+      // For each friend, get their events
+      const friendIds = friends.map(f => f.user_id);
+      const { data: theirCreated } = await supabase.from('events').select('id, created_by').in('created_by', friendIds);
+      const { data: theirParts } = await supabase.from('event_participants').select('event_id, user_id').in('user_id', friendIds);
+
+      const counts: Record<string, number> = {};
+      for (const fid of friendIds) {
+        const theirEventIds = new Set([
+          ...(theirCreated || []).filter(e => e.created_by === fid).map(e => e.id),
+          ...(theirParts || []).filter(p => p.user_id === fid).map(p => p.event_id),
+        ]);
+        counts[fid] = [...myEventIds].filter(id => theirEventIds.has(id)).length;
+      }
+      return counts;
+    },
+    enabled: friends.length > 0,
+  });
+
+  // Sort friends by shared event count descending
+  const sortedFriends = [...friends].sort((a, b) => (sharedCounts[b.user_id] || 0) - (sharedCounts[a.user_id] || 0));
   const [adding, setAdding] = useState<string | null>(null);
   const [searchDone, setSearchDone] = useState(false);
 
