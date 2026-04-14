@@ -127,7 +127,7 @@ const PeoplePage = () => {
                     👤
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground">{req.profile?.username || 'Unknown'}</p>
+                    <ClickableName userId={req.user_id} name={req.profile?.username || 'Unknown'} className="font-semibold" />
                     <p className="text-xs text-muted-foreground">{req.profile?.email}</p>
                   </div>
                   <div className="flex gap-1.5">
