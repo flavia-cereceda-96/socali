@@ -20,9 +20,12 @@ const EventDetailPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: events = [], isLoading } = useEvents();
+  const { data: friends = [] } = useFriends();
   const event = events.find(e => e.id === id) as DbEventWithCreator | undefined;
   const [userId, setUserId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  const [managingPeople, setManagingPeople] = useState(false);
+  const [friendSearch, setFriendSearch] = useState('');
 
   // Edit form state
   const [editTitle, setEditTitle] = useState('');
@@ -32,6 +35,7 @@ const EventDetailPage = () => {
   const [editEndTime, setEditEndTime] = useState('');
   const [editLocation, setEditLocation] = useState('');
   const [editNotes, setEditNotes] = useState('');
+  const [editCoverImage, setEditCoverImage] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
