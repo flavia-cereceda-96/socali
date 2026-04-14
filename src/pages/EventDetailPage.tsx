@@ -7,7 +7,7 @@ import { EventPhotos } from '@/components/EventPhotos';
 import { UserAvatar } from '@/components/UserAvatar';
 import { ClickableName } from '@/components/ClickableName';
 import { motion } from 'framer-motion';
-import { ArrowLeft, MapPin, Clock, Calendar, MessageSquare, Crown, Pencil, Check, X, UserPlus, UserMinus } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Calendar, MessageSquare, Crown, Pencil, Check, X, UserPlus, UserMinus, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -98,6 +98,15 @@ const EventDetailPage = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleDelete = async () => {
+    if (!event || !window.confirm('Are you sure you want to delete this event? This cannot be undone.')) return;
+    const { error } = await supabase.from('events').delete().eq('id', event.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Event deleted');
+    queryClient.invalidateQueries({ queryKey: ['events'] });
+    navigate('/');
   };
 
   const handleInviteFriend = async (friend: DbProfile) => {
@@ -252,6 +261,9 @@ const EventDetailPage = () => {
                 <X className="h-4 w-4" /> Cancel
               </Button>
             </div>
+            <Button variant="destructive" onClick={handleDelete} className="w-full gap-1 mt-2">
+              <Trash2 className="h-4 w-4" /> Delete Event
+            </Button>
           </motion.div>
         ) : (
           <>

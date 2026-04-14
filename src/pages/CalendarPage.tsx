@@ -1,19 +1,28 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useEvents, useFriends, DbEvent } from '@/hooks/useEvents';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, X, Plus } from 'lucide-react';
+import { X, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { MapPin, Clock } from 'lucide-react';
+import { UserAvatar } from '@/components/UserAvatar';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const FRIEND_COLORS = [
   'bg-blue-500', 'bg-rose-500', 'bg-emerald-500',
   'bg-amber-500', 'bg-violet-500', 'bg-cyan-500',
 ];
-
-type ViewMode = 'day' | 'week' | 'month';
+const FRIEND_TEXT_COLORS = [
+  'text-blue-600', 'text-rose-600', 'text-emerald-600',
+  'text-amber-600', 'text-violet-600', 'text-cyan-600',
+];
+const FRIEND_BG_COLORS = [
+  'bg-blue-100', 'bg-rose-100', 'bg-emerald-100',
+  'bg-amber-100', 'bg-violet-100', 'bg-cyan-100',
+];
 
 function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
@@ -27,37 +36,111 @@ function isDateInRange(date: Date, startStr: string, endStr?: string | null) {
   return d >= s && d <= e;
 }
 
-function getWeekDays(date: Date): Date[] {
-  const start = new Date(date);
-  start.setDate(start.getDate() - start.getDay());
+function getWeekStart(date: Date): Date {
+  const d = new Date(date);
+  d.setDate(d.getDate() - d.getDay());
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function getWeekDays(weekStart: Date): Date[] {
   return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(start);
+    const d = new Date(weekStart);
     d.setDate(d.getDate() + i);
     return d;
   });
+}
+
+// Generate N weeks from a start week
+function generateWeeks(centerDate: Date, weeksBefore: number, weeksAfter: number) {
+  const center = getWeekStart(centerDate);
+  const weeks: Date[] = [];
+  for (let i = -weeksBefore; i <= weeksAfter; i++) {
+    const ws = new Date(center);
+    ws.setDate(ws.getDate() + i * 7);
+    weeks.push(ws);
+  }
+  return weeks;
+}
+
+interface FriendEvent {
+  id: string;
+  date: string;
+  end_date: string | null;
+  title: string;
+  emoji: string;
+  friendUserId: string;
 }
 
 const CalendarPage = () => {
   const navigate = useNavigate();
   const { data: events = [] } = useEvents();
   const { data: friends = [] } = useFriends();
+  const today = new Date();
 
-  const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [query, setQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('month');
   const inputRef = useRef<HTMLInputElement>(null);
+  const currentWeekRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const year = currentMonth.getFullYear();
-  const month = currentMonth.getMonth();
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const today = new Date();
+  // Generate weeks: 26 weeks before and after (about 6 months each way)
+  const weeks = useMemo(() => generateWeeks(today, 26, 26), []);
+
+  // Scroll to current week on mount
+  useEffect(() => {
+    setTimeout(() => {
+      currentWeekRef.current?.scrollIntoView({ block: 'start' });
+    }, 100);
+  }, []);
+
+  // Fetch friend events when friends are selected
+  const { data: friendEvents = [] } = useQuery({
+    queryKey: ['friend-events', selectedFriends.join(',')],
+    queryFn: async () => {
+      if (selectedFriends.length === 0) return [];
+      const allFriendEvents: FriendEvent[] = [];
+
+      for (const fId of selectedFriends) {
+        // Events they created
+        const { data: created } = await supabase
+          .from('events')
+          .select('id, date, end_date, title, emoji')
+          .eq('created_by', fId);
+
+        (created || []).forEach(e => allFriendEvents.push({ ...e, friendUserId: fId }));
+
+        // Events they're participating in
+        const { data: parts } = await supabase
+          .from('event_participants')
+          .select('event_id')
+          .eq('user_id', fId);
+
+        if (parts && parts.length > 0) {
+          const { data: partEvents } = await supabase
+            .from('events')
+            .select('id, date, end_date, title, emoji')
+            .in('id', parts.map(p => p.event_id));
+
+          (partEvents || []).forEach(e => {
+            if (!allFriendEvents.find(fe => fe.id === e.id && fe.friendUserId === fId)) {
+              allFriendEvents.push({ ...e, friendUserId: fId });
+            }
+          });
+        }
+      }
+      return allFriendEvents;
+    },
+    enabled: selectedFriends.length > 0,
+  });
 
   const getEventsForDate = (date: Date) =>
     events.filter(e => isDateInRange(date, e.date, e.end_date));
+
+  const getFriendEventsForDate = (date: Date) =>
+    friendEvents.filter(e => isDateInRange(date, e.date, e.end_date));
 
   const filteredFriends = useMemo(() => {
     const atIndex = query.lastIndexOf('@');
@@ -84,26 +167,7 @@ const CalendarPage = () => {
     setShowDropdown(value.includes('@'));
   };
 
-  const shift = (dir: number) => {
-    if (viewMode === 'day') {
-      const d = new Date(selectedDate || today);
-      d.setDate(d.getDate() + dir);
-      setSelectedDate(d);
-      setCurrentMonth(new Date(d.getFullYear(), d.getMonth(), 1));
-    } else if (viewMode === 'week') {
-      const d = new Date(selectedDate || today);
-      d.setDate(d.getDate() + dir * 7);
-      setSelectedDate(d);
-      setCurrentMonth(new Date(d.getFullYear(), d.getMonth(), 1));
-    } else {
-      setCurrentMonth(new Date(year, month + dir, 1));
-      setSelectedDate(null);
-    }
-  };
-
-  const weekDays = useMemo(() => getWeekDays(selectedDate || today), [selectedDate]);
   const dayEvents = selectedDate ? getEventsForDate(selectedDate) : [];
-  const activeDate = selectedDate || today;
 
   const renderEventCard = (event: DbEvent, i: number) => (
     <motion.div
@@ -134,6 +198,11 @@ const CalendarPage = () => {
       </div>
     </motion.div>
   );
+
+  const getFriendColorIndex = (friendId: string) => {
+    const idx = selectedFriends.indexOf(friendId);
+    return idx >= 0 ? idx % FRIEND_COLORS.length : 0;
+  };
 
   return (
     <div className="min-h-screen pb-24">
@@ -166,9 +235,7 @@ const CalendarPage = () => {
                       onMouseDown={e => { e.preventDefault(); selectFriend(friend.user_id); }}
                       className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
                     >
-                      <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center">
-                        <span className="text-xs">👤</span>
-                      </div>
+                      <UserAvatar avatarUrl={friend.avatar_url} username={friend.username} size="sm" />
                       <span>{friend.username}</span>
                     </button>
                   ))}
@@ -184,9 +251,7 @@ const CalendarPage = () => {
                 const friend = friends.find(f => f.user_id === fId);
                 return (
                   <span key={fId} className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-sm font-medium text-foreground">
-                    <div className="h-5 w-5 rounded-full bg-muted flex items-center justify-center">
-                      <span className="text-xs">👤</span>
-                    </div>
+                    <UserAvatar avatarUrl={friend?.avatar_url} username={friend?.username} size="sm" />
                     {friend?.username || 'Unknown'}
                     <span className={cn('h-2 w-2 rounded-full', FRIEND_COLORS[idx % FRIEND_COLORS.length])} />
                     <button onClick={() => removeFriend(fId)} className="ml-0.5 text-muted-foreground hover:text-foreground">
@@ -199,198 +264,134 @@ const CalendarPage = () => {
           )}
         </motion.div>
 
-        {/* View Mode Tabs */}
-        <div className="mb-4 flex rounded-xl bg-secondary p-1">
-          {(['day', 'week', 'month'] as ViewMode[]).map(mode => (
-            <button
-              key={mode}
-              onClick={() => {
-                setViewMode(mode);
-                if (mode === 'day' && !selectedDate) setSelectedDate(today);
-              }}
-              className={cn(
-                'flex-1 rounded-lg py-1.5 text-sm font-medium transition-all capitalize',
-                viewMode === mode
-                  ? 'bg-card text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              {mode}
-            </button>
-          ))}
+        {/* Day headers */}
+        <div className="mb-1 grid grid-cols-7 text-center text-xs font-medium text-muted-foreground sticky top-0 bg-background z-10 py-1">
+          {DAYS.map(d => <div key={d}>{d}</div>)}
         </div>
 
-        {/* Navigation Header */}
-        <div className="mb-4 flex items-center justify-between">
-          <button onClick={() => shift(-1)} className="rounded-lg p-2 text-muted-foreground hover:bg-secondary">
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <span className="font-semibold text-foreground">
-            {viewMode === 'day' && activeDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-            {viewMode === 'week' && (() => {
-              const wk = getWeekDays(activeDate);
-              const s = wk[0]; const e = wk[6];
-              if (s.getMonth() === e.getMonth()) {
-                return `${s.toLocaleDateString('en-US', { month: 'long' })} ${s.getDate()}–${e.getDate()}, ${s.getFullYear()}`;
-              }
-              return `${s.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${e.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-            })()}
-            {viewMode === 'month' && currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-          </span>
-          <button onClick={() => shift(1)} className="rounded-lg p-2 text-muted-foreground hover:bg-secondary">
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        </div>
-
-        {/* MONTH VIEW */}
-        {viewMode === 'month' && (
-          <>
-            <div className="mb-1 grid grid-cols-7 text-center text-xs font-medium text-muted-foreground">
-              {DAYS.map(d => <div key={d}>{d}</div>)}
-            </div>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-7 gap-1">
-              {Array.from({ length: firstDay }).map((_, i) => <div key={`e-${i}`} />)}
-              {Array.from({ length: daysInMonth }).map((_, i) => {
-                const date = new Date(year, month, i + 1);
-                const isToday = isSameDay(date, today);
-                const hasEvent = events.some(e => isDateInRange(date, e.date, e.end_date));
-                const isSelected = selectedDate && isSameDay(date, selectedDate);
-                return (
-                  <button
-                    key={i}
-                    onClick={() => setSelectedDate(date)}
-                    className={cn(
-                      'relative flex h-10 w-full flex-col items-center justify-center rounded-xl text-sm transition-all',
-                      isSelected ? 'bg-primary text-primary-foreground font-bold' :
-                      isToday ? 'bg-primary/10 text-primary font-semibold' :
-                      'hover:bg-secondary text-foreground'
-                    )}
-                  >
-                    {i + 1}
-                    {hasEvent && !isSelected && (
-                      <div className="absolute bottom-0.5 flex gap-0.5">
-                        <span className="h-1 w-1 rounded-full bg-primary" />
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </motion.div>
-          </>
-        )}
-
-        {/* WEEK VIEW */}
-        {viewMode === 'week' && (
-          <>
-            <div className="mb-1 grid grid-cols-7 text-center text-xs font-medium text-muted-foreground">
-              {DAYS.map(d => <div key={d}>{d}</div>)}
-            </div>
-            <div className="grid grid-cols-7 gap-1 mb-4">
-              {weekDays.map((date, i) => {
-                const isToday = isSameDay(date, today);
-                const hasEvent = events.some(e => isDateInRange(date, e.date, e.end_date));
-                const isSelected = selectedDate && isSameDay(date, selectedDate);
-                return (
-                  <button
-                    key={i}
-                    onClick={() => setSelectedDate(date)}
-                    className={cn(
-                      'relative flex h-12 w-full flex-col items-center justify-center rounded-xl text-sm transition-all',
-                      isSelected ? 'bg-primary text-primary-foreground font-bold' :
-                      isToday ? 'bg-primary/10 text-primary font-semibold' :
-                      'hover:bg-secondary text-foreground'
-                    )}
-                  >
-                    {date.getDate()}
-                    {hasEvent && !isSelected && (
-                      <div className="absolute bottom-0.5 flex gap-0.5">
-                        <span className="h-1 w-1 rounded-full bg-primary" />
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-            {selectedDate && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <h3 className="mb-3 text-sm font-semibold text-muted-foreground">
-                  {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-                </h3>
-                {dayEvents.length > 0 ? (
-                  <div className="flex flex-col gap-3">
-                    {dayEvents.map((e, i) => renderEventCard(e, i))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No plans yet ✨</p>
-                )}
-                <Button
-                  onClick={() => navigate(`/create?date=${selectedDate.toISOString().split('T')[0]}`)}
-                  className="mt-4 w-full gap-2"
-                >
-                  <Plus className="h-4 w-4" /> Create event on this day
-                </Button>
-              </motion.div>
-            )}
-          </>
-        )}
-
-        {/* DAY VIEW */}
-        {viewMode === 'day' && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-2">
-            {(() => {
-              const dayEvts = getEventsForDate(activeDate);
-              return (
-                <>
-                  {dayEvts.length > 0 ? (
-                    <div className="flex flex-col gap-3">
-                      {dayEvts.map((e, i) => renderEventCard(e, i))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">No plans for this day ✨</p>
-                  )}
-                  <Button
-                    onClick={() => navigate(`/create?date=${activeDate.toISOString().split('T')[0]}`)}
-                    className="mt-4 w-full gap-2"
-                  >
-                    <Plus className="h-4 w-4" /> Create event on this day
-                  </Button>
-                </>
-              );
-            })()}
-          </motion.div>
-        )}
-
-        {/* Selected Day Events (month view) */}
-        {viewMode === 'month' && (
-          <AnimatePresence mode="wait">
-            {selectedDate && (
-              <motion.div
-                key={selectedDate.toISOString()}
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mt-6 overflow-hidden"
+        {/* Scrollable calendar grid */}
+        <div
+          ref={scrollContainerRef}
+          className="max-h-[50vh] overflow-y-auto scrollbar-thin"
+        >
+          {weeks.map((weekStart, wi) => {
+            const days = getWeekDays(weekStart);
+            const isCurrentWeek = days.some(d => isSameDay(d, today));
+            return (
+              <div
+                key={weekStart.toISOString()}
+                ref={isCurrentWeek ? currentWeekRef : undefined}
+                className="grid grid-cols-7 gap-0.5 mb-0.5"
               >
-                <h3 className="mb-3 text-sm font-semibold text-muted-foreground">
-                  {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-                </h3>
-                {dayEvents.length > 0 ? (
-                  <div className="flex flex-col gap-3">
-                    {dayEvents.map((e, i) => renderEventCard(e, i))}
+                {days.map((date, di) => {
+                  const isToday = isSameDay(date, today);
+                  const myEvents = getEventsForDate(date);
+                  const fEvents = getFriendEventsForDate(date);
+                  const isSelected = selectedDate && isSameDay(date, selectedDate);
+                  const isCurrentMonth = date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
+
+                  return (
+                    <button
+                      key={di}
+                      onClick={() => setSelectedDate(date)}
+                      className={cn(
+                        'relative flex flex-col items-start p-1 min-h-[56px] rounded-lg text-left transition-all overflow-hidden',
+                        isSelected ? 'bg-primary/15 ring-1 ring-primary' :
+                        isToday ? 'bg-primary/10' :
+                        'hover:bg-secondary/50',
+                        !isCurrentMonth && 'opacity-50'
+                      )}
+                    >
+                      <span className={cn(
+                        'text-[11px] font-medium leading-none mb-0.5',
+                        isToday ? 'text-primary font-bold' :
+                        isSelected ? 'text-primary' : 'text-foreground'
+                      )}>
+                        {date.getDate() === 1 ? `${date.toLocaleDateString('en-US', { month: 'short' })} ${date.getDate()}` : date.getDate()}
+                      </span>
+                      {/* My events */}
+                      {myEvents.slice(0, 2).map(e => (
+                        <div key={e.id} className="w-full truncate text-[9px] leading-tight rounded px-0.5 bg-primary/15 text-primary font-medium mb-px">
+                          {e.emoji} {e.title}
+                        </div>
+                      ))}
+                      {myEvents.length > 2 && (
+                        <span className="text-[8px] text-muted-foreground">+{myEvents.length - 2}</span>
+                      )}
+                      {/* Friend events */}
+                      {fEvents.slice(0, 2).map(e => {
+                        const cIdx = getFriendColorIndex(e.friendUserId);
+                        return (
+                          <div key={`${e.id}-${e.friendUserId}`} className={cn(
+                            'w-full truncate text-[9px] leading-tight rounded px-0.5 font-medium mb-px',
+                            FRIEND_BG_COLORS[cIdx], FRIEND_TEXT_COLORS[cIdx]
+                          )}>
+                            {e.emoji} {e.title}
+                          </div>
+                        );
+                      })}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Selected Day Events */}
+        <AnimatePresence mode="wait">
+          {selectedDate && (
+            <motion.div
+              key={selectedDate.toISOString()}
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-4 overflow-hidden"
+            >
+              <h3 className="mb-3 text-sm font-semibold text-muted-foreground">
+                {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+              </h3>
+              {dayEvents.length > 0 ? (
+                <div className="flex flex-col gap-3">
+                  {dayEvents.map((e, i) => renderEventCard(e, i))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No plans yet — a perfect day to plan something! ✨</p>
+              )}
+              {/* Friend events for selected day */}
+              {(() => {
+                const fEvts = getFriendEventsForDate(selectedDate);
+                if (fEvts.length === 0) return null;
+                return (
+                  <div className="mt-3">
+                    <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Friend plans</p>
+                    {fEvts.map(e => {
+                      const cIdx = getFriendColorIndex(e.friendUserId);
+                      const friend = friends.find(f => f.user_id === e.friendUserId);
+                      return (
+                        <div key={`${e.id}-${e.friendUserId}`} className={cn('rounded-xl p-3 mb-2', FRIEND_BG_COLORS[cIdx])}>
+                          <div className="flex items-center gap-2">
+                            <span className="text-base">{e.emoji}</span>
+                            <span className={cn('font-medium text-sm', FRIEND_TEXT_COLORS[cIdx])}>{e.title}</span>
+                          </div>
+                          <p className={cn('text-xs mt-1', FRIEND_TEXT_COLORS[cIdx])}>
+                            {friend?.username || 'Friend'}
+                          </p>
+                        </div>
+                      );
+                    })}
                   </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No plans yet — a perfect day to plan something! ✨</p>
-                )}
-                <Button
-                  onClick={() => navigate(`/create?date=${selectedDate.toISOString().split('T')[0]}`)}
-                  className="mt-4 w-full gap-2"
-                >
-                  <Plus className="h-4 w-4" /> Create event on this day
-                </Button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        )}
+                );
+              })()}
+              <Button
+                onClick={() => navigate(`/create?date=${selectedDate.toISOString().split('T')[0]}`)}
+                className="mt-4 w-full gap-2"
+              >
+                <Plus className="h-4 w-4" /> Create event on this day
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
