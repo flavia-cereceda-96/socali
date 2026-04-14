@@ -23,6 +23,7 @@ const OnboardingPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [usage, setUsage] = useState('');
+  const [bio, setBio] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -110,6 +111,14 @@ const OnboardingPage = () => {
             .update({ avatar_url: publicUrl })
             .eq('user_id', data.user.id);
         }
+      }
+
+      // Save bio if provided
+      if (bio.trim() && data.user) {
+        await supabase
+          .from('profiles')
+          .update({ bio: bio.trim() })
+          .eq('user_id', data.user.id);
       }
 
       toast.success('Account verified! 🎉');
@@ -301,6 +310,21 @@ const OnboardingPage = () => {
               ))}
             </div>
             {errors.usage && <p className="text-xs text-destructive">{errors.usage}</p>}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="bio">Your vibe</Label>
+            <p className="text-xs text-muted-foreground">What should friends invite you to — and what's a hard pass?</p>
+            <textarea
+              id="bio"
+              value={bio}
+              onChange={e => setBio(e.target.value)}
+              placeholder="e.g. Always down for brunch 🥞 & hiking 🥾. Skip me on karaoke nights 🎤😅"
+              rows={3}
+              maxLength={200}
+              className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+            />
+            <p className="text-right text-[10px] text-muted-foreground">{bio.length}/200</p>
           </div>
         </div>
 
