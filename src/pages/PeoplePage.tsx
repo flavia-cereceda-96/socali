@@ -260,7 +260,7 @@ const PeoplePage = () => {
               Friends ({friends.length})
             </h2>
             <div className="flex flex-col gap-3">
-              {friends.map((friend, i) => (
+              {sortedFriends.map((friend, i) => (
                 <motion.div
                   key={friend.user_id}
                   initial={{ opacity: 0, y: 10 }}
@@ -269,12 +269,15 @@ const PeoplePage = () => {
                   onClick={() => navigate(`/person/${friend.user_id}`)}
                   className="flex items-center gap-4 rounded-2xl bg-card p-4 shadow-card cursor-pointer hover:bg-accent/50 transition-colors"
                 >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-xl">
-                    👤
-                  </div>
+                  <UserAvatar avatarUrl={friend.avatar_url} username={friend.username} size="lg" />
                   <div className="flex-1 min-w-0">
                     <ClickableName userId={friend.user_id} name={friend.username} className="font-semibold" />
                     <p className="text-xs text-muted-foreground">{friend.email}</p>
+                  </div>
+                  <div className="flex flex-col items-center gap-0.5 text-muted-foreground">
+                    <Calendar className="h-4 w-4" />
+                    <span className="text-sm font-bold text-foreground">{sharedCounts[friend.user_id] || 0}</span>
+                    <span className="text-[10px] leading-tight">events</span>
                   </div>
                 </motion.div>
               ))}
