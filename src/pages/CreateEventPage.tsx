@@ -64,6 +64,7 @@ const CreateEventPage = () => {
         end_time: isMultiDay ? null : (endTime || null),
         location: location || null,
         notes: notes || null,
+        cover_image: coverImage.trim() || null,
         is_trip: isMultiDay,
         created_by: user.id,
       }).select().single();
