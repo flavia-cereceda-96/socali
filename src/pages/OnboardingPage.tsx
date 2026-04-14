@@ -22,7 +22,7 @@ const OnboardingPage = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [usage, setUsage] = useState('');
+  const [usage, setUsage] = useState<string[]>([]);
   const [bio, setBio] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -50,7 +50,7 @@ const OnboardingPage = () => {
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = 'Invalid email';
     if (!password) errs.password = 'Required';
     else if (password.length < 6) errs.password = 'At least 6 characters';
-    if (!usage) errs.usage = 'Pick one';
+    if (usage.length === 0) errs.usage = 'Pick at least one';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -63,7 +63,7 @@ const OnboardingPage = () => {
         email,
         password,
         options: {
-          data: { username, usage },
+          data: { username, usage: usage.join(',') },
           emailRedirectTo: window.location.origin,
         },
       });
@@ -296,10 +296,10 @@ const OnboardingPage = () => {
                 <button
                   key={opt.value}
                   type="button"
-                  onClick={() => setUsage(opt.value)}
+                  onClick={() => setUsage(prev => prev.includes(opt.value) ? prev.filter(v => v !== opt.value) : [...prev, opt.value])}
                   className={cn(
                     'flex flex-col items-center gap-1.5 rounded-xl px-2 py-3 text-xs font-medium transition-all border',
-                    usage === opt.value
+                    usage.includes(opt.value)
                       ? 'border-primary bg-primary/10 text-foreground'
                       : 'border-border bg-card text-muted-foreground hover:bg-secondary'
                   )}
