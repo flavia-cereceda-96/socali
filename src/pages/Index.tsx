@@ -88,6 +88,17 @@ const Index = () => {
     };
   }, [events, userId]);
 
+  // Build group hints for upcoming events (Change 6)
+  const upcomingEventIds = upcomingEvents.map(e => e.id);
+  const participantsByEvent = useMemo(() => {
+    const m: Record<string, string[]> = {};
+    upcomingEvents.forEach(e => {
+      m[e.id] = [e.created_by, ...e.participants.map(p => p.user_id)];
+    });
+    return m;
+  }, [upcomingEvents]);
+  const { data: groupHints = {} } = useEventGroupHints(upcomingEventIds, participantsByEvent);
+
   const handleRsvp = async (event: DbEvent, participantId: string, status: string) => {
     const { error } = await supabase
       .from('event_participants')
@@ -257,22 +268,35 @@ const Index = () => {
                           {timeDisplay && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{timeDisplay}</span>}
                           {event.location && <span className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3" />{event.location}</span>}
                         </div>
-                        {event.participants.length > 0 && (
-                          <div className="flex items-center gap-1 mt-0.5">
-                            {event.participants.slice(0, 5).map(p => (
-                              <UserAvatar
-                                key={p.id}
-                                avatarUrl={p.profile?.avatar_url}
-                                username={p.profile?.username}
-                                size="sm"
-                                className="h-6 w-6 text-[10px] -ml-1 first:ml-0 ring-2 ring-card"
-                              />
-                            ))}
-                            {event.participants.length > 5 && (
-                              <span className="ml-1 text-[10px] text-muted-foreground">+{event.participants.length - 5}</span>
-                            )}
-                          </div>
-                        )}
+                        {event.participants.length > 0 && (() => {
+                          const hint = groupHints[event.id];
+                          if (hint) {
+                            return (
+                              <div className="mt-0.5">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-accent/60 border border-primary/20 px-2 py-0.5 text-[11px] font-semibold text-foreground">
+                                  <span className="text-sm leading-none">{hint.emoji}</span>
+                                  {hint.name}
+                                </span>
+                              </div>
+                            );
+                          }
+                          return (
+                            <div className="flex items-center gap-1 mt-0.5">
+                              {event.participants.slice(0, 5).map(p => (
+                                <UserAvatar
+                                  key={p.id}
+                                  avatarUrl={p.profile?.avatar_url}
+                                  username={p.profile?.username}
+                                  size="sm"
+                                  className="h-6 w-6 text-[10px] -ml-1 first:ml-0 ring-2 ring-card"
+                                />
+                              ))}
+                              {event.participants.length > 5 && (
+                                <span className="ml-1 text-[10px] text-muted-foreground">+{event.participants.length - 5}</span>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     </motion.div>
                   );
