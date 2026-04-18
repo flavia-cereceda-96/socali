@@ -24,7 +24,10 @@ const CreateEventPage = () => {
   const [searchParams] = useSearchParams();
   const routeLocation = useLocation();
   const prefilledDate = searchParams.get('date') || '';
+  const prefilledGroupId = searchParams.get('groupId') || '';
   const { data: friends = [] } = useFriends();
+  const { data: groups = [] } = useGroups();
+  const { data: prefilledGroup } = useGroup(prefilledGroupId || undefined);
 
   // Pre-invite a friend if navigated from PersonPage
   const inviteFriendId = (routeLocation.state as any)?.inviteFriendId;
@@ -34,6 +37,7 @@ const CreateEventPage = () => {
   const [emoji, setEmoji] = useState('🎉');
   const [isMultiDay, setIsMultiDay] = useState(false);
   const [selectedFriends, setSelectedFriends] = useState<DbProfile[]>([]);
+  const [selectedGroups, setSelectedGroups] = useState<DbGroup[]>([]);
   const [dateStr, setDateStr] = useState(prefilledDate);
   const [endDateStr, setEndDateStr] = useState('');
   const [startTime, setStartTime] = useState('');
