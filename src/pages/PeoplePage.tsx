@@ -1,10 +1,11 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFriends, useFriendRequests } from '@/hooks/useEvents';
+import { useGroups } from '@/hooks/useGroups';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Search, UserPlus, Check, X, Calendar, Share2 } from 'lucide-react';
+import { Search, UserPlus, Check, X, Calendar, Share2, Plus, ChevronRight } from 'lucide-react';
 import { ClickableName } from '@/components/ClickableName';
 import { UserAvatar } from '@/components/UserAvatar';
 import { Input } from '@/components/ui/input';
@@ -12,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { CoachMark } from '@/components/CoachMark';
 import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
+import { cn } from '@/lib/utils';
 
 const PeoplePage = () => {
   const navigate = useNavigate();
