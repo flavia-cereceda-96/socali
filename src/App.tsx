@@ -20,6 +20,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage.tsx";
 import ResetPasswordPage from "./pages/ResetPasswordPage.tsx";
 import PersonPage from "./pages/PersonPage.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import SplashPage, { hasSeenSplash } from "./pages/SplashPage.tsx";
 import { WhatsNewModal } from "./components/WhatsNewModal.tsx";
 
 const queryClient = new QueryClient();
@@ -51,6 +52,7 @@ const App = () => {
   }
 
   const authed = !!session;
+  const seenSplash = hasSeenSplash();
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -58,11 +60,12 @@ const App = () => {
       <Sonner />
       <BrowserRouter>
         <Routes>
+          <Route path="/welcome" element={!authed ? <SplashPage /> : <Navigate to="/" replace />} />
           <Route path="/onboarding" element={!authed ? <OnboardingPage /> : <Navigate to="/" replace />} />
-          <Route path="/login" element={!authed ? <LoginPage /> : <Navigate to="/" replace />} />
+          <Route path="/login" element={!authed ? (seenSplash ? <LoginPage /> : <Navigate to="/welcome" replace />) : <Navigate to="/" replace />} />
           <Route path="/forgot-password" element={!authed ? <ForgotPasswordPage /> : <Navigate to="/" replace />} />
           <Route path="/reset-password" element={!authed ? <ResetPasswordPage /> : <Navigate to="/" replace />} />
-          <Route path="/" element={authed ? <Index /> : <Navigate to="/login" replace />} />
+          <Route path="/" element={authed ? <Index /> : <Navigate to={seenSplash ? "/login" : "/welcome"} replace />} />
           <Route path="/calendar" element={authed ? <CalendarPage /> : <Navigate to="/login" replace />} />
           <Route path="/people" element={authed ? <PeoplePage /> : <Navigate to="/login" replace />} />
           <Route path="/create" element={authed ? <CreateEventPage /> : <Navigate to="/login" replace />} />
