@@ -22,6 +22,21 @@ const Index = () => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id || null));
   }, []);
 
+  // Fetch user's usage preference for personalized empty state
+  const { data: profile } = useQuery({
+    queryKey: ['my-profile-usage', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const { data } = await supabase
+        .from('profiles')
+        .select('usage')
+        .eq('user_id', userId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!userId,
+  });
+
   const greeting = (() => {
     const h = new Date().getHours();
     if (h < 12) return 'Good morning ☀️';
