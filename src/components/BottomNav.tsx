@@ -60,6 +60,7 @@ export function BottomNav() {
           );
         })}
         <button
+          data-coach="home-fab"
           onClick={() => navigate('/create')}
           className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-elevated transition-transform active:scale-95"
         >

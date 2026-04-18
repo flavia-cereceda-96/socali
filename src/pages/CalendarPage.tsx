@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { MapPin, Clock } from 'lucide-react';
 import { UserAvatar } from '@/components/UserAvatar';
+import { CoachMark } from '@/components/CoachMark';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const FRIEND_COLORS = [
@@ -206,6 +207,12 @@ const CalendarPage = () => {
 
   return (
     <div className="min-h-screen pb-24">
+      <CoachMark
+        id="calendar-grid"
+        text="Tap any day to see or add plans"
+        anchorSelector='[data-coach="calendar-grid"]'
+        placement="top"
+      />
       <div className="mx-auto max-w-md px-4 pt-12">
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-4">
           <h1 className="text-2xl font-bold text-foreground mb-4">Calendar</h1>
@@ -272,6 +279,7 @@ const CalendarPage = () => {
         {/* Scrollable calendar grid */}
         <div
           ref={scrollContainerRef}
+          data-coach="calendar-grid"
           className="max-h-[50vh] overflow-y-auto scrollbar-thin"
         >
           {weeks.map((weekStart, wi) => {

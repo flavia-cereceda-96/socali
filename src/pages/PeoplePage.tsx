@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFriends, useFriendRequests } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Search, UserPlus, Check, X, Calendar, Share2 } from 'lucide-react';
 import { ClickableName } from '@/components/ClickableName';
@@ -10,7 +10,8 @@ import { UserAvatar } from '@/components/UserAvatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
+import { CoachMark } from '@/components/CoachMark';
+import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
 
 const PeoplePage = () => {
   const navigate = useNavigate();
@@ -20,6 +21,34 @@ const PeoplePage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  // Outgoing pending requests
+  const { data: outgoingPending = [] } = useQuery({
+    queryKey: ['outgoing-friend-requests'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+      const { data: rows } = await supabase
+        .from('friends')
+        .select('id, friend_id, created_at')
+        .eq('user_id', user.id)
+        .eq('status', 'pending');
+      if (!rows || rows.length === 0) return [];
+      const ids = rows.map(r => r.friend_id);
+      const { data: profs } = await supabase
+        .from('profiles')
+        .select('user_id, username, avatar_url')
+        .in('user_id', ids);
+      const profMap = new Map((profs || []).map(p => [p.user_id, p]));
+      return rows.map(r => ({
+        id: r.id,
+        friend_id: r.friend_id,
+        profile: profMap.get(r.friend_id) || null,
+      }));
+    },
+  });
 
   // Fetch shared event counts for all friends
   const { data: sharedCounts = {} } = useQuery({
@@ -29,12 +58,10 @@ const PeoplePage = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return {};
 
-      // My events (created + participating)
       const { data: myCreated } = await supabase.from('events').select('id').eq('created_by', user.id);
       const { data: myParts } = await supabase.from('event_participants').select('event_id').eq('user_id', user.id);
       const myEventIds = new Set([...(myCreated || []).map(e => e.id), ...(myParts || []).map(p => p.event_id)]);
 
-      // For each friend, get their events
       const friendIds = friends.map(f => f.user_id);
       const { data: theirCreated } = await supabase.from('events').select('id, created_by').in('created_by', friendIds);
       const { data: theirParts } = await supabase.from('event_participants').select('event_id, user_id').in('user_id', friendIds);
@@ -52,7 +79,6 @@ const PeoplePage = () => {
     enabled: friends.length > 0,
   });
 
-  // Sort friends by shared event count descending
   const sortedFriends = [...friends].sort((a, b) => (sharedCounts[b.user_id] || 0) - (sharedCounts[a.user_id] || 0));
   const [adding, setAdding] = useState<string | null>(null);
   const [searchDone, setSearchDone] = useState(false);
@@ -60,6 +86,7 @@ const PeoplePage = () => {
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ['friends'] });
     queryClient.invalidateQueries({ queryKey: ['friend-requests'] });
+    queryClient.invalidateQueries({ queryKey: ['outgoing-friend-requests'] });
     queryClient.invalidateQueries({ queryKey: ['pending-friend-count'] });
   };
 
@@ -72,16 +99,17 @@ const PeoplePage = () => {
       if (!user) return;
 
       const query = searchQuery.trim();
+      const lower = query.toLowerCase();
+
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .or(`username.ilike.%${query}%,email.ilike.%${query}%`)
         .neq('user_id', user.id)
-        .limit(10);
+        .limit(20);
 
       if (error) { toast.error(error.message); return; }
 
-      // Get outgoing pending requests too
       const { data: sentRequests } = await supabase
         .from('friends')
         .select('friend_id')
@@ -92,7 +120,22 @@ const PeoplePage = () => {
       const pendingIncomingIds = friendRequests.map(r => r.user_id);
       const pendingSentIds = (sentRequests || []).map(r => r.friend_id);
       const excludeIds = new Set([...friendIds, ...pendingIncomingIds, ...pendingSentIds]);
-      setSearchResults((data || []).filter(p => !excludeIds.has(p.user_id)));
+
+      // Rank: exact username > prefix > substring
+      const ranked = (data || [])
+        .filter(p => !excludeIds.has(p.user_id))
+        .map(p => {
+          const u = (p.username || '').toLowerCase();
+          let rank = 3;
+          if (u === lower) rank = 0;
+          else if (u.startsWith(lower)) rank = 1;
+          else if (u.includes(lower)) rank = 2;
+          return { p, rank };
+        })
+        .sort((a, b) => a.rank - b.rank)
+        .map(x => x.p);
+
+      setSearchResults(ranked.slice(0, 10));
       setSearchDone(true);
     } finally {
       setSearching(false);
@@ -120,6 +163,13 @@ const PeoplePage = () => {
     }
   };
 
+  const cancelOutgoingRequest = async (requestId: string) => {
+    const { error } = await supabase.from('friends').delete().eq('id', requestId);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Request cancelled');
+    invalidateAll();
+  };
+
   const respondToRequest = async (requestId: string, status: 'accepted' | 'declined') => {
     const { error } = await supabase
       .from('friends')
@@ -134,6 +184,14 @@ const PeoplePage = () => {
 
   return (
     <div className="min-h-screen pb-24">
+      <CoachMark
+        id="people-search"
+        text="Search a username to add friends"
+        anchorSelector='[data-coach="people-search"]'
+        placement="bottom"
+      />
+      <InviteFriendsSheet open={inviteOpen} onOpenChange={setInviteOpen} />
+
       <div className="mx-auto max-w-md px-4 pt-12">
         <motion.h1
           initial={{ opacity: 0, y: -10 }}
@@ -148,16 +206,11 @@ const PeoplePage = () => {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          onClick={() => {
-            const url = window.location.origin + '/onboarding';
-            const msg = `Hey! Join me on Cali so we can plan things together 🗓️✨\n\nSign up here: ${url}`;
-            navigator.clipboard.writeText(msg);
-            toast.success('Invite message copied to clipboard! 📋');
-          }}
+          onClick={() => setInviteOpen(true)}
           className="mb-6 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-primary/30 bg-primary/5 p-3.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
         >
           <Share2 className="h-4 w-4" />
-          Invite friends to join Cali
+          Invite friends to join SyncCircle
         </motion.button>
 
         {friendRequests.length > 0 && (
@@ -208,12 +261,13 @@ const PeoplePage = () => {
 
         {/* Search to add friends */}
         <motion.div
+          ref={searchRef}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
           className="mb-6"
         >
-          <div className="flex gap-2">
+          <div data-coach="people-search" className="flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -263,13 +317,54 @@ const PeoplePage = () => {
           )}
         </motion.div>
 
+        {/* Outgoing Pending Requests */}
+        {outgoingPending.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Pending ({outgoingPending.length})
+            </h2>
+            <div className="flex flex-col gap-2">
+              {outgoingPending.map(req => (
+                <div
+                  key={req.id}
+                  className="flex items-center gap-3 rounded-2xl bg-card p-3 shadow-card"
+                >
+                  <UserAvatar
+                    avatarUrl={req.profile?.avatar_url}
+                    username={req.profile?.username}
+                    size="md"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground truncate">
+                      @{req.profile?.username || 'unknown'}
+                    </p>
+                    <p className="text-xs italic text-muted-foreground">Pending...</p>
+                  </div>
+                  <button
+                    onClick={() => cancelOutgoingRequest(req.id)}
+                    className="text-xs font-medium text-muted-foreground hover:text-destructive transition-colors px-2 py-1"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         {/* Friends List */}
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading...</p>
         ) : friends.length === 0 ? (
-          <p className="text-center text-muted-foreground py-12">
-            No friends yet — search by username above to add some! 👆
-          </p>
+          outgoingPending.length === 0 && (
+            <p className="text-center text-muted-foreground py-12">
+              No friends yet — search by username above to add some! 👆
+            </p>
+          )
         ) : (
           <>
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
