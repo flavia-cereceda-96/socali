@@ -120,6 +120,7 @@
   "people": {
     "title": "People",
     "friends": "Friends",
+    "groups": "Groups",
     "requests": "Requests",
     "search": "Search by username...",
     "addFriend": "Add friend",
@@ -128,6 +129,29 @@
     "noFriends": "No friends yet",
     "inviteFriends": "Invite friends",
     "pending": "Pending"
+  },
+  "groups": {
+    "title": "Groups",
+    "create": "Create group",
+    "newGroup": "New group",
+    "name": "Group name",
+    "namePlaceholder": "e.g. Uni friends, Work crew, Family...",
+    "pickEmoji": "Pick an emoji",
+    "addMembers": "Add members",
+    "membersCount": "{{count}} members",
+    "membersCount_one": "{{count}} member",
+    "empty": "No groups yet — create one to invite everyone at once 👥",
+    "needFriendsFirst": "You need friends first — add some on the Friends tab.",
+    "createButton": "Create Group",
+    "creating": "Creating...",
+    "admin": "Admin",
+    "planTogether": "Plan something together",
+    "leave": "Leave group",
+    "delete": "Delete group",
+    "deleteConfirmTitle": "Delete this group?",
+    "deleteConfirmBody": "This will delete the group for everyone. Plans already created are not affected.",
+    "leaveConfirmTitle": "Leave this group?",
+    "leaveConfirmBody": "You'll stop seeing this group and won't be auto-included in future invites for it."
   },
   "requests": {
     "title": "Activity",

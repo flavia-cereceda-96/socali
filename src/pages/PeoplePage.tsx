@@ -1,10 +1,11 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFriends, useFriendRequests } from '@/hooks/useEvents';
+import { useGroups } from '@/hooks/useGroups';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Search, UserPlus, Check, X, Calendar, Share2 } from 'lucide-react';
+import { Search, UserPlus, Check, X, Calendar, Share2, Plus, ChevronRight } from 'lucide-react';
 import { ClickableName } from '@/components/ClickableName';
 import { UserAvatar } from '@/components/UserAvatar';
 import { Input } from '@/components/ui/input';
@@ -12,12 +13,15 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { CoachMark } from '@/components/CoachMark';
 import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
+import { cn } from '@/lib/utils';
 
 const PeoplePage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: friends = [], isLoading } = useFriends();
   const { data: friendRequests = [] } = useFriendRequests();
+  const { data: groups = [], isLoading: groupsLoading } = useGroups();
+  const [activeTab, setActiveTab] = useState<'friends' | 'groups'>('friends');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
@@ -196,11 +200,31 @@ const PeoplePage = () => {
         <motion.h1
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 text-2xl font-bold text-foreground"
+          className="mb-4 text-2xl font-bold text-foreground"
         >
           Your People
         </motion.h1>
 
+        {/* Tabs */}
+        <div className="mb-6 grid grid-cols-2 gap-2 rounded-full bg-secondary/60 p-1">
+          {(['friends', 'groups'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={cn(
+                'rounded-full py-2 text-sm font-semibold capitalize transition-all',
+                activeTab === tab
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === 'friends' && (
+          <>
         {/* Invite friends to join */}
         <motion.button
           initial={{ opacity: 0, y: 8 }}
@@ -394,6 +418,58 @@ const PeoplePage = () => {
               ))}
             </div>
           </>
+        )}
+          </>
+        )}
+
+        {activeTab === 'groups' && (
+          <div>
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                {groups.length > 0 ? `${groups.length} group${groups.length === 1 ? '' : 's'}` : ''}
+              </p>
+              <button
+                onClick={() => navigate('/people/groups/new')}
+                className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
+              >
+                <Plus className="h-3.5 w-3.5" /> Create group
+              </button>
+            </div>
+
+            {groupsLoading ? (
+              <p className="text-sm text-muted-foreground">Loading...</p>
+            ) : groups.length === 0 ? (
+              <div className="text-center py-12 px-4">
+                <p className="text-muted-foreground">
+                  No groups yet — create one to invite everyone at once 👥
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {groups.map((g, i) => (
+                  <motion.button
+                    key={g.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.04 }}
+                    onClick={() => navigate(`/people/groups/${g.id}`)}
+                    className="flex items-center gap-3 rounded-2xl bg-card p-3.5 shadow-card text-left hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-2xl">
+                      {g.emoji}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-foreground truncate">{g.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {g.member_count} member{g.member_count === 1 ? '' : 's'}
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  </motion.button>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>

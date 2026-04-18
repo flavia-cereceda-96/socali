@@ -15,6 +15,8 @@ import EventDetailPage from "./pages/EventDetailPage.tsx";
 import RequestsPage from "./pages/RequestsPage.tsx";
 import SettingsPage from "./pages/SettingsPage.tsx";
 import ProfilePage from "./pages/ProfilePage.tsx";
+import CreateGroupPage from "./pages/CreateGroupPage.tsx";
+import GroupDetailPage from "./pages/GroupDetailPage.tsx";
 import OnboardingPage from "./pages/OnboardingPage.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage.tsx";
@@ -78,6 +80,8 @@ const App = () => {
             <Route path="/" element={authed ? <Index /> : <Navigate to={seenSplash ? "/login" : "/welcome"} replace />} />
             <Route path="/calendar" element={authed ? <CalendarPage /> : <Navigate to="/login" replace />} />
             <Route path="/people" element={authed ? <PeoplePage /> : <Navigate to="/login" replace />} />
+            <Route path="/people/groups/new" element={authed ? <CreateGroupPage /> : <Navigate to="/login" replace />} />
+            <Route path="/people/groups/:id" element={authed ? <GroupDetailPage /> : <Navigate to="/login" replace />} />
             <Route path="/create" element={authed ? <CreateEventPage /> : <Navigate to="/login" replace />} />
             <Route path="/requests" element={authed ? <RequestsPage /> : <Navigate to="/login" replace />} />
             <Route path="/event/:id" element={authed ? <EventDetailPage /> : <Navigate to="/login" replace />} />

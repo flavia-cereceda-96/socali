@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useFriends, DbProfile } from '@/hooks/useEvents';
+import { useGroups, useGroup, DbGroup } from '@/hooks/useGroups';
 import { UserAvatar } from '@/components/UserAvatar';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Check, X } from 'lucide-react';
+import { ArrowLeft, Check, X, Users } from 'lucide-react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -23,7 +24,10 @@ const CreateEventPage = () => {
   const [searchParams] = useSearchParams();
   const routeLocation = useLocation();
   const prefilledDate = searchParams.get('date') || '';
+  const prefilledGroupId = searchParams.get('groupId') || '';
   const { data: friends = [] } = useFriends();
+  const { data: groups = [] } = useGroups();
+  const { data: prefilledGroup } = useGroup(prefilledGroupId || undefined);
 
   // Pre-invite a friend if navigated from PersonPage
   const inviteFriendId = (routeLocation.state as any)?.inviteFriendId;
@@ -33,6 +37,7 @@ const CreateEventPage = () => {
   const [emoji, setEmoji] = useState('🎉');
   const [isMultiDay, setIsMultiDay] = useState(false);
   const [selectedFriends, setSelectedFriends] = useState<DbProfile[]>([]);
+  const [selectedGroups, setSelectedGroups] = useState<DbGroup[]>([]);
   const [dateStr, setDateStr] = useState(prefilledDate);
   const [endDateStr, setEndDateStr] = useState('');
   const [startTime, setStartTime] = useState('');
@@ -55,13 +60,48 @@ const CreateEventPage = () => {
     }
   }, [inviteFriendId, friends]);
 
+  // Auto-select group if navigated with ?groupId
+  useEffect(() => {
+    if (prefilledGroup && !selectedGroups.find(g => g.id === prefilledGroup.id)) {
+      setSelectedGroups(prev => [...prev, {
+        id: prefilledGroup.id,
+        name: prefilledGroup.name,
+        emoji: prefilledGroup.emoji,
+        created_by: prefilledGroup.created_by,
+        created_at: prefilledGroup.created_at,
+        member_count: prefilledGroup.member_count,
+      }]);
+    }
+  }, [prefilledGroup]);
+
   const toggleFriend = (f: DbProfile) => {
     setSelectedFriends(prev =>
       prev.find(p => p.user_id === f.user_id) ? prev.filter(p => p.user_id !== f.user_id) : [...prev, f]
     );
   };
 
+  const toggleGroup = (g: DbGroup) => {
+    setSelectedGroups(prev =>
+      prev.find(p => p.id === g.id) ? prev.filter(p => p.id !== g.id) : [...prev, g]
+    );
+  };
+
   const canSubmit = title.trim() && dateStr && (isMultiDay ? endDateStr : startTime);
+
+  /** Resolve final unique participant user_ids from friends + groups (excluding current user). */
+  async function resolveParticipants(currentUserId: string): Promise<string[]> {
+    const ids = new Set<string>(selectedFriends.map(f => f.user_id));
+    if (selectedGroups.length > 0) {
+      const { data: members } = await supabase
+        .from('group_members')
+        .select('user_id')
+        .in('group_id', selectedGroups.map(g => g.id));
+      (members || []).forEach(m => {
+        if (m.user_id !== currentUserId) ids.add(m.user_id);
+      });
+    }
+    return Array.from(ids);
+  }
 
   const handleSubmit = async () => {
     if (!canSubmit || submitting) return;
@@ -113,21 +153,22 @@ const CreateEventPage = () => {
         return;
       }
 
-      // Add participants and create activity
-      if (selectedFriends.length > 0 && event) {
+      // Resolve final participants from friends + groups (deduped, excludes creator)
+      const participantIds = await resolveParticipants(user.id);
+
+      if (participantIds.length > 0 && event) {
         const { error: pError } = await supabase.from('event_participants').insert(
-          selectedFriends.map(f => ({
+          participantIds.map(uid => ({
             event_id: event.id,
-            user_id: f.user_id,
+            user_id: uid,
             status: 'suggested',
           }))
         );
         if (pError) toast.error('Event created but failed to add participants');
 
-        // Create activity feed items for each invited friend
         await supabase.from('activity_feed').insert(
-          selectedFriends.map(f => ({
-            user_id: f.user_id,
+          participantIds.map(uid => ({
+            user_id: uid,
             type: 'invitation',
             event_id: event.id,
             source_user_id: user.id,
@@ -137,8 +178,11 @@ const CreateEventPage = () => {
 
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['unread-activity-count'] });
+      const peopleSummary = selectedGroups.length > 0
+        ? selectedGroups.map(g => `${g.emoji} ${g.name}`).join(', ')
+        : selectedFriends.map(f => f.username).join(', ');
       toast.success('Plan created! 🎉', {
-        description: `${emoji} ${title}${selectedFriends.length > 0 ? ` with ${selectedFriends.map(f => f.username).join(', ')}` : ''}`,
+        description: `${emoji} ${title}${peopleSummary ? ` with ${peopleSummary}` : ''}`,
       });
       navigate('/');
     } catch (err: any) {
@@ -200,8 +244,23 @@ const CreateEventPage = () => {
 
           <div className="space-y-2">
             <Label>Who's joining?</Label>
-            {selectedFriends.length > 0 && (
+            {(selectedFriends.length > 0 || selectedGroups.length > 0) && (
               <div className="flex flex-wrap gap-2 mb-2">
+                {selectedGroups.map(g => (
+                  <span
+                    key={g.id}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-accent border border-primary/30 px-2.5 py-1 text-xs font-semibold text-foreground"
+                  >
+                    <span className="text-base leading-none">{g.emoji}</span>
+                    {g.name}
+                    <span className="rounded-full bg-primary/20 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                      ×{g.member_count}
+                    </span>
+                    <button type="button" onClick={() => toggleGroup(g)} className="hover:text-destructive">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
                 {selectedFriends.map(f => (
                   <span
                     key={f.user_id}
@@ -219,36 +278,74 @@ const CreateEventPage = () => {
             <Input
               value={friendSearch}
               onChange={e => setFriendSearch(e.target.value)}
-              placeholder="@username to search friends..."
+              placeholder="Search friends or groups..."
             />
             {friendSearch.length > 0 && (() => {
               const query = friendSearch.startsWith('@') ? friendSearch.slice(1).toLowerCase() : friendSearch.toLowerCase();
-              const filtered = friends.filter(f =>
+              const filteredFriends = friends.filter(f =>
                 !selectedFriends.find(s => s.user_id === f.user_id) &&
                 (f.username.toLowerCase().includes(query) || f.email.toLowerCase().includes(query))
               );
-              return filtered.length > 0 ? (
-                <div className="flex flex-col gap-1.5 mt-1 max-h-48 overflow-y-auto rounded-xl border border-border bg-card p-1">
-                  {filtered.map(f => (
-                    <button
-                      key={f.user_id}
-                      type="button"
-                      onClick={() => { toggleFriend(f); setFriendSearch(''); }}
-                      className="flex items-center gap-3 rounded-xl p-2.5 text-left transition-all hover:bg-secondary/50"
-                    >
-                      <UserAvatar avatarUrl={f.avatar_url} username={f.username} size="md" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-foreground">@{f.username}</p>
-                        <p className="text-xs text-muted-foreground truncate">{f.email}</p>
-                        {f.bio && (
-                          <p className="text-xs text-muted-foreground/80 truncate mt-0.5 italic">"{f.bio}"</p>
-                        )}
-                      </div>
-                    </button>
-                  ))}
+              const filteredGroups = groups.filter(g =>
+                !selectedGroups.find(s => s.id === g.id) &&
+                g.name.toLowerCase().includes(query)
+              );
+              if (filteredFriends.length === 0 && filteredGroups.length === 0) {
+                return <p className="text-xs text-muted-foreground mt-1">No matching friends or groups</p>;
+              }
+              return (
+                <div className="flex flex-col gap-1 mt-1 max-h-64 overflow-y-auto rounded-xl border border-border bg-card p-1">
+                  {filteredGroups.length > 0 && (
+                    <>
+                      <p className="px-2.5 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Groups
+                      </p>
+                      {filteredGroups.map(g => (
+                        <button
+                          key={g.id}
+                          type="button"
+                          onClick={() => { toggleGroup(g); setFriendSearch(''); }}
+                          className="flex items-center gap-3 rounded-xl p-2.5 text-left transition-all hover:bg-secondary/50"
+                        >
+                          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg">
+                            {g.emoji}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-foreground truncate">{g.name}</p>
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              {g.member_count} member{g.member_count === 1 ? '' : 's'}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </>
+                  )}
+                  {filteredFriends.length > 0 && (
+                    <>
+                      <p className="px-2.5 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Friends
+                      </p>
+                      {filteredFriends.map(f => (
+                        <button
+                          key={f.user_id}
+                          type="button"
+                          onClick={() => { toggleFriend(f); setFriendSearch(''); }}
+                          className="flex items-center gap-3 rounded-xl p-2.5 text-left transition-all hover:bg-secondary/50"
+                        >
+                          <UserAvatar avatarUrl={f.avatar_url} username={f.username} size="md" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-foreground">@{f.username}</p>
+                            <p className="text-xs text-muted-foreground truncate">{f.email}</p>
+                            {f.bio && (
+                              <p className="text-xs text-muted-foreground/80 truncate mt-0.5 italic">"{f.bio}"</p>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </>
+                  )}
                 </div>
-              ) : (
-                <p className="text-xs text-muted-foreground mt-1">No matching friends found</p>
               );
             })()}
           </div>
