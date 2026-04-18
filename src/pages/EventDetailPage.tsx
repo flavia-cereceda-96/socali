@@ -7,7 +7,7 @@ import { EventPhotos } from '@/components/EventPhotos';
 import { UserAvatar } from '@/components/UserAvatar';
 import { ClickableName } from '@/components/ClickableName';
 import { motion } from 'framer-motion';
-import { ArrowLeft, MapPin, Clock, Calendar, MessageSquare, Crown, Pencil, Check, X, UserPlus, UserMinus, Trash2, CalendarPlus } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Calendar, MessageSquare, Crown, Pencil, Check, X, UserPlus, UserMinus, Trash2, CalendarPlus, Link as LinkIcon } from 'lucide-react';
 import { buildGoogleCalendarUrl } from '@/lib/googleCalendar';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -38,6 +38,8 @@ const EventDetailPage = () => {
   const [editLocation, setEditLocation] = useState('');
   const [editNotes, setEditNotes] = useState('');
   const [editCoverImage, setEditCoverImage] = useState('');
+  const [editLinkUrl, setEditLinkUrl] = useState('');
+  const [editLinkLabel, setEditLinkLabel] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -54,6 +56,8 @@ const EventDetailPage = () => {
       setEditLocation(event.location || '');
       setEditNotes(event.notes || '');
       setEditCoverImage((event as any).cover_image || '');
+      setEditLinkUrl((event as any).link_url || '');
+      setEditLinkLabel((event as any).link_label || '');
     }
   }, [event]);
 
@@ -78,6 +82,22 @@ const EventDetailPage = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Validate link URL
+      let normalizedLink: string | null = null;
+      if (editLinkUrl.trim()) {
+        let candidate = editLinkUrl.trim();
+        if (!/^https?:\/\//i.test(candidate)) candidate = `https://${candidate}`;
+        try {
+          const u = new URL(candidate);
+          if (!/^https?:$/.test(u.protocol)) throw new Error();
+          normalizedLink = u.toString();
+        } catch {
+          toast.error('Please enter a valid link URL');
+          setSaving(false);
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from('events')
         .update({
@@ -89,6 +109,8 @@ const EventDetailPage = () => {
           location: editLocation.trim() || null,
           notes: editNotes.trim() || null,
           cover_image: editCoverImage.trim() || null,
+          link_url: normalizedLink,
+          link_label: normalizedLink ? (editLinkLabel.trim() || 'Open link') : null,
         })
         .eq('id', event.id);
 
