@@ -276,6 +276,22 @@ const EventDetailPage = () => {
                 <img src={editCoverImage} alt="Cover preview" className="mt-1 w-full h-24 object-cover rounded-lg" onError={e => (e.currentTarget.style.display = 'none')} />
               )}
             </div>
+            <div className="space-y-1.5 rounded-xl border border-border bg-secondary/30 p-3">
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Link (optional)</span>
+              <Input
+                type="url"
+                value={editLinkUrl}
+                onChange={e => setEditLinkUrl(e.target.value)}
+                placeholder="https://tickets.example.com"
+                maxLength={500}
+              />
+              <Input
+                value={editLinkLabel}
+                onChange={e => setEditLinkLabel(e.target.value)}
+                placeholder='Link text (e.g. "Ticket Site")'
+                maxLength={60}
+              />
+            </div>
             <div className="flex gap-2">
               <Button onClick={handleSave} disabled={saving} className="flex-1 gap-1">
                 <Check className="h-4 w-4" /> {saving ? 'Saving...' : 'Save'}
@@ -322,6 +338,17 @@ const EventDetailPage = () => {
                   <MessageSquare className="h-4 w-4 mt-0.5 text-primary" />
                   <p>{event.notes}</p>
                 </div>
+              )}
+              {(event as any).link_url && (
+                <a
+                  href={(event as any).link_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 text-sm font-medium text-primary underline-offset-4 hover:underline break-all"
+                >
+                  <LinkIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <span>{(event as any).link_label || (event as any).link_url}</span>
+                </a>
               )}
               <a
                 href={buildGoogleCalendarUrl({
