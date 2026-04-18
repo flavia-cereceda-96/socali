@@ -23,7 +23,7 @@ export function CoachMark({ id, text, anchorRef, anchorSelector, placement = 'to
     if (seen) return;
 
     const t = setTimeout(() => {
-      const el = anchorRef.current;
+      const el = anchorRef?.current ?? (anchorSelector ? document.querySelector<HTMLElement>(anchorSelector) : null);
       if (!el) return;
       const rect = el.getBoundingClientRect();
       setPos({
@@ -34,7 +34,7 @@ export function CoachMark({ id, text, anchorRef, anchorSelector, placement = 'to
       setVisible(true);
     }, delay);
     return () => clearTimeout(t);
-  }, [anchorRef, placement, delay, storageKey]);
+  }, [anchorRef, anchorSelector, placement, delay, storageKey]);
 
   const dismiss = () => {
     try { localStorage.setItem(storageKey, 'true'); } catch {}
