@@ -7,7 +7,7 @@ import { EventPhotos } from '@/components/EventPhotos';
 import { UserAvatar } from '@/components/UserAvatar';
 import { ClickableName } from '@/components/ClickableName';
 import { motion } from 'framer-motion';
-import { ArrowLeft, MapPin, Clock, Calendar, MessageSquare, Crown, Pencil, Check, X, UserPlus, UserMinus, Trash2, CalendarPlus } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Calendar, MessageSquare, Crown, Pencil, Check, X, UserPlus, UserMinus, Trash2, CalendarPlus, Link as LinkIcon } from 'lucide-react';
 import { buildGoogleCalendarUrl } from '@/lib/googleCalendar';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -38,6 +38,8 @@ const EventDetailPage = () => {
   const [editLocation, setEditLocation] = useState('');
   const [editNotes, setEditNotes] = useState('');
   const [editCoverImage, setEditCoverImage] = useState('');
+  const [editLinkUrl, setEditLinkUrl] = useState('');
+  const [editLinkLabel, setEditLinkLabel] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -54,6 +56,8 @@ const EventDetailPage = () => {
       setEditLocation(event.location || '');
       setEditNotes(event.notes || '');
       setEditCoverImage((event as any).cover_image || '');
+      setEditLinkUrl((event as any).link_url || '');
+      setEditLinkLabel((event as any).link_label || '');
     }
   }, [event]);
 
@@ -78,6 +82,22 @@ const EventDetailPage = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Validate link URL
+      let normalizedLink: string | null = null;
+      if (editLinkUrl.trim()) {
+        let candidate = editLinkUrl.trim();
+        if (!/^https?:\/\//i.test(candidate)) candidate = `https://${candidate}`;
+        try {
+          const u = new URL(candidate);
+          if (!/^https?:$/.test(u.protocol)) throw new Error();
+          normalizedLink = u.toString();
+        } catch {
+          toast.error('Please enter a valid link URL');
+          setSaving(false);
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from('events')
         .update({
@@ -89,6 +109,8 @@ const EventDetailPage = () => {
           location: editLocation.trim() || null,
           notes: editNotes.trim() || null,
           cover_image: editCoverImage.trim() || null,
+          link_url: normalizedLink,
+          link_label: normalizedLink ? (editLinkLabel.trim() || 'Open link') : null,
         })
         .eq('id', event.id);
 
@@ -254,6 +276,22 @@ const EventDetailPage = () => {
                 <img src={editCoverImage} alt="Cover preview" className="mt-1 w-full h-24 object-cover rounded-lg" onError={e => (e.currentTarget.style.display = 'none')} />
               )}
             </div>
+            <div className="space-y-1.5 rounded-xl border border-border bg-secondary/30 p-3">
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Link (optional)</span>
+              <Input
+                type="url"
+                value={editLinkUrl}
+                onChange={e => setEditLinkUrl(e.target.value)}
+                placeholder="https://tickets.example.com"
+                maxLength={500}
+              />
+              <Input
+                value={editLinkLabel}
+                onChange={e => setEditLinkLabel(e.target.value)}
+                placeholder='Link text (e.g. "Ticket Site")'
+                maxLength={60}
+              />
+            </div>
             <div className="flex gap-2">
               <Button onClick={handleSave} disabled={saving} className="flex-1 gap-1">
                 <Check className="h-4 w-4" /> {saving ? 'Saving...' : 'Save'}
@@ -300,6 +338,17 @@ const EventDetailPage = () => {
                   <MessageSquare className="h-4 w-4 mt-0.5 text-primary" />
                   <p>{event.notes}</p>
                 </div>
+              )}
+              {(event as any).link_url && (
+                <a
+                  href={(event as any).link_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 text-sm font-medium text-primary underline-offset-4 hover:underline break-all"
+                >
+                  <LinkIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <span>{(event as any).link_label || (event as any).link_url}</span>
+                </a>
               )}
               <a
                 href={buildGoogleCalendarUrl({

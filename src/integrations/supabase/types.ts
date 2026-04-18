@@ -199,6 +199,8 @@ export type Database = {
           end_time: string | null
           id: string
           is_trip: boolean
+          link_label: string | null
+          link_url: string | null
           location: string | null
           notes: string | null
           time: string | null
@@ -215,6 +217,8 @@ export type Database = {
           end_time?: string | null
           id?: string
           is_trip?: boolean
+          link_label?: string | null
+          link_url?: string | null
           location?: string | null
           notes?: string | null
           time?: string | null
@@ -231,6 +235,8 @@ export type Database = {
           end_time?: string | null
           id?: string
           is_trip?: boolean
+          link_label?: string | null
+          link_url?: string | null
           location?: string | null
           notes?: string | null
           time?: string | null

@@ -39,6 +39,8 @@ const CreateEventPage = () => {
   const [location, setLocation] = useState('');
   const [notes, setNotes] = useState('');
   const [coverImage, setCoverImage] = useState('');
+  const [linkUrl, setLinkUrl] = useState('');
+  const [linkLabel, setLinkLabel] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [friendSearch, setFriendSearch] = useState('');
 
@@ -71,6 +73,22 @@ const CreateEventPage = () => {
         return;
       }
 
+      // Validate link URL if provided
+      let normalizedLink: string | null = null;
+      if (linkUrl.trim()) {
+        let candidate = linkUrl.trim();
+        if (!/^https?:\/\//i.test(candidate)) candidate = `https://${candidate}`;
+        try {
+          const u = new URL(candidate);
+          if (!/^https?:$/.test(u.protocol)) throw new Error();
+          normalizedLink = u.toString();
+        } catch {
+          toast.error('Please enter a valid link URL');
+          setSubmitting(false);
+          return;
+        }
+      }
+
       const { data: event, error } = await supabase.from('events').insert({
         title,
         emoji,
@@ -81,6 +99,8 @@ const CreateEventPage = () => {
         location: location || null,
         notes: notes || null,
         cover_image: coverImage.trim() || null,
+        link_url: normalizedLink,
+        link_label: normalizedLink ? (linkLabel.trim() || 'Open link') : null,
         is_trip: isMultiDay,
         created_by: user.id,
       }).select().single();
@@ -308,6 +328,28 @@ const CreateEventPage = () => {
               placeholder="Any extra details..."
               rows={3}
             />
+          </div>
+
+          <div className="space-y-2 rounded-2xl border border-border bg-secondary/30 p-3">
+            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Add a link (optional)
+            </Label>
+            <Input
+              value={linkUrl}
+              onChange={e => setLinkUrl(e.target.value)}
+              placeholder="https://tickets.example.com"
+              maxLength={500}
+              type="url"
+            />
+            <Input
+              value={linkLabel}
+              onChange={e => setLinkLabel(e.target.value)}
+              placeholder='Link text (e.g. "Ticket Site")'
+              maxLength={60}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              People will see this as a clickable link on the event page.
+            </p>
           </div>
 
           <Button
