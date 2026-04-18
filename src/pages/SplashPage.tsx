@@ -33,7 +33,7 @@ const SplashPage = () => {
         className="flex flex-col items-center text-center"
       >
         <div className="mb-5 text-6xl">🗓️</div>
-        <h1 className="text-4xl font-bold tracking-tight text-foreground">SyncCircle</h1>
+        <h1 className="text-4xl font-bold tracking-tight text-foreground">Cali</h1>
         <p className="mt-3 text-base text-muted-foreground">
           Plan things with the people you love
         </p>
