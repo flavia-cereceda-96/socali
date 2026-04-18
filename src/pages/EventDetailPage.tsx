@@ -15,6 +15,8 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
+import { LocationPicker, LocationValue } from '@/components/LocationPicker';
+import { LocationMap } from '@/components/LocationMap';
 
 const EventDetailPage = () => {
   const { id } = useParams();
@@ -34,7 +36,7 @@ const EventDetailPage = () => {
   const [editEndDate, setEditEndDate] = useState('');
   const [editStartTime, setEditStartTime] = useState('');
   const [editEndTime, setEditEndTime] = useState('');
-  const [editLocation, setEditLocation] = useState('');
+  const [editLocation, setEditLocation] = useState<LocationValue>({ address: '', latitude: null, longitude: null });
   const [editNotes, setEditNotes] = useState('');
   const [editCoverImage, setEditCoverImage] = useState('');
   const [editLinkUrl, setEditLinkUrl] = useState('');
@@ -52,7 +54,11 @@ const EventDetailPage = () => {
       setEditEndDate(event.end_date || '');
       setEditStartTime((event as any).time || '');
       setEditEndTime((event as any).end_time || '');
-      setEditLocation(event.location || '');
+      setEditLocation({
+        address: event.location || '',
+        latitude: (event as any).latitude ?? null,
+        longitude: (event as any).longitude ?? null,
+      });
       setEditNotes(event.notes || '');
       setEditCoverImage((event as any).cover_image || '');
       setEditLinkUrl((event as any).link_url || '');
@@ -105,7 +111,9 @@ const EventDetailPage = () => {
           end_date: editEndDate || null,
           time: editStartTime || null,
           end_time: editEndTime || null,
-          location: editLocation.trim() || null,
+          location: editLocation.address.trim() || null,
+          latitude: editLocation.latitude,
+          longitude: editLocation.longitude,
           notes: editNotes.trim() || null,
           cover_image: editCoverImage.trim() || null,
           link_url: normalizedLink,
@@ -260,9 +268,17 @@ const EventDetailPage = () => {
                 <Input type="time" value={editEndTime} onChange={e => setEditEndTime(e.target.value)} />
               </div>
             </div>
-            <div>
+            <div className="space-y-2">
               <span className="text-xs font-medium text-muted-foreground">Location</span>
-              <Input value={editLocation} onChange={e => setEditLocation(e.target.value)} />
+              <LocationPicker value={editLocation} onChange={setEditLocation} />
+              {editLocation.latitude !== null && editLocation.longitude !== null && (
+                <LocationMap
+                  latitude={editLocation.latitude}
+                  longitude={editLocation.longitude}
+                  address={editLocation.address}
+                  height={120}
+                />
+              )}
             </div>
             <div>
               <span className="text-xs font-medium text-muted-foreground">Notes</span>
@@ -327,9 +343,19 @@ const EventDetailPage = () => {
                 </div>
               )}
               {event.location && (
-                <div className="flex items-start gap-3 text-sm text-foreground">
-                  <MapPin className="h-4 w-4 mt-0.5 text-primary" />
-                  <p className="font-medium">{event.location}</p>
+                <div className="space-y-2">
+                  <div className="flex items-start gap-3 text-sm text-foreground">
+                    <MapPin className="h-4 w-4 mt-0.5 text-primary" />
+                    <p className="font-medium">{event.location}</p>
+                  </div>
+                  {(event as any).latitude !== null && (event as any).longitude !== null && (
+                    <LocationMap
+                      latitude={(event as any).latitude}
+                      longitude={(event as any).longitude}
+                      address={event.location}
+                      height={160}
+                    />
+                  )}
                 </div>
               )}
               {event.notes && (
