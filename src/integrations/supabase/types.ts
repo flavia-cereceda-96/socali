@@ -62,6 +62,33 @@ export type Database = {
           },
         ]
       }
+      app_updates: {
+        Row: {
+          created_at: string
+          created_by: string
+          emoji: string
+          id: string
+          summary: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          emoji?: string
+          id?: string
+          summary: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          emoji?: string
+          id?: string
+          summary?: string
+          title?: string
+        }
+        Relationships: []
+      }
       event_comments: {
         Row: {
           content: string
@@ -242,6 +269,7 @@ export type Database = {
           bio: string | null
           created_at: string
           email: string
+          gcal_auto_export: boolean
           id: string
           usage: string
           user_id: string
@@ -252,6 +280,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           email: string
+          gcal_auto_export?: boolean
           id?: string
           usage: string
           user_id: string
@@ -262,6 +291,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           email?: string
+          gcal_auto_export?: boolean
           id?: string
           usage?: string
           user_id?: string
@@ -269,11 +299,68 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_update_reads: {
+        Row: {
+          id: string
+          read_at: string
+          update_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          read_at?: string
+          update_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          read_at?: string
+          update_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_update_reads_update_id_fkey"
+            columns: ["update_id"]
+            isOneToOne: false
+            referencedRelation: "app_updates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_event_creator: {
         Args: { _event_id: string; _user_id: string }
         Returns: boolean
@@ -284,7 +371,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -411,6 +498,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
