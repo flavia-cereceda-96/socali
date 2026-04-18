@@ -6,12 +6,13 @@ import { X } from 'lucide-react';
 interface CoachMarkProps {
   id: string;
   text: string;
-  anchorRef: RefObject<HTMLElement>;
+  anchorRef?: RefObject<HTMLElement>;
+  anchorSelector?: string;
   placement?: 'top' | 'bottom';
   delay?: number;
 }
 
-export function CoachMark({ id, text, anchorRef, placement = 'top', delay = 600 }: CoachMarkProps) {
+export function CoachMark({ id, text, anchorRef, anchorSelector, placement = 'top', delay = 600 }: CoachMarkProps) {
   const storageKey = `coach_${id}_seen`;
   const [visible, setVisible] = useState(false);
   const [pos, setPos] = useState<{ top: number; bottom: number; left: number } | null>(null);
