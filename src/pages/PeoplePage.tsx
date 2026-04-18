@@ -150,14 +150,14 @@ const PeoplePage = () => {
           transition={{ delay: 0.05 }}
           onClick={() => {
             const url = window.location.origin + '/onboarding';
-            const msg = `Hey! Join me on SyncCircle so we can plan things together 🗓️✨\n\nSign up here: ${url}`;
+            const msg = `Hey! Join me on Cali so we can plan things together 🗓️✨\n\nSign up here: ${url}`;
             navigator.clipboard.writeText(msg);
             toast.success('Invite message copied to clipboard! 📋');
           }}
           className="mb-6 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-primary/30 bg-primary/5 p-3.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
         >
           <Share2 className="h-4 w-4" />
-          Invite friends to join SyncCircle
+          Invite friends to join Cali
         </motion.button>
 
         {friendRequests.length > 0 && (
