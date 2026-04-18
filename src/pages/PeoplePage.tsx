@@ -419,6 +419,58 @@ const PeoplePage = () => {
             </div>
           </>
         )}
+          </>
+        )}
+
+        {activeTab === 'groups' && (
+          <div>
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                {groups.length > 0 ? `${groups.length} group${groups.length === 1 ? '' : 's'}` : ''}
+              </p>
+              <button
+                onClick={() => navigate('/people/groups/new')}
+                className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
+              >
+                <Plus className="h-3.5 w-3.5" /> Create group
+              </button>
+            </div>
+
+            {groupsLoading ? (
+              <p className="text-sm text-muted-foreground">Loading...</p>
+            ) : groups.length === 0 ? (
+              <div className="text-center py-12 px-4">
+                <p className="text-muted-foreground">
+                  No groups yet — create one to invite everyone at once 👥
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {groups.map((g, i) => (
+                  <motion.button
+                    key={g.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.04 }}
+                    onClick={() => navigate(`/people/groups/${g.id}`)}
+                    className="flex items-center gap-3 rounded-2xl bg-card p-3.5 shadow-card text-left hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-2xl">
+                      {g.emoji}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-foreground truncate">{g.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {g.member_count} member{g.member_count === 1 ? '' : 's'}
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  </motion.button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
