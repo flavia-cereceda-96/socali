@@ -116,6 +116,18 @@ const CreateEventPage = () => {
       toast.success('Plan created! 🎉', {
         description: `${emoji} ${title}${selectedFriends.length > 0 ? ` with ${selectedFriends.map(f => f.username).join(', ')}` : ''}`,
       });
+      if (event) {
+        autoExportToGCalIfEnabled({
+          title,
+          emoji,
+          date: dateStr,
+          end_date: isMultiDay ? endDateStr : null,
+          time: isMultiDay ? null : (startTime || null),
+          end_time: isMultiDay ? null : (endTime || null),
+          location: location || null,
+          notes: notes || null,
+        });
+      }
       navigate('/');
     } catch (err: any) {
       toast.error(err.message || 'Something went wrong');

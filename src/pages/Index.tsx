@@ -78,7 +78,21 @@ const Index = () => {
       .update({ status })
       .eq('id', participantId);
     if (error) toast.error(error.message);
-    else queryClient.invalidateQueries({ queryKey: ['events'] });
+    else {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      if (status === 'accepted') {
+        autoExportToGCalIfEnabled({
+          title: event.title,
+          emoji: event.emoji,
+          date: event.date,
+          end_date: event.end_date,
+          time: event.time,
+          end_time: event.end_time,
+          location: event.location,
+          notes: event.notes,
+        });
+      }
+    }
   };
 
   const formatTime = (t: string) => {

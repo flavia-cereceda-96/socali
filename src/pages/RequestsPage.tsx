@@ -44,7 +44,7 @@ const RequestsPage = () => {
     e.created_by !== userId && e.participants.some(p => p.user_id === userId && p.status === 'suggested')
   );
 
-  const handleRsvp = async (participantId: string, status: string, note?: string) => {
+  const handleRsvp = async (participantId: string, status: string, note?: string, event?: DbEvent) => {
     const updateData: any = { status };
     if (status === 'declined' && note) {
       updateData.decline_note = note;
@@ -57,6 +57,18 @@ const RequestsPage = () => {
     else {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['unread-activity-count'] });
+      if (status === 'accepted' && event) {
+        autoExportToGCalIfEnabled({
+          title: event.title,
+          emoji: event.emoji,
+          date: event.date,
+          end_date: event.end_date,
+          time: event.time,
+          end_time: event.end_time,
+          location: event.location,
+          notes: event.notes,
+        });
+      }
     }
     setDecliningId(null);
     setDeclineNote('');
