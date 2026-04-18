@@ -301,6 +301,24 @@ const EventDetailPage = () => {
                   <p>{event.notes}</p>
                 </div>
               )}
+              <a
+                href={buildGoogleCalendarUrl({
+                  title: event.title,
+                  emoji: event.emoji,
+                  date: event.date,
+                  end_date: event.end_date,
+                  time: (event as any).time,
+                  end_time: (event as any).end_time,
+                  location: event.location,
+                  notes: event.notes,
+                })}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-secondary/40 px-3 py-2.5 text-sm font-medium text-foreground transition-all hover:bg-secondary active:scale-[0.98]"
+              >
+                <CalendarPlus className="h-4 w-4 text-primary" />
+                Add to Google Calendar
+              </a>
             </motion.div>
           </>
         )}
