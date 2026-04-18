@@ -180,11 +180,12 @@ const OnboardingPage = () => {
       // Save bio + preferred language if account verified
       const lang = isSupportedLang(i18n.language) ? i18n.language : 'en';
       if (data.user) {
-        const updates: Record<string, any> = { preferred_language: lang };
-        if (bio.trim()) updates.bio = bio.trim();
         await supabase
           .from('profiles')
-          .update(updates)
+          .update({
+            preferred_language: lang,
+            ...(bio.trim() ? { bio: bio.trim() } : {}),
+          })
           .eq('user_id', data.user.id);
       }
 
