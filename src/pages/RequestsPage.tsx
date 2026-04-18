@@ -5,7 +5,7 @@ import { useActivityFeed, ActivityItem } from '@/hooks/useActivity';
 import { StatusBadge } from '@/components/StatusBadge';
 import { UserAvatar } from '@/components/UserAvatar';
 import { motion } from 'framer-motion';
-import { MapPin, Clock, Check, HelpCircle, X, MessageSquare, UserPlus, AtSign, Bell } from 'lucide-react';
+import { MapPin, Clock, Check, HelpCircle, X, MessageSquare, UserPlus, AtSign, Bell, CheckCircle2, XCircle, CircleHelp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CoachMark } from '@/components/CoachMark';
 import { Input } from '@/components/ui/input';
@@ -70,6 +70,9 @@ const RequestsPage = () => {
       case 'invitation': return <UserPlus className="h-4 w-4 text-primary" />;
       case 'comment': return <MessageSquare className="h-4 w-4 text-blue-500" />;
       case 'mention': return <AtSign className="h-4 w-4 text-amber-500" />;
+      case 'rsvp_accepted': return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
+      case 'rsvp_declined': return <XCircle className="h-4 w-4 text-rose-500" />;
+      case 'rsvp_maybe': return <CircleHelp className="h-4 w-4 text-amber-500" />;
       default: return <Bell className="h-4 w-4 text-muted-foreground" />;
     }
   };
@@ -84,6 +87,12 @@ const RequestsPage = () => {
         return <><span className="font-semibold">{name}</span> commented on <span className="font-semibold">{eventTitle}</span></>;
       case 'mention':
         return <><span className="font-semibold">{name}</span> mentioned you in <span className="font-semibold">{eventTitle}</span></>;
+      case 'rsvp_accepted':
+        return <><span className="font-semibold">{name}</span> is going to <span className="font-semibold">{eventTitle}</span> 🎉</>;
+      case 'rsvp_declined':
+        return <><span className="font-semibold">{name}</span> can't make it to <span className="font-semibold">{eventTitle}</span></>;
+      case 'rsvp_maybe':
+        return <><span className="font-semibold">{name}</span> might come to <span className="font-semibold">{eventTitle}</span></>;
       default:
         return <><span className="font-semibold">{name}</span> activity on <span className="font-semibold">{eventTitle}</span></>;
     }
