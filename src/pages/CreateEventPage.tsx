@@ -153,21 +153,22 @@ const CreateEventPage = () => {
         return;
       }
 
-      // Add participants and create activity
-      if (selectedFriends.length > 0 && event) {
+      // Resolve final participants from friends + groups (deduped, excludes creator)
+      const participantIds = await resolveParticipants(user.id);
+
+      if (participantIds.length > 0 && event) {
         const { error: pError } = await supabase.from('event_participants').insert(
-          selectedFriends.map(f => ({
+          participantIds.map(uid => ({
             event_id: event.id,
-            user_id: f.user_id,
+            user_id: uid,
             status: 'suggested',
           }))
         );
         if (pError) toast.error('Event created but failed to add participants');
 
-        // Create activity feed items for each invited friend
         await supabase.from('activity_feed').insert(
-          selectedFriends.map(f => ({
-            user_id: f.user_id,
+          participantIds.map(uid => ({
+            user_id: uid,
             type: 'invitation',
             event_id: event.id,
             source_user_id: user.id,
@@ -177,8 +178,11 @@ const CreateEventPage = () => {
 
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['unread-activity-count'] });
+      const peopleSummary = selectedGroups.length > 0
+        ? selectedGroups.map(g => `${g.emoji} ${g.name}`).join(', ')
+        : selectedFriends.map(f => f.username).join(', ');
       toast.success('Plan created! 🎉', {
-        description: `${emoji} ${title}${selectedFriends.length > 0 ? ` with ${selectedFriends.map(f => f.username).join(', ')}` : ''}`,
+        description: `${emoji} ${title}${peopleSummary ? ` with ${peopleSummary}` : ''}`,
       });
       navigate('/');
     } catch (err: any) {
