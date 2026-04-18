@@ -4,7 +4,7 @@ import { useProfile } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
 import { UserAvatar } from '@/components/UserAvatar';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Camera, Settings as SettingsIcon } from 'lucide-react';
+import { ArrowLeft, Camera, Settings as SettingsIcon, LogOut } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -176,6 +176,23 @@ const ProfilePage = () => {
           <Button onClick={handleSave} disabled={saving} className="w-full font-semibold" size="lg">
             {saving ? 'Saving...' : 'Save Changes'}
           </Button>
+
+          <div className="pt-4">
+            <Button
+              onClick={async () => {
+                await supabase.auth.signOut();
+                queryClient.clear();
+                toast.success('Logged out');
+                navigate('/');
+              }}
+              variant="outline"
+              className="w-full font-semibold"
+              size="lg"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Log out
+            </Button>
+          </div>
         </motion.div>
       </div>
     </div>
