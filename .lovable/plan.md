@@ -1,68 +1,52 @@
 
 
-## Current state
+## Calendar overhaul plan
 
-The current "Google Calendar export" is a **link generator**, not an integration:
-- `src/lib/googleCalendar.ts` builds a `calendar.google.com/render?action=TEMPLATE&...` URL
-- `autoExportGCalIfEnabled` opens that URL in a new tab
-- Nothing is ever written to the user's calendar via API; the user has to click "Save" on Google's side every time
-- There's no OAuth, no token storage, no two-way sync
+Skip Change 2 (it already works). Implement Changes 1, 3, 4, 5.
 
-## What "real integration" means
+### Change 1 — Paginated month view
+Rewrite `CalendarPage.tsx` from infinite week-scroll to a single-month grid:
+- State: `viewMonth: Date` (defaults to current month, first of month)
+- Sticky header (`sticky top-0 bg-background z-20`): `‹` button → previous month, centred bold 18px "Month YYYY", `›` button → next month, "Today" pill on the right that resets to current month
+- Sticky day-of-week row (`sticky top-[57px] z-10`) with 12px small-caps muted labels
+- 7-col grid, 6 rows, each cell `min-h-[56px]`. Cells from prev/next month at `opacity-30 pointer-events-none`
+- Today: filled terracotta circle behind date number, white text
+- 150ms slide transition on month change using `AnimatePresence` + `x` slide based on direction
 
-A real Google Calendar integration requires **per-user OAuth** (each user authorises access to *their own* calendar — not the workspace owner's). Per the Lovable connector docs, connectors authenticate the developer's account, so they're not suitable here. We need our own OAuth flow.
+### Change 3 — Friend busy-day tints
+Friend palette (exact hex per spec):
+- Friend 1: `#DBEAFE` (blue) at 70% opacity
+- Friend 2: `#EDE9FE` (purple) at 70% opacity
+- Friend 3: `#DCFCE7` (green) at 70% opacity
 
-The full real integration involves:
-1. A Google Cloud project with OAuth 2.0 credentials (Client ID + Secret) with the `https://www.googleapis.com/auth/calendar.events` scope
-2. Storing per-user `access_token` + `refresh_token` securely (in a new `google_calendar_tokens` table, RLS-locked to the owner)
-3. An OAuth start edge function that redirects the user to Google's consent screen
-4. An OAuth callback edge function that exchanges the code for tokens and stores them
-5. A `gcal-create-event` edge function that uses the stored token (refreshing if expired) to POST to `https://www.googleapis.com/calendar/v3/calendars/primary/events`
-6. Settings UI: "Connect Google Calendar" / "Disconnect" + connection status
-7. Wire `autoExportToGCalIfEnabled` (and any explicit export buttons) to call the edge function instead of opening a URL
+Applied as inline `style={{ backgroundColor }}` since they fall outside the design system. Cell layering:
+- Background: friend tint (or stacked diagonal gradient if multiple friends busy)
+- Foreground: date number + user's terracotta event dots (existing behaviour preserved)
 
-## What I need from you (the user)
+Friend chip (Change 5 area) shows the same hex as a small filled dot so the legend is implicit.
 
-The Lovable platform cannot create Google OAuth credentials for you — you have to register an OAuth client in **Google Cloud Console**. I'll guide you, but you'll need to:
+### Change 4 — Day detail bottom sheet
+Replace the current inline `AnimatePresence` expanding section with a shadcn `Sheet` (side="bottom") containing:
+- Drag handle bar
+- Bold date heading "Saturday, 25 April 2026"
+- Scrollable list mixing user events + friend events
+- Friend events: 3px left border in their assigned tint hex
+- Empty state: "Nothing planned — tap + to add something ✨" linking to `/create?date=YYYY-MM-DD`
+- Tap-outside or drag-down dismisses (built-in shadcn behaviour)
 
-1. Create/choose a project at https://console.cloud.google.com
-2. Enable the **Google Calendar API**
-3. Configure the OAuth consent screen (External, add your email as a test user)
-4. Create an **OAuth 2.0 Client ID** (Web application)
-5. Add this exact redirect URI:
-   `https://nadyafekoiaxoeqgvhtp.supabase.co/functions/v1/gcal-oauth-callback`
-6. Copy the **Client ID** and **Client Secret** — I'll prompt for them as secrets
+### Change 5 — Friend availability search
+- Replace free-text `@` parsing with: input shows all confirmed friends in dropdown the moment user focuses or types a single `@`. As they type more, list filters by username substring.
+- Selected friends row sits **below** the search input in a `overflow-x-auto flex` row (not flex-wrap above it)
+- Each chip: avatar, username, coloured dot (matching grid tint), `×` remove
+- Hard cap at 3. If user attempts a 4th selection, show inline `text-xs text-amber-600` "Maximum 3 friends at once" for 3 seconds
+- Input clears after each selection
 
-## Implementation plan
+### Files
+**Edit:** `src/pages/CalendarPage.tsx` (full rewrite — file is monolithic, ~400 lines, single responsibility, no need to split)
+**No DB changes, no new components needed** (using existing shadcn `Sheet`).
 
-### 1. Database
-Migration to create `google_calendar_tokens`:
-- `user_id uuid PK references auth.users`
-- `access_token text`, `refresh_token text`, `expires_at timestamptz`, `scope text`
-- RLS: only the owner can `select`/`delete` their row; only edge functions (service role) can `insert`/`update`
+### Out of scope
+- Change 2 (skipped per your confirmation)
 
-### 2. Secrets
-Request from user: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
-
-### 3. Edge functions
-- `gcal-oauth-start` — builds Google consent URL with `access_type=offline&prompt=consent`, returns it to the client
-- `gcal-oauth-callback` — exchanges `code` for tokens, upserts into `google_calendar_tokens`, redirects user back to `/settings?gcal=connected`
-- `gcal-create-event` — accepts an event payload, loads the user's token, refreshes if needed, POSTs to Calendar API, returns the created event id/link
-
-### 4. Frontend
-- `src/lib/gcalClient.ts` — `connectGoogleCalendar()`, `disconnectGoogleCalendar()`, `isGoogleCalendarConnected()`, `createGCalEvent(event)`
-- `SettingsPage.tsx` — replace the auto-export switch with a real **Connect Google Calendar** button showing connection status, plus the "auto-export new events" switch (only enabled once connected)
-- `autoExportGCal.ts` — call `createGCalEvent` instead of `window.open`, toast success/failure with link to the created event
-- `EventDetailPage.tsx` "Add to Google Calendar" button — same treatment
-
-### 5. Cleanup
-- Keep `googleCalendar.ts` URL builder as a fallback only if user hasn't connected; otherwise hide it
-
-## Files
-
-**Create:** migration for `google_calendar_tokens`; `supabase/functions/gcal-oauth-start/index.ts`, `gcal-oauth-callback/index.ts`, `gcal-create-event/index.ts`; `src/lib/gcalClient.ts`
-**Edit:** `src/pages/SettingsPage.tsx`, `src/lib/autoExportGCal.ts`, `src/pages/EventDetailPage.tsx`
-**Secrets requested:** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
-
-Once you approve, I'll start with the migration + edge function scaffolding, then prompt you for the two Google secrets before wiring the UI.
+Approve and I'll write it.
 
