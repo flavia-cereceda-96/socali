@@ -14,7 +14,7 @@ interface CoachMarkProps {
 export function CoachMark({ id, text, anchorRef, placement = 'top', delay = 600 }: CoachMarkProps) {
   const storageKey = `coach_${id}_seen`;
   const [visible, setVisible] = useState(false);
-  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [pos, setPos] = useState<{ top: number; bottom: number; left: number } | null>(null);
 
   useEffect(() => {
     let seen = false;
@@ -26,9 +26,9 @@ export function CoachMark({ id, text, anchorRef, placement = 'top', delay = 600 
       if (!el) return;
       const rect = el.getBoundingClientRect();
       setPos({
-        top: placement === 'top' ? rect.top + window.scrollY : rect.bottom + window.scrollY,
+        top: rect.top + window.scrollY,
+        bottom: rect.bottom + window.scrollY,
         left: rect.left + rect.width / 2 + window.scrollX,
-        width: rect.width,
       });
       setVisible(true);
     }, delay);
@@ -46,7 +46,7 @@ export function CoachMark({ id, text, anchorRef, placement = 'top', delay = 600 
   const style: React.CSSProperties =
     placement === 'top'
       ? { top: pos.top - offset, left: pos.left, transform: 'translate(-50%, -100%)' }
-      : { top: pos.top + offset, left: pos.left, transform: 'translate(-50%, 0)' };
+      : { top: pos.bottom + offset, left: pos.left, transform: 'translate(-50%, 0)' };
 
   return createPortal(
     <AnimatePresence>
