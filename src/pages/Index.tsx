@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useEvents, DbEvent, DbEventWithCreator } from '@/hooks/useEvents';
+import { useEventGroupHints } from '@/hooks/useGroups';
 import { UserAvatar } from '@/components/UserAvatar';
 import { motion } from 'framer-motion';
 import { CalendarDays, Check, X, HelpCircle, MapPin, Clock } from 'lucide-react';
