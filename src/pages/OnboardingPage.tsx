@@ -11,6 +11,8 @@ import { Camera, Eye, EyeOff, Check, X, Loader2, Sparkles } from 'lucide-react';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { UsageTile } from '@/components/onboarding/UsageTile';
 import { PasswordStrength } from '@/components/onboarding/PasswordStrength';
+import { useTranslation } from 'react-i18next';
+import { isSupportedLang } from '@/hooks/useLanguagePreference';
 
 const usageOptions = [
   { value: 'spouse', label: 'With my partner', emoji: '💑', description: 'Coordinate dates & plans together' },
@@ -22,6 +24,7 @@ type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 
 const OnboardingPage = () => {
   const navigate = useNavigate();
+  const { i18n } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [username, setUsername] = useState('');
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle');
@@ -174,11 +177,14 @@ const OnboardingPage = () => {
         }
       }
 
-      // Save bio if provided
-      if (bio.trim() && data.user) {
+      // Save bio + preferred language if account verified
+      const lang = isSupportedLang(i18n.language) ? i18n.language : 'en';
+      if (data.user) {
+        const updates: Record<string, any> = { preferred_language: lang };
+        if (bio.trim()) updates.bio = bio.trim();
         await supabase
           .from('profiles')
-          .update({ bio: bio.trim() })
+          .update(updates)
           .eq('user_id', data.user.id);
       }
 
