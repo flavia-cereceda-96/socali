@@ -14,12 +14,14 @@ import CreateEventPage from "./pages/CreateEventPage.tsx";
 import EventDetailPage from "./pages/EventDetailPage.tsx";
 import RequestsPage from "./pages/RequestsPage.tsx";
 import SettingsPage from "./pages/SettingsPage.tsx";
+import ProfilePage from "./pages/ProfilePage.tsx";
 import OnboardingPage from "./pages/OnboardingPage.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage.tsx";
 import ResetPasswordPage from "./pages/ResetPasswordPage.tsx";
 import PersonPage from "./pages/PersonPage.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import { WhatsNewModal } from "./components/WhatsNewModal.tsx";
 
 const queryClient = new QueryClient();
 
@@ -70,9 +72,11 @@ const App = () => {
             <Route path="/event/:id" element={authed ? <EventDetailPage /> : <Navigate to="/login" replace />} />
             <Route path="/person/:userId" element={authed ? <PersonPage /> : <Navigate to="/login" replace />} />
             <Route path="/settings" element={authed ? <SettingsPage /> : <Navigate to="/login" replace />} />
+            <Route path="/profile" element={authed ? <ProfilePage /> : <Navigate to="/login" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           {authed && <BottomNav />}
+          {authed && <WhatsNewModal />}
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

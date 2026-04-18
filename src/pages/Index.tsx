@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { autoExportToGCalIfEnabled } from '@/lib/autoExportGCal';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -77,7 +78,21 @@ const Index = () => {
       .update({ status })
       .eq('id', participantId);
     if (error) toast.error(error.message);
-    else queryClient.invalidateQueries({ queryKey: ['events'] });
+    else {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      if (status === 'confirmed') {
+        autoExportToGCalIfEnabled({
+          title: event.title,
+          emoji: event.emoji,
+          date: event.date,
+          end_date: event.end_date,
+          time: event.time,
+          end_time: event.end_time,
+          location: event.location,
+          notes: event.notes,
+        });
+      }
+    }
   };
 
   const formatTime = (t: string) => {

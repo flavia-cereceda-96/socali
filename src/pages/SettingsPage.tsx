@@ -1,94 +1,94 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useProfile } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
-import { UserAvatar } from '@/components/UserAvatar';
+import { useProfile } from '@/hooks/useEvents';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Camera, LogOut } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { ArrowLeft, LogOut, CalendarPlus, Megaphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: profile, isLoading } = useProfile();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { data: profile } = useProfile();
 
-  const [username, setUsername] = useState('');
-  const [bio, setBio] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [autoExport, setAutoExport] = useState(false);
+  const [savingPref, setSavingPref] = useState(false);
+
+  // Admin-only update composer
+  const [updTitle, setUpdTitle] = useState('');
+  const [updEmoji, setUpdEmoji] = useState('✨');
+  const [updSummary, setUpdSummary] = useState('');
+  const [posting, setPosting] = useState(false);
+
+  const { data: isAdmin = false } = useQuery({
+    queryKey: ['is-admin'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+      const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+      return !!data;
+    },
+  });
 
   useEffect(() => {
     if (profile) {
-      setUsername(profile.username || '');
-      setBio((profile as any).bio || '');
-      setAvatarUrl((profile as any).avatar_url || null);
+      setAutoExport(!!(profile as any).gcal_auto_export);
     }
   }, [profile]);
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
+  const toggleAutoExport = async (next: boolean) => {
+    setAutoExport(next);
+    setSavingPref(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
-      const ext = file.name.split('.').pop();
-      const path = `${user.id}/avatar.${ext}`;
-
-      const { error: uploadErr } = await supabase.storage
-        .from('avatars')
-        .upload(path, file, { upsert: true });
-
-      if (uploadErr) { toast.error(uploadErr.message); return; }
-
-      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
-      const url = `${publicUrl}?t=${Date.now()}`;
-
-      const { error: updateErr } = await supabase
+      const { error } = await supabase
         .from('profiles')
-        .update({ avatar_url: url })
+        .update({ gcal_auto_export: next } as any)
         .eq('user_id', user.id);
-
-      if (updateErr) { toast.error(updateErr.message); return; }
-
-      setAvatarUrl(url);
+      if (error) {
+        setAutoExport(!next);
+        toast.error(error.message);
+        return;
+      }
       queryClient.invalidateQueries({ queryKey: ['profile'] });
-      toast.success('Photo updated! 📸');
+      toast.success(next ? 'Auto-export to Google Calendar enabled' : 'Auto-export disabled');
     } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      setSavingPref(false);
     }
   };
 
-  const handleSave = async () => {
-    if (!username.trim()) { toast.error('Username is required'); return; }
-    if (/\s/.test(username)) { toast.error('No spaces in username'); return; }
-
-    setSaving(true);
+  const handlePostUpdate = async () => {
+    if (!updTitle.trim() || !updSummary.trim()) {
+      toast.error('Title and summary are required');
+      return;
+    }
+    setPosting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({ username: username.trim(), bio: bio.trim() || null })
-        .eq('user_id', user.id);
-
+      const { error } = await supabase.from('app_updates').insert({
+        title: updTitle.trim(),
+        summary: updSummary.trim(),
+        emoji: updEmoji.trim() || '✨',
+        created_by: user.id,
+      });
       if (error) { toast.error(error.message); return; }
-
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
-      toast.success('Profile saved! ✨');
+      setUpdTitle(''); setUpdSummary(''); setUpdEmoji('✨');
+      toast.success('Update posted to all users! 📣');
     } finally {
-      setSaving(false);
+      setPosting(false);
     }
   };
 
@@ -96,14 +96,6 @@ const SettingsPage = () => {
     await supabase.auth.signOut();
     navigate('/login');
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-sm text-muted-foreground">Loading...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen pb-24">
@@ -124,58 +116,83 @@ const SettingsPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
+          className="space-y-8"
         >
-          {/* Avatar */}
-          <div className="flex flex-col items-center gap-3">
-            <div className="relative">
-              <UserAvatar avatarUrl={avatarUrl} username={username} size="xl" />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-transform active:scale-95"
-              >
-                <Camera className="h-4 w-4" />
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleAvatarUpload}
-              />
+          {/* Google Calendar */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2">
+              <CalendarPlus className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-semibold text-foreground">Google Calendar</h2>
             </div>
-            {uploading && <p className="text-xs text-muted-foreground">Uploading...</p>}
-          </div>
 
-          {/* Username */}
-          <div className="space-y-1.5">
-            <Label htmlFor="username">Username</Label>
-            <Input
-              id="username"
-              value={username}
-              onChange={e => setUsername(e.target.value.replace(/\s/g, ''))}
-              placeholder="yourname"
-            />
-          </div>
+            <div className="rounded-2xl border border-border bg-card p-4 space-y-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="auto-export" className="text-sm font-medium">
+                    Auto-export new events
+                  </Label>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    When you RSVP yes or create a plan, we'll automatically open Google Calendar to add it.
+                  </p>
+                </div>
+                <Switch
+                  id="auto-export"
+                  checked={autoExport}
+                  onCheckedChange={toggleAutoExport}
+                  disabled={savingPref}
+                />
+              </div>
 
-          {/* Bio */}
-          <div className="space-y-1.5">
-            <Label htmlFor="bio">What should people invite you to (and NOT invite you to)?</Label>
-            <Textarea
-              id="bio"
-              value={bio}
-              onChange={e => setBio(e.target.value)}
-              placeholder="e.g. Always down for tacos and hiking 🌮🥾 Please no karaoke nights 🙈"
-              rows={3}
-              className="resize-none"
-            />
-          </div>
+              <div className="border-t border-border pt-3">
+                <p className="text-xs text-muted-foreground">
+                  💡 You can always export individual events using the <span className="font-medium text-foreground">Add to Google Calendar</span> button on each event's detail page.
+                </p>
+              </div>
+            </div>
+          </section>
 
-          <Button onClick={handleSave} disabled={saving} className="w-full font-semibold" size="lg">
-            {saving ? 'Saving...' : 'Save Changes'}
-          </Button>
+          {/* Admin: post an update */}
+          {isAdmin && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Megaphone className="h-4 w-4 text-primary" />
+                <h2 className="text-sm font-semibold text-foreground">Post update to all users</h2>
+              </div>
 
+              <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+                <div className="flex gap-2">
+                  <Input
+                    value={updEmoji}
+                    onChange={e => setUpdEmoji(e.target.value)}
+                    className="w-16 text-center"
+                    maxLength={2}
+                  />
+                  <Input
+                    value={updTitle}
+                    onChange={e => setUpdTitle(e.target.value)}
+                    placeholder="What's new?"
+                    className="flex-1"
+                  />
+                </div>
+                <Textarea
+                  value={updSummary}
+                  onChange={e => setUpdSummary(e.target.value)}
+                  placeholder="Quick summary of what changed..."
+                  rows={4}
+                  className="resize-none"
+                />
+                <Button
+                  onClick={handlePostUpdate}
+                  disabled={posting}
+                  className="w-full font-semibold"
+                >
+                  {posting ? 'Posting...' : 'Post update'}
+                </Button>
+              </div>
+            </section>
+          )}
+
+          {/* Logout */}
           <Button onClick={handleLogout} variant="ghost" className="w-full text-muted-foreground gap-2">
             <LogOut className="h-4 w-4" /> Log Out
           </Button>
