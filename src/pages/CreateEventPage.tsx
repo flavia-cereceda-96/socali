@@ -12,6 +12,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { LocationPicker, LocationValue } from '@/components/LocationPicker';
+import { LocationMap } from '@/components/LocationMap';
 
 const quickEmojis = ['🍝', '🎬', '🏃', '🎮', '🍕', '☕', '🎉', '🎵', '🏕️'];
 
@@ -35,7 +37,7 @@ const CreateEventPage = () => {
   const [endDateStr, setEndDateStr] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
-  const [location, setLocation] = useState('');
+  const [location, setLocation] = useState<LocationValue>({ address: '', latitude: null, longitude: null });
   const [notes, setNotes] = useState('');
   const [coverImage, setCoverImage] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
@@ -95,7 +97,9 @@ const CreateEventPage = () => {
         end_date: isMultiDay ? endDateStr : null,
         time: isMultiDay ? null : (startTime || null),
         end_time: isMultiDay ? null : (endTime || null),
-        location: location || null,
+        location: location.address.trim() || null,
+        latitude: location.latitude,
+        longitude: location.longitude,
         notes: notes || null,
         cover_image: coverImage.trim() || null,
         link_url: normalizedLink,
@@ -281,11 +285,19 @@ const CreateEventPage = () => {
 
           <div className="space-y-2">
             <Label>Location (optional)</Label>
-            <Input
+            <LocationPicker
               value={location}
-              onChange={e => setLocation(e.target.value)}
+              onChange={setLocation}
               placeholder="e.g. Central Park, Café Bloom..."
             />
+            {location.latitude !== null && location.longitude !== null && (
+              <LocationMap
+                latitude={location.latitude}
+                longitude={location.longitude}
+                address={location.address}
+                height={140}
+              />
+            )}
           </div>
 
           <div className="space-y-2">
