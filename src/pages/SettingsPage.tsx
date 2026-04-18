@@ -1,24 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useProfile } from '@/hooks/useEvents';
 import { motion } from 'framer-motion';
-import { ArrowLeft, LogOut, CalendarPlus, Megaphone } from 'lucide-react';
+import { ArrowLeft, LogOut, Megaphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { data: profile } = useProfile();
-
-  const [autoExport, setAutoExport] = useState(false);
-  const [savingPref, setSavingPref] = useState(false);
 
   // Admin-only update composer
   const [updTitle, setUpdTitle] = useState('');
@@ -40,34 +32,6 @@ const SettingsPage = () => {
       return !!data;
     },
   });
-
-  useEffect(() => {
-    if (profile) {
-      setAutoExport(!!(profile as any).gcal_auto_export);
-    }
-  }, [profile]);
-
-  const toggleAutoExport = async (next: boolean) => {
-    setAutoExport(next);
-    setSavingPref(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { error } = await supabase
-        .from('profiles')
-        .update({ gcal_auto_export: next } as any)
-        .eq('user_id', user.id);
-      if (error) {
-        setAutoExport(!next);
-        toast.error(error.message);
-        return;
-      }
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
-      toast.success(next ? 'Auto-export to Google Calendar enabled' : 'Auto-export disabled');
-    } finally {
-      setSavingPref(false);
-    }
-  };
 
   const handlePostUpdate = async () => {
     if (!updTitle.trim() || !updSummary.trim()) {
@@ -118,39 +82,6 @@ const SettingsPage = () => {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-8"
         >
-          {/* Google Calendar */}
-          <section className="space-y-3">
-            <div className="flex items-center gap-2">
-              <CalendarPlus className="h-4 w-4 text-primary" />
-              <h2 className="text-sm font-semibold text-foreground">Google Calendar</h2>
-            </div>
-
-            <div className="rounded-2xl border border-border bg-card p-4 space-y-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <Label htmlFor="auto-export" className="text-sm font-medium">
-                    Auto-export new events
-                  </Label>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    When you RSVP yes or create a plan, we'll automatically open Google Calendar to add it.
-                  </p>
-                </div>
-                <Switch
-                  id="auto-export"
-                  checked={autoExport}
-                  onCheckedChange={toggleAutoExport}
-                  disabled={savingPref}
-                />
-              </div>
-
-              <div className="border-t border-border pt-3">
-                <p className="text-xs text-muted-foreground">
-                  💡 You can always export individual events using the <span className="font-medium text-foreground">Add to Google Calendar</span> button on each event's detail page.
-                </p>
-              </div>
-            </div>
-          </section>
-
           {/* Admin: post an update */}
           {isAdmin && (
             <section className="space-y-3">

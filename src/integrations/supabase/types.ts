@@ -269,43 +269,12 @@ export type Database = {
         }
         Relationships: []
       }
-      google_calendar_tokens: {
-        Row: {
-          access_token: string
-          created_at: string
-          expires_at: string
-          refresh_token: string
-          scope: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          access_token: string
-          created_at?: string
-          expires_at: string
-          refresh_token: string
-          scope?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          access_token?: string
-          created_at?: string
-          expires_at?: string
-          refresh_token?: string
-          scope?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           avatar_url: string | null
           bio: string | null
           created_at: string
           email: string
-          gcal_auto_export: boolean
           id: string
           usage: string
           user_id: string
@@ -316,7 +285,6 @@ export type Database = {
           bio?: string | null
           created_at?: string
           email: string
-          gcal_auto_export?: boolean
           id?: string
           usage: string
           user_id: string
@@ -327,7 +295,6 @@ export type Database = {
           bio?: string | null
           created_at?: string
           email?: string
-          gcal_auto_export?: boolean
           id?: string
           usage?: string
           user_id?: string
