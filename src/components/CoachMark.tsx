@@ -46,7 +46,7 @@ export function CoachMark({ id, text, anchorRef, placement = 'top', delay = 600 
   const style: React.CSSProperties =
     placement === 'top'
       ? { top: pos.top - offset, left: pos.left, transform: 'translate(-50%, -100%)' }
-      : { top: pos.bottom + offset, left: pos.left, transform: 'translate(-50%, 0)' };
+      : { top: pos.top + offset, left: pos.left, transform: 'translate(-50%, 0)' };
 
   return createPortal(
     <AnimatePresence>
