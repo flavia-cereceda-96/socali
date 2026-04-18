@@ -3,12 +3,13 @@ import { useEvents, DbEvent, DbEventWithCreator } from '@/hooks/useEvents';
 import { UserAvatar } from '@/components/UserAvatar';
 import { motion } from 'framer-motion';
 import { CalendarDays, Check, X, HelpCircle, MapPin, Clock } from 'lucide-react';
-import { WelcomeTour } from '@/components/WelcomeTour';
+import { HomeEmptyState } from '@/components/HomeEmptyState';
+import { CoachMark } from '@/components/CoachMark';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { autoExportToGCalIfEnabled } from '@/lib/autoExportGCal';
 
 const Index = () => {
