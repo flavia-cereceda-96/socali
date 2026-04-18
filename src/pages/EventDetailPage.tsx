@@ -7,7 +7,8 @@ import { EventPhotos } from '@/components/EventPhotos';
 import { UserAvatar } from '@/components/UserAvatar';
 import { ClickableName } from '@/components/ClickableName';
 import { motion } from 'framer-motion';
-import { ArrowLeft, MapPin, Clock, Calendar, MessageSquare, Crown, Pencil, Check, X, UserPlus, UserMinus, Trash2 } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Calendar, MessageSquare, Crown, Pencil, Check, X, UserPlus, UserMinus, Trash2, CalendarPlus } from 'lucide-react';
+import { buildGoogleCalendarUrl } from '@/lib/googleCalendar';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -300,6 +301,24 @@ const EventDetailPage = () => {
                   <p>{event.notes}</p>
                 </div>
               )}
+              <a
+                href={buildGoogleCalendarUrl({
+                  title: event.title,
+                  emoji: event.emoji,
+                  date: event.date,
+                  end_date: event.end_date,
+                  time: (event as any).time,
+                  end_time: (event as any).end_time,
+                  location: event.location,
+                  notes: event.notes,
+                })}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-secondary/40 px-3 py-2.5 text-sm font-medium text-foreground transition-all hover:bg-secondary active:scale-[0.98]"
+              >
+                <CalendarPlus className="h-4 w-4 text-primary" />
+                Add to Google Calendar
+              </a>
             </motion.div>
           </>
         )}
