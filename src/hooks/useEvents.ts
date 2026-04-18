@@ -14,6 +14,8 @@ export interface DbEvent {
   is_trip: boolean;
   link_url: string | null;
   link_label: string | null;
+  latitude: number | null;
+  longitude: number | null;
   created_by: string;
   created_at: string;
   participants: DbParticipant[];
