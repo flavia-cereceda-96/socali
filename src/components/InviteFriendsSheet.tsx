@@ -9,7 +9,7 @@ interface InviteFriendsSheetProps {
 }
 
 const INVITE_URL = 'https://socali.lovable.app';
-const INVITE_MESSAGE = `Hey! I'm using SyncCircle to plan things — join me here: ${INVITE_URL}`;
+const INVITE_MESSAGE = `Hey! I'm using Cali to plan things — join me here: ${INVITE_URL}`;
 
 export function InviteFriendsSheet({ open, onOpenChange }: InviteFriendsSheetProps) {
   const handleCopy = async () => {
@@ -25,7 +25,7 @@ export function InviteFriendsSheet({ open, onOpenChange }: InviteFriendsSheetPro
     if (typeof navigator !== 'undefined' && (navigator as any).share) {
       try {
         await (navigator as any).share({
-          title: 'Join me on SyncCircle',
+          title: 'Join me on Cali',
           text: INVITE_MESSAGE,
           url: INVITE_URL,
         });
