@@ -60,13 +60,48 @@ const CreateEventPage = () => {
     }
   }, [inviteFriendId, friends]);
 
+  // Auto-select group if navigated with ?groupId
+  useEffect(() => {
+    if (prefilledGroup && !selectedGroups.find(g => g.id === prefilledGroup.id)) {
+      setSelectedGroups(prev => [...prev, {
+        id: prefilledGroup.id,
+        name: prefilledGroup.name,
+        emoji: prefilledGroup.emoji,
+        created_by: prefilledGroup.created_by,
+        created_at: prefilledGroup.created_at,
+        member_count: prefilledGroup.member_count,
+      }]);
+    }
+  }, [prefilledGroup]);
+
   const toggleFriend = (f: DbProfile) => {
     setSelectedFriends(prev =>
       prev.find(p => p.user_id === f.user_id) ? prev.filter(p => p.user_id !== f.user_id) : [...prev, f]
     );
   };
 
+  const toggleGroup = (g: DbGroup) => {
+    setSelectedGroups(prev =>
+      prev.find(p => p.id === g.id) ? prev.filter(p => p.id !== g.id) : [...prev, g]
+    );
+  };
+
   const canSubmit = title.trim() && dateStr && (isMultiDay ? endDateStr : startTime);
+
+  /** Resolve final unique participant user_ids from friends + groups (excluding current user). */
+  async function resolveParticipants(currentUserId: string): Promise<string[]> {
+    const ids = new Set<string>(selectedFriends.map(f => f.user_id));
+    if (selectedGroups.length > 0) {
+      const { data: members } = await supabase
+        .from('group_members')
+        .select('user_id')
+        .in('group_id', selectedGroups.map(g => g.id));
+      (members || []).forEach(m => {
+        if (m.user_id !== currentUserId) ids.add(m.user_id);
+      });
+    }
+    return Array.from(ids);
+  }
 
   const handleSubmit = async () => {
     if (!canSubmit || submitting) return;
