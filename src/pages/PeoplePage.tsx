@@ -20,6 +20,8 @@ const PeoplePage = () => {
   const queryClient = useQueryClient();
   const { data: friends = [], isLoading } = useFriends();
   const { data: friendRequests = [] } = useFriendRequests();
+  const { data: groups = [], isLoading: groupsLoading } = useGroups();
+  const [activeTab, setActiveTab] = useState<'friends' | 'groups'>('friends');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
