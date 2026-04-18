@@ -58,7 +58,7 @@ const RequestsPage = () => {
     else {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['unread-activity-count'] });
-      if (status === 'accepted' && event) {
+      if (status === 'confirmed' && event) {
         autoExportToGCalIfEnabled({
           title: event.title,
           emoji: event.emoji,
@@ -181,12 +181,12 @@ const RequestsPage = () => {
                           placeholder="Add a note (optional) e.g. Sorry, busy that day!"
                           value={declineNote}
                           onChange={e => setDeclineNote(e.target.value)}
-                          onKeyDown={e => e.key === 'Enter' && handleRsvp(myP.id, 'declined', declineNote)}
+                          onKeyDown={e => e.key === 'Enter' && handleRsvp(myP.id, 'declined', declineNote, event)}
                           autoFocus
                         />
                         <div className="flex gap-2">
                           <button
-                            onClick={() => handleRsvp(myP.id, 'declined', declineNote)}
+                            onClick={() => handleRsvp(myP.id, 'declined', declineNote, event)}
                             className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-destructive/10 py-2 text-sm font-medium text-destructive transition-all hover:bg-destructive hover:text-destructive-foreground"
                           >
                             <X className="h-4 w-4" /> Confirm Decline
@@ -202,13 +202,13 @@ const RequestsPage = () => {
                     ) : (
                       <div className="flex gap-2">
                         <button
-                          onClick={() => handleRsvp(myP.id, 'confirmed')}
+                          onClick={() => handleRsvp(myP.id, 'confirmed', undefined, event)}
                           className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-secondary py-2 text-sm font-medium text-muted-foreground transition-all hover:bg-green-500/10 hover:text-green-600"
                         >
                           <Check className="h-4 w-4" /> Going
                         </button>
                         <button
-                          onClick={() => handleRsvp(myP.id, 'maybe')}
+                          onClick={() => handleRsvp(myP.id, 'maybe', undefined, event)}
                           className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-secondary py-2 text-sm font-medium text-muted-foreground transition-all hover:bg-amber-500/10 hover:text-amber-600"
                         >
                           <HelpCircle className="h-4 w-4" /> Maybe

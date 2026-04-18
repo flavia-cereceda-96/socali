@@ -80,7 +80,7 @@ const Index = () => {
     if (error) toast.error(error.message);
     else {
       queryClient.invalidateQueries({ queryKey: ['events'] });
-      if (status === 'accepted') {
+      if (status === 'confirmed') {
         autoExportToGCalIfEnabled({
           title: event.title,
           emoji: event.emoji,
