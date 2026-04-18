@@ -7,6 +7,7 @@ import { UserAvatar } from '@/components/UserAvatar';
 import { motion } from 'framer-motion';
 import { MapPin, Clock, Check, HelpCircle, X, MessageSquare, UserPlus, AtSign, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CoachMark } from '@/components/CoachMark';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -276,7 +277,15 @@ const RequestsPage = () => {
         )}
 
         {pendingInvitations.length === 0 && activities.length === 0 && (
-          <p className="text-center text-muted-foreground py-12">No new activity yet ✨</p>
+          <div data-coach="activity-empty" className="relative">
+            <p className="text-center text-muted-foreground py-12">No new activity yet ✨</p>
+            <CoachMark
+              id="activity-empty"
+              text="Friend requests and event updates live here"
+              anchorSelector='[data-coach="activity-empty"]'
+              placement="top"
+            />
+          </div>
         )}
       </div>
     </div>
