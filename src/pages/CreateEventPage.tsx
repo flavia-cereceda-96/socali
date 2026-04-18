@@ -12,7 +12,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
-import { autoExportToGCalIfEnabled } from '@/lib/autoExportGCal';
 
 const quickEmojis = ['🍝', '🎬', '🏃', '🎮', '🍕', '☕', '🎉', '🎵', '🏕️'];
 
@@ -137,18 +136,6 @@ const CreateEventPage = () => {
       toast.success('Plan created! 🎉', {
         description: `${emoji} ${title}${selectedFriends.length > 0 ? ` with ${selectedFriends.map(f => f.username).join(', ')}` : ''}`,
       });
-      if (event) {
-        autoExportToGCalIfEnabled({
-          title,
-          emoji,
-          date: dateStr,
-          end_date: isMultiDay ? endDateStr : null,
-          time: isMultiDay ? null : (startTime || null),
-          end_time: isMultiDay ? null : (endTime || null),
-          location: location || null,
-          notes: notes || null,
-        });
-      }
       navigate('/');
     } catch (err: any) {
       toast.error(err.message || 'Something went wrong');

@@ -12,7 +12,6 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
-import { autoExportToGCalIfEnabled } from '@/lib/autoExportGCal';
 
 const RequestsPage = () => {
   const queryClient = useQueryClient();
@@ -59,18 +58,6 @@ const RequestsPage = () => {
     else {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['unread-activity-count'] });
-      if (status === 'confirmed' && event) {
-        autoExportToGCalIfEnabled({
-          title: event.title,
-          emoji: event.emoji,
-          date: event.date,
-          end_date: event.end_date,
-          time: event.time,
-          end_time: event.end_time,
-          location: event.location,
-          notes: event.notes,
-        });
-      }
     }
     setDecliningId(null);
     setDeclineNote('');
