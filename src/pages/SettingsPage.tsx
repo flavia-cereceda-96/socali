@@ -2,15 +2,18 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
-import { ArrowLeft, LogOut, Megaphone } from 'lucide-react';
+import { ArrowLeft, LogOut, Megaphone, Languages, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import { LanguageToggle } from '@/components/LanguageToggle';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // Admin-only update composer
   const [updTitle, setUpdTitle] = useState('');
@@ -73,7 +76,7 @@ const SettingsPage = () => {
             animate={{ opacity: 1, x: 0 }}
             className="text-2xl font-bold text-foreground"
           >
-            Settings
+            {t('settings.title')}
           </motion.h1>
         </div>
 
@@ -82,12 +85,36 @@ const SettingsPage = () => {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-8"
         >
+          {/* Language picker */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Languages className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-semibold text-foreground">{t('settings.language')}</h2>
+            </div>
+            <p className="text-xs text-muted-foreground -mt-1">{t('settings.languageHint')}</p>
+            <LanguageToggle variant="card" />
+          </section>
+
+          {/* Manage friends shortcut */}
+          <section className="space-y-3">
+            <button
+              onClick={() => navigate('/people')}
+              className="flex w-full items-center justify-between rounded-2xl border border-border bg-card px-4 py-3.5 text-left transition-colors hover:bg-secondary/40"
+            >
+              <div className="flex items-center gap-3">
+                <Users className="h-5 w-5 text-primary" />
+                <span className="text-sm font-semibold text-foreground">{t('people.title')}</span>
+              </div>
+              <span className="text-muted-foreground">›</span>
+            </button>
+          </section>
+
           {/* Admin: post an update */}
           {isAdmin && (
             <section className="space-y-3">
               <div className="flex items-center gap-2">
                 <Megaphone className="h-4 w-4 text-primary" />
-                <h2 className="text-sm font-semibold text-foreground">Post update to all users</h2>
+                <h2 className="text-sm font-semibold text-foreground">{t('settings.postUpdate')}</h2>
               </div>
 
               <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
@@ -101,14 +128,14 @@ const SettingsPage = () => {
                   <Input
                     value={updTitle}
                     onChange={e => setUpdTitle(e.target.value)}
-                    placeholder="What's new?"
+                    placeholder={t('settings.whatsNew')}
                     className="flex-1"
                   />
                 </div>
                 <Textarea
                   value={updSummary}
                   onChange={e => setUpdSummary(e.target.value)}
-                  placeholder="Quick summary of what changed..."
+                  placeholder={t('settings.summaryPlaceholder')}
                   rows={4}
                   className="resize-none"
                 />
@@ -117,7 +144,7 @@ const SettingsPage = () => {
                   disabled={posting}
                   className="w-full font-semibold"
                 >
-                  {posting ? 'Posting...' : 'Post update'}
+                  {posting ? t('settings.posting') : t('settings.post')}
                 </Button>
               </div>
             </section>
@@ -125,7 +152,7 @@ const SettingsPage = () => {
 
           {/* Logout */}
           <Button onClick={handleLogout} variant="ghost" className="w-full text-muted-foreground gap-2">
-            <LogOut className="h-4 w-4" /> Log Out
+            <LogOut className="h-4 w-4" /> {t('settings.logout')}
           </Button>
         </motion.div>
       </div>
