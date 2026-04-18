@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { BottomNav } from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
@@ -55,30 +54,28 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/onboarding" element={!authed ? <OnboardingPage /> : <Navigate to="/" replace />} />
-            <Route path="/login" element={!authed ? <LoginPage /> : <Navigate to="/" replace />} />
-            <Route path="/forgot-password" element={!authed ? <ForgotPasswordPage /> : <Navigate to="/" replace />} />
-            <Route path="/reset-password" element={!authed ? <ResetPasswordPage /> : <Navigate to="/" replace />} />
-            <Route path="/" element={authed ? <Index /> : <Navigate to="/login" replace />} />
-            <Route path="/calendar" element={authed ? <CalendarPage /> : <Navigate to="/login" replace />} />
-            <Route path="/people" element={authed ? <PeoplePage /> : <Navigate to="/login" replace />} />
-            <Route path="/create" element={authed ? <CreateEventPage /> : <Navigate to="/login" replace />} />
-            <Route path="/requests" element={authed ? <RequestsPage /> : <Navigate to="/login" replace />} />
-            <Route path="/event/:id" element={authed ? <EventDetailPage /> : <Navigate to="/login" replace />} />
-            <Route path="/person/:userId" element={authed ? <PersonPage /> : <Navigate to="/login" replace />} />
-            <Route path="/settings" element={authed ? <SettingsPage /> : <Navigate to="/login" replace />} />
-            <Route path="/profile" element={authed ? <ProfilePage /> : <Navigate to="/login" replace />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          {authed && <BottomNav />}
-          {authed && <WhatsNewModal />}
-        </BrowserRouter>
-      </TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/onboarding" element={!authed ? <OnboardingPage /> : <Navigate to="/" replace />} />
+          <Route path="/login" element={!authed ? <LoginPage /> : <Navigate to="/" replace />} />
+          <Route path="/forgot-password" element={!authed ? <ForgotPasswordPage /> : <Navigate to="/" replace />} />
+          <Route path="/reset-password" element={!authed ? <ResetPasswordPage /> : <Navigate to="/" replace />} />
+          <Route path="/" element={authed ? <Index /> : <Navigate to="/login" replace />} />
+          <Route path="/calendar" element={authed ? <CalendarPage /> : <Navigate to="/login" replace />} />
+          <Route path="/people" element={authed ? <PeoplePage /> : <Navigate to="/login" replace />} />
+          <Route path="/create" element={authed ? <CreateEventPage /> : <Navigate to="/login" replace />} />
+          <Route path="/requests" element={authed ? <RequestsPage /> : <Navigate to="/login" replace />} />
+          <Route path="/event/:id" element={authed ? <EventDetailPage /> : <Navigate to="/login" replace />} />
+          <Route path="/person/:userId" element={authed ? <PersonPage /> : <Navigate to="/login" replace />} />
+          <Route path="/settings" element={authed ? <SettingsPage /> : <Navigate to="/login" replace />} />
+          <Route path="/profile" element={authed ? <ProfilePage /> : <Navigate to="/login" replace />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        {authed && <BottomNav />}
+        {authed && <WhatsNewModal />}
+      </BrowserRouter>
     </QueryClientProvider>
   );
 };
