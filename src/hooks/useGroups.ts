@@ -101,8 +101,9 @@ export function useCreateGroup() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ name, emoji, memberIds }: { name: string; emoji: string; memberIds: string[] }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData.session?.user;
+      if (!user) throw new Error('You must be signed in to create a group.');
 
       const { data: group, error } = await supabase
         .from('groups')
@@ -110,7 +111,11 @@ export function useCreateGroup() {
         .select()
         .single();
 
-      if (error || !group) throw error;
+      if (error) {
+        console.error('[useCreateGroup] insert groups error', error, { userId: user.id });
+        throw error;
+      }
+      if (!group) throw new Error('Group was not created');
 
       // Trigger auto-adds creator. Insert remaining members (skip creator).
       const others = memberIds.filter(id => id !== user.id);
