@@ -200,11 +200,31 @@ const PeoplePage = () => {
         <motion.h1
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 text-2xl font-bold text-foreground"
+          className="mb-4 text-2xl font-bold text-foreground"
         >
           Your People
         </motion.h1>
 
+        {/* Tabs */}
+        <div className="mb-6 grid grid-cols-2 gap-2 rounded-full bg-secondary/60 p-1">
+          {(['friends', 'groups'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={cn(
+                'rounded-full py-2 text-sm font-semibold capitalize transition-all',
+                activeTab === tab
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === 'friends' && (
+          <>
         {/* Invite friends to join */}
         <motion.button
           initial={{ opacity: 0, y: 8 }}
