@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { BottomNav } from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
+import { useTranslation } from 'react-i18next';
 import Index from "./pages/Index.tsx";
 import CalendarPage from "./pages/CalendarPage.tsx";
 import PeoplePage from "./pages/PeoplePage.tsx";
@@ -22,12 +23,20 @@ import PersonPage from "./pages/PersonPage.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import SplashPage, { hasSeenSplash } from "./pages/SplashPage.tsx";
 import { WhatsNewModal } from "./components/WhatsNewModal.tsx";
+import { useSyncLanguageFromProfile } from "./hooks/useLanguagePreference";
 
 const queryClient = new QueryClient();
+
+function AuthedShell({ children }: { children: React.ReactNode }) {
+  // Sync user's preferred language from profile once authenticated
+  useSyncLanguageFromProfile();
+  return <>{children}</>;
+}
 
 const App = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -46,7 +55,7 @@ const App = () => {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-muted-foreground text-sm">Loading...</div>
+        <div className="text-muted-foreground text-sm">{t('common.loading')}</div>
       </div>
     );
   }
@@ -59,25 +68,27 @@ const App = () => {
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/welcome" element={!authed ? <SplashPage /> : <Navigate to="/" replace />} />
-          <Route path="/onboarding" element={!authed ? <OnboardingPage /> : <Navigate to="/" replace />} />
-          <Route path="/login" element={!authed ? (seenSplash ? <LoginPage /> : <Navigate to="/welcome" replace />) : <Navigate to="/" replace />} />
-          <Route path="/forgot-password" element={!authed ? <ForgotPasswordPage /> : <Navigate to="/" replace />} />
-          <Route path="/reset-password" element={!authed ? <ResetPasswordPage /> : <Navigate to="/" replace />} />
-          <Route path="/" element={authed ? <Index /> : <Navigate to={seenSplash ? "/login" : "/welcome"} replace />} />
-          <Route path="/calendar" element={authed ? <CalendarPage /> : <Navigate to="/login" replace />} />
-          <Route path="/people" element={authed ? <PeoplePage /> : <Navigate to="/login" replace />} />
-          <Route path="/create" element={authed ? <CreateEventPage /> : <Navigate to="/login" replace />} />
-          <Route path="/requests" element={authed ? <RequestsPage /> : <Navigate to="/login" replace />} />
-          <Route path="/event/:id" element={authed ? <EventDetailPage /> : <Navigate to="/login" replace />} />
-          <Route path="/person/:userId" element={authed ? <PersonPage /> : <Navigate to="/login" replace />} />
-          <Route path="/settings" element={authed ? <SettingsPage /> : <Navigate to="/login" replace />} />
-          <Route path="/profile" element={authed ? <ProfilePage /> : <Navigate to="/login" replace />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        {authed && <BottomNav />}
-        {authed && <WhatsNewModal />}
+        <AuthedShell>
+          <Routes>
+            <Route path="/welcome" element={!authed ? <SplashPage /> : <Navigate to="/" replace />} />
+            <Route path="/onboarding" element={!authed ? <OnboardingPage /> : <Navigate to="/" replace />} />
+            <Route path="/login" element={!authed ? (seenSplash ? <LoginPage /> : <Navigate to="/welcome" replace />) : <Navigate to="/" replace />} />
+            <Route path="/forgot-password" element={!authed ? <ForgotPasswordPage /> : <Navigate to="/" replace />} />
+            <Route path="/reset-password" element={!authed ? <ResetPasswordPage /> : <Navigate to="/" replace />} />
+            <Route path="/" element={authed ? <Index /> : <Navigate to={seenSplash ? "/login" : "/welcome"} replace />} />
+            <Route path="/calendar" element={authed ? <CalendarPage /> : <Navigate to="/login" replace />} />
+            <Route path="/people" element={authed ? <PeoplePage /> : <Navigate to="/login" replace />} />
+            <Route path="/create" element={authed ? <CreateEventPage /> : <Navigate to="/login" replace />} />
+            <Route path="/requests" element={authed ? <RequestsPage /> : <Navigate to="/login" replace />} />
+            <Route path="/event/:id" element={authed ? <EventDetailPage /> : <Navigate to="/login" replace />} />
+            <Route path="/person/:userId" element={authed ? <PersonPage /> : <Navigate to="/login" replace />} />
+            <Route path="/settings" element={authed ? <SettingsPage /> : <Navigate to="/login" replace />} />
+            <Route path="/profile" element={authed ? <ProfilePage /> : <Navigate to="/login" replace />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          {authed && <BottomNav />}
+          {authed && <WhatsNewModal />}
+        </AuthedShell>
       </BrowserRouter>
     </QueryClientProvider>
   );
