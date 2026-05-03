@@ -3,7 +3,7 @@ import { useFriends, DbProfile } from '@/hooks/useEvents';
 import { useGroups, useGroup, DbGroup } from '@/hooks/useGroups';
 import { UserAvatar } from '@/components/UserAvatar';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Check, X, Users } from 'lucide-react';
+import { ArrowLeft, Check, X, Users, Shield } from 'lucide-react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -49,6 +49,15 @@ const CreateEventPage = () => {
   const [linkLabel, setLinkLabel] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [friendSearch, setFriendSearch] = useState('');
+  const [coAdminIds, setCoAdminIds] = useState<Set<string>>(new Set());
+
+  const toggleCoAdmin = (userId: string) => {
+    setCoAdminIds(prev => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId); else next.add(userId);
+      return next;
+    });
+  };
 
   // Auto-select friend if navigated from PersonPage
   useEffect(() => {
@@ -163,6 +172,7 @@ const CreateEventPage = () => {
             event_id: event.id,
             user_id: uid,
             status: 'suggested',
+            role: coAdminIds.has(uid) ? 'co-admin' : 'attendee',
           }))
         );
         if (pError) toast.error('Event created but failed to add participants');
@@ -350,6 +360,44 @@ const CreateEventPage = () => {
               );
             })()}
           </div>
+
+          {selectedFriends.length > 0 && (
+            <div className="space-y-2 rounded-2xl border border-border bg-secondary/30 p-3">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                <Shield className="h-3.5 w-3.5" /> Give admin rights (optional)
+              </Label>
+              <p className="text-[11px] text-muted-foreground">
+                Co-admins can edit the event and manage attendees, but can't delete it.
+              </p>
+              <div className="flex flex-col gap-1.5">
+                {selectedFriends.map(f => {
+                  const on = coAdminIds.has(f.user_id);
+                  return (
+                    <button
+                      key={f.user_id}
+                      type="button"
+                      onClick={() => toggleCoAdmin(f.user_id)}
+                      className={cn(
+                        'flex items-center gap-3 rounded-xl border p-2 text-left transition-all',
+                        on ? 'border-primary/40 bg-primary/5' : 'border-border bg-card hover:bg-secondary/50'
+                      )}
+                    >
+                      <UserAvatar avatarUrl={f.avatar_url} username={f.username} size="sm" />
+                      <span className="flex-1 text-sm font-medium text-foreground">@{f.username}</span>
+                      <span
+                        className={cn(
+                          'flex h-5 w-9 items-center rounded-full p-0.5 transition-colors',
+                          on ? 'bg-primary justify-end' : 'bg-muted justify-start'
+                        )}
+                      >
+                        <span className="h-4 w-4 rounded-full bg-background shadow" />
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label>{isMultiDay ? 'Dates *' : 'Date & Time *'}</Label>

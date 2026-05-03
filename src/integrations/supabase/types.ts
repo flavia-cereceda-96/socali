@@ -186,6 +186,7 @@ export type Database = {
           decline_note: string | null
           event_id: string
           id: string
+          role: string
           status: string
           user_id: string
         }
@@ -194,6 +195,7 @@ export type Database = {
           decline_note?: string | null
           event_id: string
           id?: string
+          role?: string
           status?: string
           user_id: string
         }
@@ -202,6 +204,7 @@ export type Database = {
           decline_note?: string | null
           event_id?: string
           id?: string
+          role?: string
           status?: string
           user_id?: string
         }
@@ -656,6 +659,14 @@ export type Database = {
       }
       is_accepted_group_member: {
         Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_event_admin: {
+        Args: { _event_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_event_co_admin: {
+        Args: { _event_id: string; _user_id: string }
         Returns: boolean
       }
       is_event_creator: {

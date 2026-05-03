@@ -7,7 +7,7 @@ import { EventPhotos } from '@/components/EventPhotos';
 import { UserAvatar } from '@/components/UserAvatar';
 import { ClickableName } from '@/components/ClickableName';
 import { motion } from 'framer-motion';
-import { ArrowLeft, MapPin, Clock, Calendar, MessageSquare, Crown, Pencil, Check, X, UserPlus, UserMinus, Trash2, Link as LinkIcon, Bell, Share2 } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Calendar, MessageSquare, Crown, Pencil, Check, X, UserPlus, UserMinus, Trash2, Link as LinkIcon, Bell, Share2, Shield, ShieldOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -55,6 +55,7 @@ const EventDetailPage = () => {
   const [nudgeOpen, setNudgeOpen] = useState(false);
   const [nudgeSending, setNudgeSending] = useState(false);
   const [nudgeCooldownUntil, setNudgeCooldownUntil] = useState<number>(0);
+  const [roleDialog, setRoleDialog] = useState<{ userId: string; username: string; promote: boolean } | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id || null));
@@ -96,6 +97,9 @@ const EventDetailPage = () => {
   }
 
   const isCreator = userId === event.created_by;
+  const myParticipation = event.participants.find(p => p.user_id === userId);
+  const isCoAdmin = (myParticipation as any)?.role === 'co-admin';
+  const canManage = isCreator || isCoAdmin;
 
   const handleShareInviteLink = async () => {
     if (!event) return;
@@ -230,6 +234,19 @@ const EventDetailPage = () => {
     queryClient.invalidateQueries({ queryKey: ['events'] });
   };
 
+  const handleSetRole = async (participantUserId: string, role: 'co-admin' | 'attendee') => {
+    if (!event) return;
+    const { error } = await supabase
+      .from('event_participants')
+      .update({ role })
+      .eq('event_id', event.id)
+      .eq('user_id', participantUserId);
+    if (error) { toast.error(error.message); return; }
+    toast.success(role === 'co-admin' ? 'Co-admin rights granted' : 'Co-admin rights removed');
+    queryClient.invalidateQueries({ queryKey: ['events'] });
+    setRoleDialog(null);
+  };
+
   const pendingAttendees = (event?.participants || []).filter(p => p.status === 'suggested');
   const nudgeOnCooldown = Date.now() < nudgeCooldownUntil;
 
@@ -311,7 +328,7 @@ const EventDetailPage = () => {
           >
             {event.title}
           </motion.h1>
-          {isCreator && !editing && (
+          {canManage && !editing && (
             <button
               onClick={() => setEditing(true)}
               className="rounded-lg p-2 text-muted-foreground hover:bg-secondary"
@@ -398,9 +415,11 @@ const EventDetailPage = () => {
                 <X className="h-4 w-4" /> Cancel
               </Button>
             </div>
-            <Button variant="destructive" onClick={handleDelete} className="w-full gap-1 mt-2">
-              <Trash2 className="h-4 w-4" /> Delete Event
-            </Button>
+            {isCreator && (
+              <Button variant="destructive" onClick={handleDelete} className="w-full gap-1 mt-2">
+                <Trash2 className="h-4 w-4" /> Delete Event
+              </Button>
+            )}
           </motion.div>
         ) : (
           <>
@@ -472,7 +491,7 @@ const EventDetailPage = () => {
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               Attendees ({attendees.length})
             </h2>
-            {isCreator && pendingAttendees.length > 0 && (
+            {canManage && pendingAttendees.length > 0 && (
               <button
                 onClick={() => setNudgeOpen(true)}
                 disabled={nudgeOnCooldown}
@@ -506,8 +525,31 @@ const EventDetailPage = () => {
                     </span>
                   ) : (
                     <div className="flex items-center gap-2">
+                        {(a as any).role === 'co-admin' && (
+                          <span
+                            className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium"
+                            style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}
+                          >
+                            <Shield className="h-3 w-3" /> Co-admin
+                          </span>
+                        )}
                       <StatusBadge status={a.status as any} size="md" />
-                      {isCreator && (
+                        {isCreator && a.status === 'confirmed' && (
+                          <button
+                            onClick={() => setRoleDialog({
+                              userId: a.user_id,
+                              username: a.username,
+                              promote: (a as any).role !== 'co-admin',
+                            })}
+                            className="rounded-full p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                            title={(a as any).role === 'co-admin' ? 'Remove admin rights' : 'Make co-admin'}
+                          >
+                            {(a as any).role === 'co-admin'
+                              ? <ShieldOff className="h-3.5 w-3.5" />
+                              : <Shield className="h-3.5 w-3.5" />}
+                          </button>
+                        )}
+                        {canManage && (a as any).role !== 'co-admin' && (
                         <button
                           onClick={() => handleRemoveParticipant(a.user_id)}
                           className="rounded-full p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
@@ -529,7 +571,7 @@ const EventDetailPage = () => {
           </div>
 
           {/* Invite friends - organizer only */}
-          {isCreator && (
+          {canManage && (
             <div className="mt-3 space-y-2">
               <button
                 onClick={() => setManagingPeople(!managingPeople)}
@@ -630,6 +672,34 @@ const EventDetailPage = () => {
               disabled={nudgeSending}
             >
               {nudgeSending ? 'Sending...' : 'Send notification'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!roleDialog} onOpenChange={(o) => !o && setRoleDialog(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {roleDialog?.promote
+                ? `Give @${roleDialog?.username} admin rights to this event?`
+                : `Remove @${roleDialog?.username}'s admin rights?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {roleDialog?.promote
+                ? "Co-admins can edit the event and manage attendees, but can't delete it."
+                : "They'll go back to being a regular attendee."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                if (roleDialog) handleSetRole(roleDialog.userId, roleDialog.promote ? 'co-admin' : 'attendee');
+              }}
+            >
+              Confirm
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
