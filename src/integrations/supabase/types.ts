@@ -334,6 +334,7 @@ export type Database = {
           bio: string | null
           created_at: string
           email: string
+          email_notifications: boolean | null
           id: string
           preferred_language: string
           usage: string
@@ -345,6 +346,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           email: string
+          email_notifications?: boolean | null
           id?: string
           preferred_language?: string
           usage: string
@@ -356,6 +358,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           email?: string
+          email_notifications?: boolean | null
           id?: string
           preferred_language?: string
           usage?: string
