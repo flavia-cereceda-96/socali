@@ -116,6 +116,7 @@ const OnboardingPage = () => {
     else if (password.length < 8) errs.password = 'At least 8 characters';
     if (!usage) errs.usage = 'Pick one';
     if (!bio.trim()) errs.bio = 'Required';
+    if (!avatarFile) errs.avatar = 'Required';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -322,6 +323,9 @@ const OnboardingPage = () => {
           <p className="text-center text-xs text-muted-foreground -mt-3">
             {avatarPreview ? 'Tap to change' : 'Add a profile photo'}
           </p>
+          {errors.avatar && (
+            <p className="text-center text-xs text-destructive -mt-2">Please add a profile photo *</p>
+          )}
 
           {/* Username */}
           <div className="space-y-1.5">

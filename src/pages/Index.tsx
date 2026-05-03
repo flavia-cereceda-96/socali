@@ -7,6 +7,7 @@ import { MapPin, Clock } from 'lucide-react';
 import { HomeEmptyState } from '@/components/HomeEmptyState';
 import { CoachMark } from '@/components/CoachMark';
 import { EmailNotificationsPrompt } from '@/components/EmailNotificationsPrompt';
+import { AvatarPrompt } from '@/components/AvatarPrompt';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -220,6 +221,8 @@ const Index = () => {
           <p className="text-sm font-medium text-muted-foreground">{greeting}</p>
           <h1 className="text-2xl font-bold text-foreground">Your Week</h1>
         </motion.div>
+
+        <AvatarPrompt userId={userId} />
 
         {hasNoEvents ? (
           <HomeEmptyState usage={profile?.usage} />
