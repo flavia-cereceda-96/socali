@@ -7,7 +7,7 @@ import { EventPhotos } from '@/components/EventPhotos';
 import { UserAvatar } from '@/components/UserAvatar';
 import { ClickableName } from '@/components/ClickableName';
 import { motion } from 'framer-motion';
-import { ArrowLeft, MapPin, Clock, Calendar, MessageSquare, Crown, Pencil, Check, X, UserPlus, UserMinus, Trash2, Link as LinkIcon } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Calendar, MessageSquare, Crown, Pencil, Check, X, UserPlus, UserMinus, Trash2, Link as LinkIcon, Bell } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,6 +17,16 @@ import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { LocationPicker, LocationValue } from '@/components/LocationPicker';
 import { LocationMap } from '@/components/LocationMap';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const EventDetailPage = () => {
   const { id } = useParams();
@@ -42,6 +52,9 @@ const EventDetailPage = () => {
   const [editLinkUrl, setEditLinkUrl] = useState('');
   const [editLinkLabel, setEditLinkLabel] = useState('');
   const [saving, setSaving] = useState(false);
+  const [nudgeOpen, setNudgeOpen] = useState(false);
+  const [nudgeSending, setNudgeSending] = useState(false);
+  const [nudgeCooldownUntil, setNudgeCooldownUntil] = useState<number>(0);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id || null));
@@ -168,6 +181,29 @@ const EventDetailPage = () => {
     if (error) { toast.error(error.message); return; }
     toast.success('Participant removed');
     queryClient.invalidateQueries({ queryKey: ['events'] });
+  };
+
+  const pendingAttendees = (event?.participants || []).filter(p => p.status === 'suggested');
+  const nudgeOnCooldown = Date.now() < nudgeCooldownUntil;
+
+  const handleSendNudges = async () => {
+    if (!event || !userId || pendingAttendees.length === 0) return;
+    setNudgeSending(true);
+    try {
+      const rows = pendingAttendees.map(p => ({
+        user_id: p.user_id,
+        type: 'rsvp_nudge',
+        event_id: event.id,
+        source_user_id: userId,
+      }));
+      const { error } = await supabase.from('activity_feed').insert(rows);
+      if (error) { toast.error(error.message); return; }
+      toast.success(`Notifications sent to ${rows.length} ${rows.length === 1 ? 'person' : 'people'}`);
+      setNudgeCooldownUntil(Date.now() + 5 * 60 * 1000); // 5 min cooldown
+      setNudgeOpen(false);
+    } finally {
+      setNudgeSending(false);
+    }
   };
 
   const fmt = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
