@@ -415,6 +415,45 @@ const EventDetailPage = () => {
                 <X className="h-4 w-4" /> Cancel
               </Button>
             </div>
+            {isCreator && event.participants.filter(p => p.status === 'confirmed').length > 0 && (
+              <div className="space-y-2 rounded-xl border border-border bg-secondary/30 p-3">
+                <div className="space-y-0.5">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Admin rights</span>
+                  <p className="text-xs text-muted-foreground">Co-admins can edit the event and manage attendees, but can't delete it.</p>
+                </div>
+                <div className="space-y-1.5">
+                  {event.participants
+                    .filter(p => p.status === 'confirmed')
+                    .map(p => {
+                      const isCo = (p as any).role === 'co-admin';
+                      return (
+                        <div key={p.id} className="flex items-center gap-2 rounded-lg bg-card px-2 py-1.5">
+                          <UserAvatar username={p.profile?.username || '?'} avatarUrl={p.profile?.avatar_url || null} size="sm" />
+                          <span className="flex-1 truncate text-sm font-medium">@{p.profile?.username || 'unknown'}</span>
+                          {isCo && (
+                            <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}>
+                              Co-admin
+                            </span>
+                          )}
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={isCo ? 'ghost' : 'outline'}
+                            className="h-7 gap-1 text-xs"
+                            onClick={() => setRoleDialog({
+                              userId: p.user_id,
+                              username: p.profile?.username || 'user',
+                              promote: !isCo,
+                            })}
+                          >
+                            {isCo ? <><ShieldOff className="h-3 w-3" /> Revoke</> : <><Shield className="h-3 w-3" /> Make co-admin</>}
+                          </Button>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
             {isCreator && (
               <Button variant="destructive" onClick={handleDelete} className="w-full gap-1 mt-2">
                 <Trash2 className="h-4 w-4" /> Delete Event
