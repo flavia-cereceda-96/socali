@@ -1,15 +1,18 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { motion } from 'framer-motion';
-import { ArrowLeft, CalendarPlus, Calendar, Clock } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, CalendarPlus, Calendar, Clock, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/UserAvatar';
 import { format, formatDistanceToNow } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 const PersonPage = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
+  const [showShared, setShowShared] = useState(false);
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ['person-profile', userId],
@@ -88,6 +91,48 @@ const PersonPage = () => {
     enabled: !!userId,
   });
 
+  const { data: sharedEvents = [], isLoading: sharedLoading } = useQuery({
+    queryKey: ['shared-events-list', userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const [{ data: myCreated }, { data: myParts }, { data: theirCreated }, { data: theirParts }] = await Promise.all([
+        supabase.from('events').select('id').eq('created_by', user.id),
+        supabase.from('event_participants').select('event_id').eq('user_id', user.id),
+        supabase.from('events').select('id').eq('created_by', userId),
+        supabase.from('event_participants').select('event_id').eq('user_id', userId),
+      ]);
+
+      const mine = new Set([
+        ...(myCreated || []).map(e => e.id),
+        ...(myParts || []).map(p => p.event_id),
+      ]);
+      const theirs = new Set([
+        ...(theirCreated || []).map(e => e.id),
+        ...(theirParts || []).map(p => p.event_id),
+      ]);
+      const sharedIds = [...mine].filter(id => theirs.has(id));
+      if (sharedIds.length === 0) return [];
+
+      const { data: events } = await supabase
+        .from('events')
+        .select('id, title, emoji, date, time')
+        .in('id', sharedIds);
+      return events || [];
+    },
+    enabled: !!userId && showShared,
+  });
+
+  const today = new Date().toISOString().split('T')[0];
+  const upcoming = sharedEvents
+    .filter(e => e.date >= today)
+    .sort((a, b) => a.date.localeCompare(b.date) || (a.time || '').localeCompare(b.time || ''));
+  const past = sharedEvents
+    .filter(e => e.date < today)
+    .sort((a, b) => b.date.localeCompare(a.date) || (b.time || '').localeCompare(a.time || ''));
+
   if (profileLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -144,7 +189,11 @@ const PersonPage = () => {
           transition={{ delay: 0.1 }}
           className="grid grid-cols-2 gap-3 mb-8"
         >
-          <div className="rounded-2xl bg-card p-4 shadow-card text-center">
+          <button
+            onClick={() => setShowShared(s => !s)}
+            className="rounded-2xl bg-card p-4 shadow-card text-center hover:bg-accent/40 transition-[background-color] duration-100 ease-out relative"
+            aria-expanded={showShared}
+          >
             <div className="flex items-center justify-center gap-1.5 text-muted-foreground mb-1">
               <Calendar className="h-4 w-4" />
               <span className="text-xs font-medium uppercase tracking-wider">Events Together</span>
@@ -152,7 +201,13 @@ const PersonPage = () => {
             <p className="text-3xl font-bold text-foreground">
               {sharedStats?.count ?? '—'}
             </p>
-          </div>
+            <ChevronDown
+              className={cn(
+                "absolute right-2 top-2 h-3.5 w-3.5 text-muted-foreground transition-transform duration-200",
+                showShared && "rotate-180"
+              )}
+            />
+          </button>
 
           <div className="rounded-2xl bg-card p-4 shadow-card text-center">
             <div className="flex items-center justify-center gap-1.5 text-muted-foreground mb-1">
@@ -166,6 +221,37 @@ const PersonPage = () => {
             </p>
           </div>
         </motion.div>
+
+        {/* Shared events expand */}
+        <AnimatePresence initial={false}>
+          {showShared && (
+            <motion.div
+              key="shared"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden mb-8"
+            >
+              <div className="space-y-5">
+                <SharedEventsSection
+                  title="Upcoming"
+                  events={upcoming}
+                  loading={sharedLoading}
+                  emptyText="No upcoming plans together yet"
+                  onClick={(id) => navigate(`/event/${id}`)}
+                />
+                <SharedEventsSection
+                  title="Past"
+                  events={past}
+                  loading={sharedLoading}
+                  emptyText="No past events together yet"
+                  onClick={(id) => navigate(`/event/${id}`)}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Action */}
         <motion.div
@@ -187,3 +273,51 @@ const PersonPage = () => {
 };
 
 export default PersonPage;
+
+function SharedEventsSection({
+  title,
+  events,
+  loading,
+  emptyText,
+  onClick,
+}: {
+  title: string;
+  events: Array<{ id: string; title: string; emoji: string; date: string; time: string | null }>;
+  loading: boolean;
+  emptyText: string;
+  onClick: (id: string) => void;
+}) {
+  return (
+    <div>
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+        {title}
+      </h3>
+      {loading ? (
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      ) : events.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{emptyText}</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {events.map(e => (
+            <button
+              key={e.id}
+              onClick={() => onClick(e.id)}
+              className="flex items-center gap-3 rounded-2xl bg-card p-3 shadow-card text-left hover:bg-accent/40 transition-[background-color] duration-100 ease-out"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xl">
+                {e.emoji}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm truncate">{e.title}</p>
+                <p className="text-xs text-muted-foreground">
+                  {format(new Date(e.date + 'T00:00:00'), 'EEE, MMM d')}
+                  {e.time ? ` · ${e.time.slice(0, 5)}` : ''}
+                </p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
