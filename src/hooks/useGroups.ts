@@ -10,10 +10,13 @@ export interface DbGroup {
   created_at: string;
   member_count: number;
   avatar_url?: string | null;
+  description?: string | null;
+  membership_status?: string;
 }
 
 export interface DbGroupWithMembers extends DbGroup {
   members: DbProfile[];
+  pending_members?: DbProfile[];
 }
 
 /** All groups the current user belongs to, with member counts. */
@@ -28,7 +31,8 @@ export function useGroups() {
       const { data: myMemberships } = await supabase
         .from('group_members')
         .select('group_id')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .eq('membership_status', 'accepted');
 
       const groupIds = (myMemberships || []).map(m => m.group_id);
       if (groupIds.length === 0) return [];
@@ -43,7 +47,8 @@ export function useGroups() {
       const { data: allMembers } = await supabase
         .from('group_members')
         .select('group_id')
-        .in('group_id', groupIds);
+        .in('group_id', groupIds)
+        .eq('membership_status', 'accepted');
 
       const counts: Record<string, number> = {};
       (allMembers || []).forEach(m => {
@@ -76,23 +81,28 @@ export function useGroup(groupId: string | undefined) {
 
       const { data: memberRows } = await supabase
         .from('group_members')
-        .select('user_id')
+        .select('user_id, membership_status')
         .eq('group_id', groupId);
 
-      const userIds = (memberRows || []).map(m => m.user_id);
-      let members: DbProfile[] = [];
-      if (userIds.length > 0) {
+      const acceptedIds = (memberRows || []).filter(m => m.membership_status === 'accepted').map(m => m.user_id);
+      const pendingIds = (memberRows || []).filter(m => m.membership_status === 'pending').map(m => m.user_id);
+      const allIds = [...acceptedIds, ...pendingIds];
+      const profilesMap = new Map<string, DbProfile>();
+      if (allIds.length > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
           .select('*')
-          .in('user_id', userIds);
-        members = (profiles || []) as DbProfile[];
+          .in('user_id', allIds);
+        (profiles || []).forEach((p: any) => profilesMap.set(p.user_id, p as DbProfile));
       }
+      const members = acceptedIds.map(id => profilesMap.get(id)).filter(Boolean) as DbProfile[];
+      const pending_members = pendingIds.map(id => profilesMap.get(id)).filter(Boolean) as DbProfile[];
 
       return {
         ...group,
         member_count: members.length,
         members,
+        pending_members,
       };
     },
   });
@@ -118,13 +128,23 @@ export function useCreateGroup() {
       }
       if (!group) throw new Error('Group was not created');
 
-      // Trigger auto-adds creator. Insert remaining members (skip creator).
+      // Trigger auto-adds creator (accepted). Invite remaining members as pending.
       const others = memberIds.filter(id => id !== user.id);
       if (others.length > 0) {
         const { error: memErr } = await supabase
           .from('group_members')
-          .insert(others.map(uid => ({ group_id: group.id, user_id: uid })));
+          .insert(others.map(uid => ({ group_id: group.id, user_id: uid, membership_status: 'pending' })));
         if (memErr) throw memErr;
+
+        await supabase.from('activity_feed').insert(
+          others.map(uid => ({
+            user_id: uid,
+            type: 'group_invite',
+            source_user_id: user.id,
+            group_id: group.id,
+            is_read: false,
+          })) as any
+        );
       }
 
       return group;
@@ -140,10 +160,22 @@ export function useAddGroupMembers() {
   return useMutation({
     mutationFn: async ({ groupId, userIds }: { groupId: string; userIds: string[] }) => {
       if (userIds.length === 0) return;
+      const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase
         .from('group_members')
-        .insert(userIds.map(uid => ({ group_id: groupId, user_id: uid })));
+        .insert(userIds.map(uid => ({ group_id: groupId, user_id: uid, membership_status: 'pending' })));
       if (error) throw error;
+      if (user) {
+        await supabase.from('activity_feed').insert(
+          userIds.map(uid => ({
+            user_id: uid,
+            type: 'group_invite',
+            source_user_id: user.id,
+            group_id: groupId,
+            is_read: false,
+          })) as any
+        );
+      }
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ['group', vars.groupId] });
@@ -183,6 +215,39 @@ export function useDeleteGroup() {
   });
 }
 
+/** Respond to a group invite (accept/decline). */
+export function useRespondGroupInvite() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ groupId, accept }: { groupId: string; accept: boolean }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not signed in');
+      if (accept) {
+        const { error } = await supabase
+          .from('group_members')
+          .update({ membership_status: 'accepted' })
+          .eq('group_id', groupId)
+          .eq('user_id', user.id);
+        if (error) throw error;
+      } else {
+        // Remove the row so creator is not notified and user isn't tied to group
+        const { error } = await supabase
+          .from('group_members')
+          .delete()
+          .eq('group_id', groupId)
+          .eq('user_id', user.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['groups'] });
+      qc.invalidateQueries({ queryKey: ['group', vars.groupId] });
+      qc.invalidateQueries({ queryKey: ['activity-feed'] });
+      qc.invalidateQueries({ queryKey: ['unread-activity-count'] });
+    },
+  });
+}
+
 /** Returns a map: eventId -> group hint (if ≥80% of participants share one group) */
 export function useEventGroupHints(eventIds: string[], participantsByEvent: Record<string, string[]>) {
   return useQuery({
@@ -196,7 +261,8 @@ export function useEventGroupHints(eventIds: string[], participantsByEvent: Reco
       const { data: myMemberships } = await supabase
         .from('group_members')
         .select('group_id')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .eq('membership_status', 'accepted');
 
       const groupIds = (myMemberships || []).map(m => m.group_id);
       if (groupIds.length === 0) return {};
@@ -209,7 +275,8 @@ export function useEventGroupHints(eventIds: string[], participantsByEvent: Reco
       const { data: members } = await supabase
         .from('group_members')
         .select('group_id, user_id')
-        .in('group_id', groupIds);
+        .in('group_id', groupIds)
+        .eq('membership_status', 'accepted');
 
       const groupMembers: Record<string, Set<string>> = {};
       (members || []).forEach(m => {

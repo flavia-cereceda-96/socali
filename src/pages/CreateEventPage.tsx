@@ -95,7 +95,8 @@ const CreateEventPage = () => {
       const { data: members } = await supabase
         .from('group_members')
         .select('user_id')
-        .in('group_id', selectedGroups.map(g => g.id));
+        .in('group_id', selectedGroups.map(g => g.id))
+        .eq('membership_status', 'accepted');
       (members || []).forEach(m => {
         if (m.user_id !== currentUserId) ids.add(m.user_id);
       });

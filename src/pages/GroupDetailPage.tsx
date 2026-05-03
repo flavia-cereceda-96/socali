@@ -66,7 +66,11 @@ const GroupDetailPage = () => {
   }
 
   const isCreator = currentUserId === group.created_by;
-  const memberIds = new Set(group.members.map(m => m.user_id));
+  const pendingMembers = (group as any).pending_members || [];
+  const memberIds = new Set([
+    ...group.members.map(m => m.user_id),
+    ...pendingMembers.map((m: any) => m.user_id),
+  ]);
   const addableFriends = friends.filter(f => !memberIds.has(f.user_id));
 
   const handleAdd = async () => {
@@ -243,7 +247,7 @@ const GroupDetailPage = () => {
         >
           <div>
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Members ({group.members.length})
+              Members ({group.members.length}{isCreator && pendingMembers.length > 0 ? ` · ${pendingMembers.length} pending` : ''})
             </h2>
             <div className="flex flex-col gap-2">
               {group.members.map(m => (
@@ -269,6 +273,27 @@ const GroupDetailPage = () => {
                       <X className="h-4 w-4" />
                     </button>
                   )}
+                </div>
+              ))}
+              {isCreator && pendingMembers.map((m: any) => (
+                <div
+                  key={`pending-${m.user_id}`}
+                  className="flex items-center gap-3 rounded-2xl bg-card p-3 shadow-card opacity-70"
+                >
+                  <UserAvatar avatarUrl={m.avatar_url} username={m.username} size="md" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground truncate">@{m.username}</p>
+                  </div>
+                  <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-600">
+                    Pending
+                  </span>
+                  <button
+                    onClick={() => handleRemove(m.user_id)}
+                    className="rounded-full p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    aria-label={`Cancel invite to ${m.username}`}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
               ))}
             </div>

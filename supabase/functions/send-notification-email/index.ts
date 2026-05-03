@@ -12,7 +12,7 @@ const APP_URL = Deno.env.get('APP_URL') ?? 'https://socali.lovable.app';
 
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
-function buildContent(type: string, sourceName: string, eventTitle?: string, commentContent?: string) {
+function buildContent(type: string, sourceName: string, eventTitle?: string, commentContent?: string, groupName?: string) {
   const actor = sourceName || 'Someone';
   switch (type) {
     case 'invitation':
@@ -31,6 +31,12 @@ function buildContent(type: string, sourceName: string, eventTitle?: string, com
       return { subject: `Socali - New friend request`, title: `${actor} sent you a friend request`, body: `${actor} wants to connect with you on Socali.` };
     case 'friend_accepted':
       return { subject: `Socali - Friend request accepted`, title: `${actor} accepted your friend request`, body: `You're now friends with ${actor} on Socali.` };
+    case 'group_invite':
+      return {
+        subject: `Socali - You've been added to a group`,
+        title: `${actor} added you to ${groupName ?? 'a group'}`,
+        body: `${actor} added you to "${groupName ?? 'a group'}". Open Socali to accept or decline.`,
+      };
     case 'rsvp_nudge':
       return {
         subject: `Socali - Please confirm your RSVP`,
@@ -82,9 +88,18 @@ Deno.serve(async (req) => {
       const { data: c } = await supabase.from('event_comments').select('content').eq('id', record.comment_id).maybeSingle();
       commentContent = c?.content;
     }
+    let groupName: string | undefined;
+    if (record.group_id) {
+      const { data: g } = await supabase.from('groups').select('name').eq('id', record.group_id).maybeSingle();
+      groupName = g?.name;
+    }
 
-    const { subject, title, body } = buildContent(record.type, sourceName, eventTitle, commentContent);
-    const link = record.event_id ? `${APP_URL}/event/${record.event_id}` : `${APP_URL}/activity`;
+    const { subject, title, body } = buildContent(record.type, sourceName, eventTitle, commentContent, groupName);
+    const link = record.event_id
+      ? `${APP_URL}/event/${record.event_id}`
+      : record.group_id
+      ? `${APP_URL}/activity`
+      : `${APP_URL}/activity`;
 
     const html = `<!doctype html><html><body style="font-family:system-ui,-apple-system,sans-serif;background:#FAFAFE;padding:24px;color:#1A1230;">
       <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:16px;padding:32px;border:1px solid rgba(160,130,255,0.2);">
