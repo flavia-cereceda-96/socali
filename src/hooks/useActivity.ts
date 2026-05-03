@@ -8,10 +8,12 @@ export interface ActivityItem {
   event_id: string | null;
   source_user_id: string | null;
   comment_id: string | null;
+  group_id?: string | null;
   is_read: boolean;
   created_at: string;
   source_profile?: { username: string; avatar_url: string | null };
   event?: { title: string; emoji: string };
+  group?: { id: string; name: string; emoji: string; avatar_url: string | null };
   comment_content?: string;
 }
 
@@ -67,10 +69,23 @@ export function useActivityFeed() {
       }
       const commentMap = new Map(comments.map(c => [c.id, c]));
 
+      // Fetch groups for group_invite items
+      const groupIds = [...new Set(items.map((i: any) => i.group_id).filter(Boolean))] as string[];
+      let groupRows: any[] = [];
+      if (groupIds.length > 0) {
+        const { data } = await supabase
+          .from('groups')
+          .select('id, name, emoji, avatar_url')
+          .in('id', groupIds);
+        groupRows = data || [];
+      }
+      const groupMap = new Map(groupRows.map(g => [g.id, g]));
+
       return items.map(item => ({
         ...item,
         source_profile: item.source_user_id ? profileMap.get(item.source_user_id) : undefined,
         event: item.event_id ? eventMap.get(item.event_id) : undefined,
+        group: (item as any).group_id ? groupMap.get((item as any).group_id) : undefined,
         comment_content: item.comment_id ? commentMap.get(item.comment_id)?.content : undefined,
       })) as ActivityItem[];
     },
