@@ -208,7 +208,7 @@ const CreateEventPage = () => {
           className="space-y-6"
         >
           <div className="space-y-2">
-            <Label>What are you planning?</Label>
+            <Label>What are you planning? *</Label>
             <div className="flex flex-wrap gap-2 mb-2">
               {quickEmojis.map(e => (
                 <button
@@ -351,7 +351,7 @@ const CreateEventPage = () => {
           </div>
 
           <div className="space-y-2">
-            <Label>{isMultiDay ? 'Dates' : 'Date & Time'}</Label>
+            <Label>{isMultiDay ? 'Dates *' : 'Date & Time *'}</Label>
             {isMultiDay ? (
               <div className="grid grid-cols-2 gap-2">
                 <div>
