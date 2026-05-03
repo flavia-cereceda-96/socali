@@ -6,47 +6,51 @@
 
 @layer base {
   :root {
-    --background: 30 33% 97%;
-    --foreground: 240 20% 12%;
+    /* Off-white page background #FAFAFE */
+    --background: 240 50% 99%;
+    --foreground: 258 45% 13%;
 
-    --card: 30 30% 99%;
-    --card-foreground: 240 20% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 258 45% 13%;
 
-    --popover: 30 30% 99%;
-    --popover-foreground: 240 20% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 258 45% 13%;
 
-    --primary: 12 76% 62%;
+    /* Purple primary #B8A0FF, dark #6B45F5 used as foreground-on-light */
+    --primary: 252 100% 81%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 30 30% 93%;
-    --secondary-foreground: 240 20% 20%;
+    /* Light purple surface #EBE5FF */
+    --secondary: 252 100% 95%;
+    --secondary-foreground: 252 90% 62%;
 
-    --muted: 30 20% 94%;
-    --muted-foreground: 240 10% 50%;
+    --muted: 252 100% 97%;
+    --muted-foreground: 258 19% 45%;
 
-    --accent: 160 50% 45%;
-    --accent-foreground: 0 0% 100%;
+    /* Yellow-orange accent #FFC234 */
+    --accent: 40 100% 60%;
+    --accent-foreground: 40 100% 20%;
 
     --destructive: 0 72% 56%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 30 20% 90%;
-    --input: 30 20% 90%;
-    --ring: 12 76% 62%;
+    --border: 252 100% 90%;
+    --input: 252 100% 90%;
+    --ring: 252 90% 62%;
 
     --radius: 1rem;
 
     /* Custom tokens */
-    --status-suggested: 40 90% 55%;
-    --status-maybe: 220 70% 58%;
-    --status-confirmed: 160 50% 45%;
+    --status-suggested: 40 100% 60%;
+    --status-maybe: 252 100% 81%;
+    --status-confirmed: 143 71% 36%;
     --status-declined: 0 60% 55%;
 
-    --surface-warm: 25 40% 95%;
-    --surface-glow: 12 76% 62%;
+    --surface-warm: 252 100% 95%;
+    --surface-glow: 252 100% 81%;
 
-    --shadow-card: 0 2px 12px -2px hsl(12 76% 62% / 0.08);
-    --shadow-elevated: 0 8px 30px -8px hsl(12 76% 62% / 0.15);
+    --shadow-card: 0 2px 12px -2px hsl(252 90% 62% / 0.08);
+    --shadow-elevated: 0 8px 30px -8px hsl(252 90% 62% / 0.18);
 
     --font-display: 'DM Sans', system-ui, sans-serif;
     --font-body: 'DM Sans', system-ui, sans-serif;
