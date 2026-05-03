@@ -43,13 +43,15 @@ const Index = () => {
     return 'Good evening 🌙';
   })();
 
-  const { todayEvents, weekEvents, todayCount, weekCount, pendingCount } = useMemo(() => {
+  const { todayEvents, weekEvents, monthEvents, todayCount, weekCount, pendingCount } = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
     const weekEnd = new Date(today);
     weekEnd.setDate(weekEnd.getDate() + 7);
+    const monthEnd = new Date(today);
+    monthEnd.setDate(monthEnd.getDate() + 30);
 
     const future = events
       .filter(e => new Date(e.date) >= today)
@@ -62,6 +64,10 @@ const Index = () => {
 
     const today_ = notDeclined.filter(e => e.date === todayKey);
     const week_ = notDeclined.filter(e => e.date !== todayKey && new Date(e.date) <= weekEnd);
+    const month_ = notDeclined.filter(e => {
+      const d = new Date(e.date);
+      return d > weekEnd && d <= monthEnd;
+    });
     const pending = future.filter(e => {
       const myP = e.participants.find(p => p.user_id === userId);
       return myP?.status === 'suggested';
@@ -70,13 +76,14 @@ const Index = () => {
     return {
       todayEvents: today_,
       weekEvents: week_,
+      monthEvents: month_,
       todayCount: today_.length,
       weekCount: notDeclined.filter(e => new Date(e.date) <= weekEnd).length,
       pendingCount: pending.length,
     };
   }, [events, userId]);
 
-  const allListedEvents = useMemo(() => [...todayEvents, ...weekEvents], [todayEvents, weekEvents]);
+  const allListedEvents = useMemo(() => [...todayEvents, ...weekEvents, ...monthEvents], [todayEvents, weekEvents, monthEvents]);
   const upcomingEventIds = allListedEvents.map(e => e.id);
   const participantsByEvent = useMemo(() => {
     const m: Record<string, string[]> = {};
@@ -289,9 +296,9 @@ const Index = () => {
                 <p className="text-[11px] opacity-80">plan{todayCount !== 1 ? 's' : ''}</p>
               </div>
               <div className="rounded-2xl p-4 shadow-card" style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}>
-                <p className="text-xs font-medium">This week</p>
+                <p className="text-xs font-medium">Next 7 days</p>
                 <p className="text-2xl font-bold mt-1">{weekCount}</p>
-                <p className="text-[11px] opacity-80">next 7 days</p>
+                <p className="text-[11px] opacity-80">plans</p>
               </div>
               <div className="rounded-2xl p-4 shadow-card" style={{ backgroundColor: '#FFE0CC', color: '#C2410C' }}>
                 <p className="text-xs font-medium">Pending</p>
@@ -333,14 +340,14 @@ const Index = () => {
               )}
             </div>
 
-            {/* This week */}
+            {/* Next 7 days */}
             <motion.h2
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.15 }}
               className={sectionHeaderCls}
             >
-              This week
+              Next 7 days
             </motion.h2>
             {renderFriendsRow(weekEvents)}
             <div className="flex flex-col gap-3 mb-8">
@@ -348,6 +355,24 @@ const Index = () => {
                 weekEvents.map((e, i) => renderEventCard(e, i))
               ) : (
                 <p className="text-sm text-muted-foreground">Nothing planned this week yet ✨</p>
+              )}
+            </div>
+
+            {/* Next 30 days */}
+            <motion.h2
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className={sectionHeaderCls}
+            >
+              Next 30 days
+            </motion.h2>
+            {renderFriendsRow(monthEvents)}
+            <div className="flex flex-col gap-3 mb-8">
+              {monthEvents.length > 0 ? (
+                monthEvents.map((e, i) => renderEventCard(e, i))
+              ) : (
+                <p className="text-sm text-muted-foreground">Nothing planned yet — a good time to make plans!</p>
               )}
             </div>
           </>
