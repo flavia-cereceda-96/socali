@@ -409,7 +409,7 @@ const PeoplePage = () => {
                     <ClickableName userId={friend.user_id} name={friend.username} className="font-semibold" />
                     <p className="text-xs text-muted-foreground">{friend.email}</p>
                     {friend.bio && (
-                      <p className="text-xs truncate" style={{ color: '#CFFCE3' }}>{friend.bio}</p>
+                      <p className="text-xs truncate" style={{ color: '#1A9E55' }}>{friend.bio}</p>
                     )}
                   </div>
                   <div className="flex flex-col items-center gap-0.5 text-muted-foreground">
