@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 type Category = 'bug' | 'feature' | 'improvement' | 'other';
-type Status = 'under_review' | 'planned' | 'done' | null;
+type Status = 'created' | 'accepted' | 'rejected';
 
 interface FeedbackRow {
   id: string;
@@ -45,6 +45,7 @@ interface CommentRow {
   feedback_id: string;
   content: string;
   created_at: string;
+  is_developer_response: boolean;
 }
 
 interface CommentVoteRow {
@@ -59,16 +60,22 @@ const CATEGORY_LABELS: Record<Category, string> = {
   other: 'Other',
 };
 
-const STATUS_LABELS: Record<Exclude<Status, null>, string> = {
-  under_review: 'Under review',
-  planned: 'Planned',
-  done: 'Done',
+const STATUS_LABELS: Record<Status, string> = {
+  created: 'Created',
+  accepted: 'Accepted',
+  rejected: 'Rejected',
 };
 
-const STATUS_STYLES: Record<Exclude<Status, null>, string> = {
-  under_review: 'bg-amber-100 text-amber-800',
-  planned: 'bg-blue-100 text-blue-800',
-  done: 'bg-green-100 text-green-800',
+const STATUS_STYLES: Record<Status, string> = {
+  created: '',
+  accepted: '',
+  rejected: '',
+};
+
+const STATUS_INLINE: Record<Status, { backgroundColor: string; color: string }> = {
+  created: { backgroundColor: '#E5E7EB', color: '#374151' },
+  accepted: { backgroundColor: '#CFFCE3', color: '#1A9E55' },
+  rejected: { backgroundColor: '#FFE4E1', color: '#C0392B' },
 };
 
 const formatDate = (iso: string) => {
@@ -225,8 +232,7 @@ const FeedbackBoardPage = () => {
   };
 
   const handleStatusChange = async (feedbackId: string, status: string) => {
-    const newStatus = status === 'none' ? null : status;
-    const { error } = await supabase.from('feedback').update({ status: newStatus }).eq('id', feedbackId);
+    const { error } = await supabase.from('feedback').update({ status }).eq('id', feedbackId);
     if (error) toast.error(error.message);
     else queryClient.invalidateQueries({ queryKey: ['feedback'] });
   };
@@ -314,11 +320,13 @@ const FeedbackBoardPage = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start gap-2 flex-wrap">
                       <h3 className="font-semibold text-foreground leading-tight flex-1 min-w-0">{f.title}</h3>
-                      {f.status && (
-                        <Badge className={cn("text-[10px] font-medium", STATUS_STYLES[f.status])} variant="secondary">
-                          {STATUS_LABELS[f.status]}
-                        </Badge>
-                      )}
+                      <Badge
+                        className="text-[10px] font-medium border-0"
+                        style={STATUS_INLINE[f.status]}
+                        variant="secondary"
+                      >
+                        {STATUS_LABELS[f.status]}
+                      </Badge>
                     </div>
                     {f.description && (
                       <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{f.description}</p>
@@ -341,15 +349,14 @@ const FeedbackBoardPage = () => {
                         <span>{f.commentCount} {f.commentCount === 1 ? 'comment' : 'comments'}</span>
                       </button>
                       {isAdmin && (
-                        <Select value={f.status ?? 'none'} onValueChange={(v) => handleStatusChange(f.id, v)}>
-                          <SelectTrigger className="h-7 text-xs w-[140px]">
-                            <SelectValue placeholder="Set status" />
+                        <Select value={f.status} onValueChange={(v) => handleStatusChange(f.id, v)}>
+                          <SelectTrigger className="h-7 text-xs w-[130px]">
+                            <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="none">No status</SelectItem>
-                            <SelectItem value="under_review">Under review</SelectItem>
-                            <SelectItem value="planned">Planned</SelectItem>
-                            <SelectItem value="done">Done</SelectItem>
+                            <SelectItem value="created">Created</SelectItem>
+                            <SelectItem value="accepted">Accepted</SelectItem>
+                            <SelectItem value="rejected">Rejected</SelectItem>
                           </SelectContent>
                         </Select>
                       )}
@@ -369,6 +376,7 @@ const FeedbackBoardPage = () => {
                             commentVotes={commentVotes}
                             profileMap={profileMap}
                             userId={userId}
+                            isAdmin={isAdmin}
                           />
                         </motion.div>
                       )}
@@ -400,19 +408,23 @@ function CommentsThread({
   commentVotes,
   profileMap,
   userId,
+  isAdmin,
 }: {
   feedbackId: string;
   comments: CommentRow[];
   commentVotes: CommentVoteRow[];
   profileMap: Map<string, Profile>;
   userId: string | null;
+  isAdmin: boolean;
 }) {
   const queryClient = useQueryClient();
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [devText, setDevText] = useState('');
+  const [devSubmitting, setDevSubmitting] = useState(false);
 
-  const enriched = useMemo(() => {
-    return comments
+  const { regularComments, devComments } = useMemo(() => {
+    const enrich = (list: CommentRow[]) => list
       .map(c => {
         const cVotes = commentVotes.filter(v => v.comment_id === c.id);
         const ups = cVotes.length;
@@ -420,6 +432,10 @@ function CommentsThread({
         return { ...c, ups, myUpvoted };
       })
       .sort((a, b) => b.ups - a.ups || a.created_at.localeCompare(b.created_at));
+    return {
+      regularComments: enrich(comments.filter(c => !c.is_developer_response)),
+      devComments: enrich(comments.filter(c => c.is_developer_response)),
+    };
   }, [comments, commentVotes, userId]);
 
   const handleUpvote = async (commentId: string, currentlyUpvoted: boolean) => {
@@ -455,9 +471,37 @@ function CommentsThread({
     queryClient.invalidateQueries({ queryKey: ['feedback_comments'] });
   };
 
+  const handleDevSubmit = async () => {
+    if (!userId || !devText.trim()) return;
+    setDevSubmitting(true);
+    const { error } = await supabase
+      .from('feedback_comments')
+      .insert({ user_id: userId, feedback_id: feedbackId, content: devText.trim(), is_developer_response: true });
+    setDevSubmitting(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setDevText('');
+    queryClient.invalidateQueries({ queryKey: ['feedback_comments'] });
+  };
+
+  const renderUpvote = (commentId: string, ups: number, myUpvoted: boolean) => (
+    <button
+      onClick={() => handleUpvote(commentId, myUpvoted)}
+      className={cn(
+        "flex items-center gap-0.5 text-xs px-1.5 rounded h-fit py-1 transition-colors",
+        myUpvoted ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:bg-muted'
+      )}
+    >
+      <ChevronUp className="w-3.5 h-3.5" />
+      <span className="tabular-nums">{ups}</span>
+    </button>
+  );
+
   return (
     <div className="mt-3 pt-3 border-t border-border space-y-3">
-      {enriched.map(c => {
+      {regularComments.map(c => {
         const author = profileMap.get(c.user_id);
         return (
           <div key={c.id} className="flex gap-2">
@@ -469,16 +513,7 @@ function CommentsThread({
               </div>
               <p className="text-sm text-foreground whitespace-pre-wrap">{c.content}</p>
             </div>
-            <button
-              onClick={() => handleUpvote(c.id, c.myUpvoted)}
-              className={cn(
-                "flex items-center gap-0.5 text-xs px-1.5 rounded h-fit py-1 transition-colors",
-                c.myUpvoted ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:bg-muted'
-              )}
-            >
-              <ChevronUp className="w-3.5 h-3.5" />
-              <span className="tabular-nums">{c.ups}</span>
-            </button>
+            {renderUpvote(c.id, c.ups, c.myUpvoted)}
           </div>
         );
       })}
@@ -498,6 +533,57 @@ function CommentsThread({
           Post
         </Button>
       </div>
+
+      {(devComments.length > 0 || isAdmin) && (
+        <div className="space-y-2 pt-2">
+          {devComments.map(c => {
+            const author = profileMap.get(c.user_id);
+            return (
+              <div
+                key={c.id}
+                className="rounded-xl p-3 flex gap-2"
+                style={{ backgroundColor: '#EBE5FF' }}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge className="text-[10px] font-semibold border-0" style={{ backgroundColor: '#6B45F5', color: '#ffffff' }}>
+                      Developer response
+                    </Badge>
+                    <span className="text-xs text-foreground/70">
+                      {author?.username || 'Team'} · {formatDate(c.created_at)}
+                    </span>
+                  </div>
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{c.content}</p>
+                </div>
+                {renderUpvote(c.id, c.ups, c.myUpvoted)}
+              </div>
+            );
+          })}
+
+          {isAdmin && (
+            <div className="rounded-xl p-3 space-y-2" style={{ backgroundColor: '#EBE5FF' }}>
+              <div className="flex items-center gap-2">
+                <Badge className="text-[10px] font-semibold border-0" style={{ backgroundColor: '#6B45F5', color: '#ffffff' }}>
+                  Developer response
+                </Badge>
+                <span className="text-xs text-foreground/70">Visible to everyone</span>
+              </div>
+              <Textarea
+                value={devText}
+                onChange={(e) => setDevText(e.target.value)}
+                placeholder="Post an official response from the team..."
+                rows={2}
+                className="bg-white"
+              />
+              <div className="flex justify-end">
+                <Button onClick={handleDevSubmit} disabled={!devText.trim() || devSubmitting} size="sm">
+                  Post response
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
