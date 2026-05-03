@@ -31,6 +31,7 @@ const ProfilePage = () => {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [avatarPreviewOpen, setAvatarPreviewOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id || null));
@@ -200,7 +201,14 @@ const ProfilePage = () => {
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
           {/* Header */}
           <div className="flex flex-col items-center text-center">
-            <UserAvatar avatarUrl={avatarUrl} username={username} size="xl" />
+            <button
+              type="button"
+              onClick={() => setAvatarPreviewOpen(true)}
+              className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
+              aria-label="View profile picture"
+            >
+              <UserAvatar avatarUrl={avatarUrl} username={username} size="xl" />
+            </button>
             <h2 className="mt-3 text-xl font-bold text-foreground">{username}</h2>
             {bio && (
               <p className="mt-2 text-sm text-foreground/80 leading-relaxed max-w-xs">{bio}</p>
@@ -335,6 +343,46 @@ const ProfilePage = () => {
             </section>
           )}
         </motion.div>
+
+        <AnimatePresence>
+          {avatarPreviewOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setAvatarPreviewOpen(false)}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-6"
+            >
+              <button
+                onClick={() => setAvatarPreviewOpen(false)}
+                className="absolute top-5 right-5 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <motion.div
+                initial={{ scale: 0.85, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.85, opacity: 0 }}
+                transition={{ type: 'spring', damping: 22, stiffness: 240 }}
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center justify-center"
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={username || 'Profile'}
+                    className="max-h-[80vh] max-w-[80vw] rounded-full object-cover shadow-2xl"
+                  />
+                ) : (
+                  <div className="flex h-72 w-72 items-center justify-center rounded-full bg-secondary text-7xl font-semibold text-muted-foreground shadow-2xl">
+                    {username ? username[0].toUpperCase() : '?'}
+                  </div>
+                )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Edit modal */}
