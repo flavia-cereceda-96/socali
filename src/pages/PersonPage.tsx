@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, CalendarPlus, Clock, MapPin, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/UserAvatar';
+import { GroupAvatar } from '@/components/GroupAvatar';
 
 const PersonPage = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -47,6 +48,41 @@ const PersonPage = () => {
 
   // Use existing events query (viewer's own visible events) to compute shared & upcoming together
   const { data: events = [] } = useEvents();
+
+  // Shared and other groups
+  const { data: groupData } = useQuery({
+    queryKey: ['person-groups', userId, meId],
+    enabled: !!userId && !!meId,
+    queryFn: async () => {
+      if (!userId || !meId) return { shared: [], theirOther: [] };
+      // Their accepted groups
+      const { data: theirMems } = await supabase
+        .from('group_members')
+        .select('group_id')
+        .eq('user_id', userId)
+        .eq('membership_status', 'accepted');
+      const theirGroupIds = (theirMems || []).map(m => m.group_id);
+      if (theirGroupIds.length === 0) return { shared: [], theirOther: [] };
+
+      // My accepted groups
+      const { data: myMems } = await supabase
+        .from('group_members')
+        .select('group_id')
+        .eq('user_id', meId)
+        .eq('membership_status', 'accepted');
+      const myGroupIds = new Set((myMems || []).map(m => m.group_id));
+
+      const { data: groups } = await supabase
+        .from('groups')
+        .select('id, name, emoji, avatar_url')
+        .in('id', theirGroupIds);
+      const all = (groups || []) as any[];
+      return {
+        shared: all.filter(g => myGroupIds.has(g.id)),
+        theirOther: all.filter(g => !myGroupIds.has(g.id)),
+      };
+    },
+  });
 
   const shared = useMemo(() => {
     if (!userId || !meId) return [];
@@ -176,6 +212,52 @@ const PersonPage = () => {
                   </div>
                 </button>
               ))}
+            </div>
+          )}
+        </motion.section>
+
+        {/* Groups */}
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
+          className="mb-8"
+        >
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            Groups
+          </h2>
+          {(groupData?.shared.length ?? 0) === 0 ? (
+            <p className="text-sm text-muted-foreground">No groups in common</p>
+          ) : (
+            <div className="-mx-4 px-4 overflow-x-auto scrollbar-hide">
+              <div className="flex gap-4 pb-1">
+                {groupData!.shared.map((g: any) => (
+                  <button
+                    key={g.id}
+                    onClick={() => navigate(`/people/groups/${g.id}`)}
+                    className="flex flex-col items-center gap-1.5 w-16 flex-shrink-0"
+                  >
+                    <GroupAvatar avatarUrl={g.avatar_url} emoji={g.emoji} name={g.name} size="lg" />
+                    <span className="text-xs text-foreground truncate max-w-full">{g.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(groupData?.theirOther.length ?? 0) > 0 && (
+            <div className="mt-5">
+              <h3 className="mb-2 text-xs font-medium text-muted-foreground">Their other groups</h3>
+              <div className="-mx-4 px-4 overflow-x-auto scrollbar-hide">
+                <div className="flex gap-4 pb-1 opacity-80">
+                  {groupData!.theirOther.map((g: any) => (
+                    <div key={g.id} className="flex flex-col items-center gap-1.5 w-16 flex-shrink-0">
+                      <GroupAvatar avatarUrl={g.avatar_url} emoji={g.emoji} name={g.name} size="lg" />
+                      <span className="text-xs text-foreground truncate max-w-full">{g.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </motion.section>
