@@ -7,6 +7,7 @@ import { MapPin, Clock } from 'lucide-react';
 import { HomeEmptyState } from '@/components/HomeEmptyState';
 import { CoachMark } from '@/components/CoachMark';
 import { EmailNotificationsPrompt } from '@/components/EmailNotificationsPrompt';
+import { AvatarPrompt } from '@/components/AvatarPrompt';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -209,6 +210,9 @@ const Index = () => {
   return (
     <div className="min-h-screen pb-24">
       <EmailNotificationsPrompt userId={userId} />
+      <div className="mx-auto max-w-md px-4 pt-4">
+        <AvatarPrompt userId={userId} />
+      </div>
       <CoachMark
         id="home-fab"
         text="Tap here to create your first plan"
