@@ -5,7 +5,7 @@ import { useActivityFeed, ActivityItem } from '@/hooks/useActivity';
 import { StatusBadge } from '@/components/StatusBadge';
 import { UserAvatar } from '@/components/UserAvatar';
 import { motion } from 'framer-motion';
-import { MapPin, Clock, Check, HelpCircle, X, MessageSquare, UserPlus, AtSign, Bell, CheckCircle2, XCircle, CircleHelp, Users } from 'lucide-react';
+import { MapPin, Clock, Check, HelpCircle, X, MessageSquare, UserPlus, AtSign, Bell, CheckCircle2, XCircle, CircleHelp, Users, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CoachMark } from '@/components/CoachMark';
 import { Input } from '@/components/ui/input';
@@ -82,6 +82,7 @@ const RequestsPage = () => {
       case 'rsvp_declined': return <XCircle className="h-4 w-4 text-rose-500" />;
       case 'rsvp_maybe': return <CircleHelp className="h-4 w-4 text-amber-500" />;
       case 'group_invite': return <Users className="h-4 w-4 text-primary" />;
+      case 'group_message': return <MessageCircle className="h-4 w-4 text-blue-500" />;
       default: return <Bell className="h-4 w-4 text-muted-foreground" />;
     }
   };
@@ -105,6 +106,10 @@ const RequestsPage = () => {
       case 'group_invite': {
         const gname = item.group?.name || 'a group';
         return <><span className="font-semibold">{name}</span> added you to <span className="font-semibold">{gname}</span></>;
+      }
+      case 'group_message': {
+        const gname = item.group?.name || 'a group';
+        return <><span className="font-semibold">{name}</span> sent a message in <span className="font-semibold">{gname}</span></>;
       }
       default:
         return <><span className="font-semibold">{name}</span> activity on <span className="font-semibold">{eventTitle}</span></>;
