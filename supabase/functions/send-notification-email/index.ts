@@ -37,6 +37,12 @@ function buildContent(type: string, sourceName: string, eventTitle?: string, com
         title: `${actor} added you to ${groupName ?? 'a group'}`,
         body: `${actor} added you to "${groupName ?? 'a group'}". Open Socali to accept or decline.`,
       };
+    case 'group_message':
+      return {
+        subject: `Socali - New message in ${groupName ?? 'your group'}`,
+        title: `${actor} sent a message in ${groupName ?? 'your group'}`,
+        body: commentContent ?? `${actor} sent a new message in "${groupName ?? 'your group'}".`,
+      };
     case 'rsvp_nudge':
       return {
         subject: `Socali - Please confirm your RSVP`,
