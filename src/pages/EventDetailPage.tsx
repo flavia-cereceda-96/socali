@@ -7,7 +7,7 @@ import { EventPhotos } from '@/components/EventPhotos';
 import { UserAvatar } from '@/components/UserAvatar';
 import { ClickableName } from '@/components/ClickableName';
 import { motion } from 'framer-motion';
-import { ArrowLeft, MapPin, Clock, Calendar, MessageSquare, Crown, Pencil, Check, X, UserPlus, UserMinus, Trash2, Link as LinkIcon, Bell } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Calendar, MessageSquare, Crown, Pencil, Check, X, UserPlus, UserMinus, Trash2, Link as LinkIcon, Bell, Share2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -96,6 +96,53 @@ const EventDetailPage = () => {
   }
 
   const isCreator = userId === event.created_by;
+
+  const handleShareInviteLink = async () => {
+    if (!event) return;
+    try {
+      // Look up existing link
+      const { data: existing } = await supabase
+        .from('event_invite_links')
+        .select('token')
+        .eq('event_id', event.id)
+        .maybeSingle();
+
+      let token = existing?.token as string | undefined;
+      if (!token) {
+        const { data: created, error } = await supabase
+          .from('event_invite_links')
+          .insert({ event_id: event.id, created_by: userId! })
+          .select('token')
+          .single();
+        if (error) {
+          toast.error(error.message);
+          return;
+        }
+        token = created.token as string;
+      }
+
+      const url = `${window.location.origin}/invite/event/${token}`;
+      const shareData = {
+        title: event.title,
+        text: `Join me for ${event.title}`,
+        url,
+      };
+
+      if (navigator.share && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+        try {
+          await navigator.share(shareData);
+          return;
+        } catch {
+          // fall through to clipboard
+        }
+      }
+
+      await navigator.clipboard.writeText(url);
+      toast.success('Link copied!');
+    } catch (err: any) {
+      toast.error(err.message || 'Could not create invite link');
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -489,6 +536,12 @@ const EventDetailPage = () => {
                 className="flex items-center gap-2 text-xs font-medium text-primary hover:underline"
               >
                 <UserPlus className="h-3.5 w-3.5" /> Invite more people
+              </button>
+              <button
+                onClick={handleShareInviteLink}
+                className="flex items-center gap-2 text-xs font-medium text-primary hover:underline"
+              >
+                <Share2 className="h-3.5 w-3.5" /> Share invite link
               </button>
               {managingPeople && (
                 <div className="space-y-2">
