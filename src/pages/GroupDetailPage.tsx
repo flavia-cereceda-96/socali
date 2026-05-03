@@ -16,6 +16,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { UserAvatar } from '@/components/UserAvatar';
 import { GroupAvatar } from '@/components/GroupAvatar';
 import { FriendChipPicker } from '@/components/FriendChipPicker';
+import { GroupChat } from '@/components/GroupChat';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -386,6 +387,13 @@ const GroupDetailPage = () => {
                 </div>
               </div>
             )}
+          </div>
+
+          <div>
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Group chat
+            </h2>
+            <GroupChat groupId={group.id} />
           </div>
 
           <Button
