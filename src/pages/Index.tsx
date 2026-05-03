@@ -275,6 +275,53 @@ const Index = () => {
             >
               This week
             </motion.h2>
+            {(() => {
+              const seen = new Map<string, { user_id: string; username?: string; avatar_url?: string | null }>();
+              weekEvents.forEach(e => {
+                if (e.created_by && e.created_by !== userId && !seen.has(e.created_by)) {
+                  seen.set(e.created_by, {
+                    user_id: e.created_by,
+                    username: e.creator_profile?.username,
+                    avatar_url: e.creator_profile?.avatar_url,
+                  });
+                }
+                e.participants.forEach(p => {
+                  if (p.user_id !== userId && !seen.has(p.user_id)) {
+                    seen.set(p.user_id, {
+                      user_id: p.user_id,
+                      username: p.profile?.username,
+                      avatar_url: p.profile?.avatar_url,
+                    });
+                  }
+                });
+              });
+              const people = Array.from(seen.values());
+              if (people.length === 0) return null;
+              return (
+                <div className="mb-4 -mx-4 px-4 overflow-x-auto scrollbar-hide">
+                  <p className="mb-2 text-xs text-muted-foreground">Friends you're seeing</p>
+                  <div className="flex gap-3 pb-1">
+                    {people.map(p => {
+                      const name = p.username || '';
+                      const first = name.charAt(0).toUpperCase() + name.slice(1);
+                      return (
+                        <div key={p.user_id} className="flex flex-col items-center gap-1 w-12 flex-shrink-0">
+                          <UserAvatar
+                            avatarUrl={p.avatar_url}
+                            username={p.username}
+                            size="md"
+                            className="h-11 w-11 text-sm"
+                          />
+                          <span className="text-[10px] text-muted-foreground truncate max-w-full text-center">
+                            {first}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
             <div className="flex flex-col gap-3 mb-8">
               {weekEvents.length > 0 ? (
                 weekEvents.map((e, i) => renderEventCard(e, i))
