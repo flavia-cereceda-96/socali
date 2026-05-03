@@ -234,7 +234,7 @@ const ProfilePage = () => {
                     return (
                       <button
                         key={f.profile?.user_id || name}
-                        onClick={() => f.profile?.user_id && navigate(`/people/${f.profile.user_id}`)}
+                        onClick={() => f.profile?.user_id && navigate(`/person/${f.profile.user_id}`)}
                         className="flex flex-col items-center gap-1.5 w-16 flex-shrink-0"
                       >
                         <UserAvatar avatarUrl={f.profile?.avatar_url} username={name} size="lg" />
