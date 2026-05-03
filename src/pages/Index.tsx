@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { CalendarDays, Check, X, HelpCircle, MapPin, Clock } from 'lucide-react';
 import { HomeEmptyState } from '@/components/HomeEmptyState';
 import { CoachMark } from '@/components/CoachMark';
+import { EmailNotificationsPrompt } from '@/components/EmailNotificationsPrompt';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -136,6 +137,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen pb-24">
+      <EmailNotificationsPrompt userId={userId} />
       <CoachMark
         id="home-fab"
         text="Tap here to create your first plan"
