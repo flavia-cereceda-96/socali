@@ -27,9 +27,9 @@
     --muted: 252 100% 97%;
     --muted-foreground: 258 19% 45%;
 
-    /* Yellow-orange accent #FFC234 */
-    --accent: 40 100% 60%;
-    --accent-foreground: 40 100% 20%;
+    /* Light pink accent */
+    --accent: 340 100% 88%;
+    --accent-foreground: 340 60% 30%;
 
     --destructive: 0 72% 56%;
     --destructive-foreground: 0 0% 100%;
@@ -41,7 +41,7 @@
     --radius: 1rem;
 
     /* Custom tokens */
-    --status-suggested: 40 100% 60%;
+    --status-suggested: 340 100% 80%;
     --status-maybe: 252 100% 81%;
     --status-confirmed: 143 71% 36%;
     --status-declined: 0 60% 55%;
