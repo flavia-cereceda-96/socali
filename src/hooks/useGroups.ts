@@ -17,6 +17,7 @@ export interface DbGroup {
 export interface DbGroupWithMembers extends DbGroup {
   members: DbProfile[];
   pending_members?: DbProfile[];
+  admin_ids?: string[];
 }
 
 /** All groups the current user belongs to, with member counts. */
@@ -81,11 +82,12 @@ export function useGroup(groupId: string | undefined) {
 
       const { data: memberRows } = await supabase
         .from('group_members')
-        .select('user_id, membership_status')
+        .select('user_id, membership_status, role')
         .eq('group_id', groupId);
 
       const acceptedIds = (memberRows || []).filter(m => m.membership_status === 'accepted').map(m => m.user_id);
       const pendingIds = (memberRows || []).filter(m => m.membership_status === 'pending').map(m => m.user_id);
+      const adminIds = (memberRows || []).filter((m: any) => m.role === 'admin' && m.membership_status === 'accepted').map(m => m.user_id);
       const allIds = [...acceptedIds, ...pendingIds];
       const profilesMap = new Map<string, DbProfile>();
       if (allIds.length > 0) {
@@ -103,6 +105,7 @@ export function useGroup(groupId: string | undefined) {
         member_count: members.length,
         members,
         pending_members,
+        admin_ids: adminIds,
       };
     },
   });
@@ -210,6 +213,25 @@ export function useDeleteGroup() {
       if (error) throw error;
     },
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['groups'] });
+    },
+  });
+}
+
+/** Promote or demote a group member to/from admin. */
+export function useSetGroupMemberRole() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ groupId, userId, role }: { groupId: string; userId: string; role: 'admin' | 'member' }) => {
+      const { error } = await supabase
+        .from('group_members')
+        .update({ role })
+        .eq('group_id', groupId)
+        .eq('user_id', userId);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['group', vars.groupId] });
       qc.invalidateQueries({ queryKey: ['groups'] });
     },
   });
