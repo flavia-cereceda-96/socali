@@ -19,6 +19,7 @@ export type Database = {
           comment_id: string | null
           created_at: string
           event_id: string | null
+          group_id: string | null
           id: string
           is_read: boolean
           source_user_id: string | null
@@ -29,6 +30,7 @@ export type Database = {
           comment_id?: string | null
           created_at?: string
           event_id?: string | null
+          group_id?: string | null
           id?: string
           is_read?: boolean
           source_user_id?: string | null
@@ -39,6 +41,7 @@ export type Database = {
           comment_id?: string | null
           created_at?: string
           event_id?: string | null
+          group_id?: string | null
           id?: string
           is_read?: boolean
           source_user_id?: string | null
@@ -412,18 +415,21 @@ export type Database = {
           added_at: string
           group_id: string
           id: string
+          membership_status: string
           user_id: string
         }
         Insert: {
           added_at?: string
           group_id: string
           id?: string
+          membership_status?: string
           user_id: string
         }
         Update: {
           added_at?: string
           group_id?: string
           id?: string
+          membership_status?: string
           user_id?: string
         }
         Relationships: [
