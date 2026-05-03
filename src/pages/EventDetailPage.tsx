@@ -7,7 +7,7 @@ import { EventPhotos } from '@/components/EventPhotos';
 import { UserAvatar } from '@/components/UserAvatar';
 import { ClickableName } from '@/components/ClickableName';
 import { motion } from 'framer-motion';
-import { ArrowLeft, MapPin, Clock, Calendar, MessageSquare, Crown, Pencil, Check, X, UserPlus, UserMinus, Trash2, Link as LinkIcon, Bell, Share2 } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Calendar, MessageSquare, Crown, Pencil, Check, X, UserPlus, UserMinus, Trash2, Link as LinkIcon, Bell, Share2, Shield, ShieldOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -55,6 +55,7 @@ const EventDetailPage = () => {
   const [nudgeOpen, setNudgeOpen] = useState(false);
   const [nudgeSending, setNudgeSending] = useState(false);
   const [nudgeCooldownUntil, setNudgeCooldownUntil] = useState<number>(0);
+  const [roleDialog, setRoleDialog] = useState<{ userId: string; username: string; promote: boolean } | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id || null));
@@ -96,6 +97,9 @@ const EventDetailPage = () => {
   }
 
   const isCreator = userId === event.created_by;
+  const myParticipation = event.participants.find(p => p.user_id === userId);
+  const isCoAdmin = (myParticipation as any)?.role === 'co-admin';
+  const canManage = isCreator || isCoAdmin;
 
   const handleShareInviteLink = async () => {
     if (!event) return;
@@ -228,6 +232,19 @@ const EventDetailPage = () => {
     if (error) { toast.error(error.message); return; }
     toast.success('Participant removed');
     queryClient.invalidateQueries({ queryKey: ['events'] });
+  };
+
+  const handleSetRole = async (participantUserId: string, role: 'co-admin' | 'attendee') => {
+    if (!event) return;
+    const { error } = await supabase
+      .from('event_participants')
+      .update({ role })
+      .eq('event_id', event.id)
+      .eq('user_id', participantUserId);
+    if (error) { toast.error(error.message); return; }
+    toast.success(role === 'co-admin' ? 'Co-admin rights granted' : 'Co-admin rights removed');
+    queryClient.invalidateQueries({ queryKey: ['events'] });
+    setRoleDialog(null);
   };
 
   const pendingAttendees = (event?.participants || []).filter(p => p.status === 'suggested');
