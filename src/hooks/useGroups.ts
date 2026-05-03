@@ -9,6 +9,7 @@ export interface DbGroup {
   created_by: string;
   created_at: string;
   member_count: number;
+  avatar_url?: string | null;
 }
 
 export interface DbGroupWithMembers extends DbGroup {
@@ -100,14 +101,14 @@ export function useGroup(groupId: string | undefined) {
 export function useCreateGroup() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ name, emoji, memberIds }: { name: string; emoji: string; memberIds: string[] }) => {
+    mutationFn: async ({ name, emoji, memberIds, avatarUrl }: { name: string; emoji: string; memberIds: string[]; avatarUrl?: string | null }) => {
       const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData.session?.user;
       if (!user) throw new Error('You must be signed in to create a group.');
 
       const { data: group, error } = await supabase
         .from('groups')
-        .insert({ name: name.trim(), emoji, created_by: user.id })
+        .insert({ name: name.trim(), emoji, created_by: user.id, avatar_url: avatarUrl || null })
         .select()
         .single();
 
@@ -216,22 +217,22 @@ export function useEventGroupHints(eventIds: string[], participantsByEvent: Reco
         groupMembers[m.group_id].add(m.user_id);
       });
 
-      const hints: Record<string, { id: string; name: string; emoji: string } | null> = {};
+      const hints: Record<string, { id: string; name: string; emoji: string; avatar_url?: string | null } | null> = {};
       for (const eventId of eventIds) {
         const partIds = participantsByEvent[eventId] || [];
         if (partIds.length < 2) { hints[eventId] = null; continue; }
 
-        let bestMatch: { id: string; name: string; emoji: string; ratio: number } | null = null;
+        let bestMatch: { id: string; name: string; emoji: string; avatar_url?: string | null; ratio: number } | null = null;
         for (const g of (groups || [])) {
           const memberSet = groupMembers[g.id] || new Set();
           const inGroup = partIds.filter(id => memberSet.has(id)).length;
           const ratio = inGroup / partIds.length;
           // Need ≥80% of participants in group AND group covers ≥half its members AND ≥2 matches
           if (ratio >= 0.8 && inGroup >= 2 && (!bestMatch || ratio > bestMatch.ratio)) {
-            bestMatch = { id: g.id, name: g.name, emoji: g.emoji, ratio };
+            bestMatch = { id: g.id, name: g.name, emoji: g.emoji, avatar_url: (g as any).avatar_url ?? null, ratio };
           }
         }
-        hints[eventId] = bestMatch ? { id: bestMatch.id, name: bestMatch.name, emoji: bestMatch.emoji } : null;
+        hints[eventId] = bestMatch ? { id: bestMatch.id, name: bestMatch.name, emoji: bestMatch.emoji, avatar_url: bestMatch.avatar_url } : null;
       }
 
       return hints;

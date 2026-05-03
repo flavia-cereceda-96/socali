@@ -162,8 +162,12 @@ const Index = () => {
               const hint = groupHints[event.id];
               if (hint) {
                 return (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-accent/60 border border-primary/20 px-2 py-0.5 text-[11px] font-semibold text-foreground">
-                    <span className="text-sm leading-none">{hint.emoji}</span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-accent/60 border border-primary/20 pl-1 pr-2 py-0.5 text-[11px] font-semibold text-foreground">
+                    {hint.avatar_url ? (
+                      <img src={hint.avatar_url} alt={hint.name} className="h-4 w-4 rounded-full object-cover" />
+                    ) : (
+                      <span className="text-sm leading-none">{hint.emoji}</span>
+                    )}
                     {hint.name}
                   </span>
                 );

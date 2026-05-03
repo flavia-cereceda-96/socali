@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { Search, UserPlus, Check, X, Calendar, Share2, Plus, ChevronRight } from 'lucide-react';
 import { ClickableName } from '@/components/ClickableName';
 import { UserAvatar } from '@/components/UserAvatar';
+import { GroupAvatar } from '@/components/GroupAvatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -458,9 +459,7 @@ const PeoplePage = () => {
                     onClick={() => navigate(`/people/groups/${g.id}`)}
                     className="flex items-center gap-3 rounded-2xl bg-card p-3.5 shadow-card text-left hover:bg-accent/50 transition-[background-color] duration-100 ease-out"
                   >
-                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-2xl">
-                      {g.emoji}
-                    </div>
+                    <GroupAvatar avatarUrl={(g as any).avatar_url} emoji={g.emoji} name={g.name} size="md" />
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-foreground truncate">{g.name}</p>
                       <p className="text-xs text-muted-foreground">

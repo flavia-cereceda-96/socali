@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProfile, useEvents, useFriends } from '@/hooks/useEvents';
+import { useGroups } from '@/hooks/useGroups';
+import { GroupAvatar } from '@/components/GroupAvatar';
 import { supabase } from '@/integrations/supabase/client';
 import { UserAvatar } from '@/components/UserAvatar';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,6 +20,7 @@ const ProfilePage = () => {
   const { data: profile, isLoading } = useProfile();
   const { data: events = [] } = useEvents();
   const { data: friends = [] } = useFriends();
+  const { data: groups = [] } = useGroups();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [editing, setEditing] = useState(false);
@@ -246,6 +249,36 @@ const ProfilePage = () => {
               </div>
             </section>
           )}
+
+          {/* Groups */}
+          <section>
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Your groups
+            </h3>
+            {groups.length === 0 ? (
+              <button
+                onClick={() => navigate('/people/groups/new')}
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                No groups yet — create one!
+              </button>
+            ) : (
+              <div className="-mx-4 px-4 overflow-x-auto scrollbar-hide">
+                <div className="flex gap-4 pb-1">
+                  {groups.map((g: any) => (
+                    <button
+                      key={g.id}
+                      onClick={() => navigate(`/people/groups/${g.id}`)}
+                      className="flex flex-col items-center gap-1.5 w-16 flex-shrink-0"
+                    >
+                      <GroupAvatar avatarUrl={g.avatar_url} emoji={g.emoji} name={g.name} size="lg" />
+                      <span className="text-xs text-foreground truncate max-w-full">{g.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
 
           {/* Coming up */}
           <section>

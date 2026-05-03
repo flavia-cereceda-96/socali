@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, X, Plus, ArrowRight } from 'lucide-react';
+import { ArrowLeft, X, Plus, ArrowRight, Camera, Trash2 } from 'lucide-react';
 import { useFriends, DbProfile } from '@/hooks/useEvents';
 import {
   useGroup,
@@ -11,7 +11,9 @@ import {
 } from '@/hooks/useGroups';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { UserAvatar } from '@/components/UserAvatar';
+import { GroupAvatar } from '@/components/GroupAvatar';
 import { FriendChipPicker } from '@/components/FriendChipPicker';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,6 +36,9 @@ const GroupDetailPage = () => {
   const addMembers = useAddGroupMembers();
   const removeMember = useRemoveGroupMember();
   const deleteGroup = useDeleteGroup();
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
@@ -102,6 +107,39 @@ const GroupDetailPage = () => {
     }
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !group) return;
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const path = `${group.id}/avatar.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from('group-avatars')
+        .upload(path, file, { upsert: true });
+      if (upErr) { toast.error(upErr.message); return; }
+      const { data: { publicUrl } } = supabase.storage.from('group-avatars').getPublicUrl(path);
+      const url = `${publicUrl}?t=${Date.now()}`;
+      const { error } = await supabase.from('groups').update({ avatar_url: url }).eq('id', group.id);
+      if (error) { toast.error(error.message); return; }
+      queryClient.invalidateQueries({ queryKey: ['group', group.id] });
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
+      toast.success('Group photo updated! 📸');
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!group) return;
+    const { error } = await supabase.from('groups').update({ avatar_url: null }).eq('id', group.id);
+    if (error) { toast.error(error.message); return; }
+    queryClient.invalidateQueries({ queryKey: ['group', group.id] });
+    queryClient.invalidateQueries({ queryKey: ['groups'] });
+    toast.success('Photo removed');
+  };
+
   return (
     <div className="min-h-screen pb-24">
       <div className="mx-auto max-w-md px-4 pt-12">
@@ -112,10 +150,44 @@ const GroupDetailPage = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-xl font-bold text-foreground flex items-center gap-2 truncate">
-            <span className="text-2xl">{group.emoji}</span>
-            <span className="truncate">{group.name}</span>
-          </h1>
+          <h1 className="text-xl font-bold text-foreground truncate">{group.name}</h1>
+        </div>
+
+        <div className="flex flex-col items-center gap-2 mb-6">
+          <div className="relative">
+            <GroupAvatar avatarUrl={(group as any).avatar_url} emoji={group.emoji} name={group.name} size="xl" />
+            {isCreator && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                  className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md"
+                  aria-label="Change group photo"
+                >
+                  <Camera className="h-4 w-4" />
+                </button>
+                {(group as any).avatar_url && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveAvatar}
+                    className="absolute top-0 right-0 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-md"
+                    aria-label="Remove group photo"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarUpload}
+                />
+              </>
+            )}
+          </div>
+          {uploadingAvatar && <p className="text-xs text-muted-foreground">Uploading...</p>}
         </div>
 
         <motion.div

@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Camera, X } from 'lucide-react';
 import { useFriends, DbProfile } from '@/hooks/useEvents';
 import { useCreateGroup } from '@/hooks/useGroups';
 import { FriendChipPicker } from '@/components/FriendChipPicker';
+import { GroupAvatar } from '@/components/GroupAvatar';
+import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -21,6 +23,23 @@ const CreateGroupPage = () => {
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState(GROUP_EMOJIS[0]);
   const [members, setMembers] = useState<DbProfile[]>([]);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
+
+  const clearAvatar = () => {
+    setAvatarFile(null);
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+    setAvatarPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const canSubmit = name.trim().length > 0 && members.length > 0 && !createGroup.isPending;
 
@@ -32,6 +51,21 @@ const CreateGroupPage = () => {
         emoji,
         memberIds: members.map(m => m.user_id),
       });
+
+      // If avatar was selected, upload it now (we need group.id for the path)
+      if (avatarFile) {
+        const ext = avatarFile.name.split('.').pop() || 'jpg';
+        const path = `${group.id}/avatar.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from('group-avatars')
+          .upload(path, avatarFile, { upsert: true });
+        if (!upErr) {
+          const { data: { publicUrl } } = supabase.storage.from('group-avatars').getPublicUrl(path);
+          const url = `${publicUrl}?t=${Date.now()}`;
+          await supabase.from('groups').update({ avatar_url: url }).eq('id', group.id);
+        }
+      }
+
       toast.success(`${emoji} ${group.name} created!`);
       navigate(`/people/groups/${group.id}`, { replace: true });
     } catch (err: any) {
@@ -57,6 +91,38 @@ const CreateGroupPage = () => {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
+          <div className="flex flex-col items-center gap-2">
+            <div className="relative">
+              <GroupAvatar avatarUrl={avatarPreview} emoji={emoji} name={name} size="xl" />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md"
+                aria-label="Upload group photo"
+              >
+                <Camera className="h-4 w-4" />
+              </button>
+              {avatarPreview && (
+                <button
+                  type="button"
+                  onClick={clearAvatar}
+                  className="absolute top-0 right-0 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-md"
+                  aria-label="Remove photo"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">Optional group photo</p>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="group-name">Group name</Label>
             <Input
