@@ -97,6 +97,53 @@ const EventDetailPage = () => {
 
   const isCreator = userId === event.created_by;
 
+  const handleShareInviteLink = async () => {
+    if (!event) return;
+    try {
+      // Look up existing link
+      const { data: existing } = await supabase
+        .from('event_invite_links')
+        .select('token')
+        .eq('event_id', event.id)
+        .maybeSingle();
+
+      let token = existing?.token as string | undefined;
+      if (!token) {
+        const { data: created, error } = await supabase
+          .from('event_invite_links')
+          .insert({ event_id: event.id, created_by: userId! })
+          .select('token')
+          .single();
+        if (error) {
+          toast.error(error.message);
+          return;
+        }
+        token = created.token as string;
+      }
+
+      const url = `${window.location.origin}/invite/event/${token}`;
+      const shareData = {
+        title: event.title,
+        text: `Join me for ${event.title}`,
+        url,
+      };
+
+      if (navigator.share && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+        try {
+          await navigator.share(shareData);
+          return;
+        } catch {
+          // fall through to clipboard
+        }
+      }
+
+      await navigator.clipboard.writeText(url);
+      toast.success('Link copied!');
+    } catch (err: any) {
+      toast.error(err.message || 'Could not create invite link');
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
