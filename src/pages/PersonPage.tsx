@@ -273,3 +273,51 @@ const PersonPage = () => {
 };
 
 export default PersonPage;
+
+function SharedEventsSection({
+  title,
+  events,
+  loading,
+  emptyText,
+  onClick,
+}: {
+  title: string;
+  events: Array<{ id: string; title: string; emoji: string; date: string; time: string | null }>;
+  loading: boolean;
+  emptyText: string;
+  onClick: (id: string) => void;
+}) {
+  return (
+    <div>
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+        {title}
+      </h3>
+      {loading ? (
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      ) : events.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{emptyText}</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {events.map(e => (
+            <button
+              key={e.id}
+              onClick={() => onClick(e.id)}
+              className="flex items-center gap-3 rounded-2xl bg-card p-3 shadow-card text-left hover:bg-accent/40 transition-[background-color] duration-100 ease-out"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xl">
+                {e.emoji}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm truncate">{e.title}</p>
+                <p className="text-xs text-muted-foreground">
+                  {format(new Date(e.date + 'T00:00:00'), 'EEE, MMM d')}
+                  {e.time ? ` · ${e.time.slice(0, 5)}` : ''}
+                </p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
