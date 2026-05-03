@@ -16,23 +16,23 @@ function buildContent(type: string, sourceName: string, eventTitle?: string, com
   const actor = sourceName || 'Someone';
   switch (type) {
     case 'invitation':
-      return { title: `${actor} invited you to ${eventTitle ?? 'an event'}`, body: `You've been invited to "${eventTitle ?? 'an event'}".` };
+      return { subject: `Socali - You've been invited to an event!`, title: `${actor} invited you to ${eventTitle ?? 'an event'}`, body: `You've been invited to "${eventTitle ?? 'an event'}".` };
     case 'comment':
-      return { title: `${actor} commented on ${eventTitle ?? 'an event'}`, body: commentContent ?? 'New comment on your event.' };
+      return { subject: `Socali - New comment on your event`, title: `${actor} commented on ${eventTitle ?? 'an event'}`, body: commentContent ?? 'New comment on your event.' };
     case 'mention':
-      return { title: `${actor} mentioned you`, body: commentContent ?? `${actor} mentioned you in a comment.` };
+      return { subject: `Socali - You were mentioned`, title: `${actor} mentioned you`, body: commentContent ?? `${actor} mentioned you in a comment.` };
     case 'rsvp_accepted':
-      return { title: `${actor} is going to ${eventTitle ?? 'your event'}`, body: `${actor} accepted your invitation.` };
     case 'rsvp_declined':
-      return { title: `${actor} can't make it to ${eventTitle ?? 'your event'}`, body: `${actor} declined your invitation.` };
-    case 'rsvp_maybe':
-      return { title: `${actor} might come to ${eventTitle ?? 'your event'}`, body: `${actor} responded "maybe" to your invitation.` };
+    case 'rsvp_maybe': {
+      const verb = type === 'rsvp_accepted' ? 'is going to' : type === 'rsvp_declined' ? "can't make it to" : 'might come to';
+      return { subject: `Socali - An invitee just updated their RSVP`, title: `${actor} ${verb} ${eventTitle ?? 'your event'}`, body: `${actor} updated their RSVP for "${eventTitle ?? 'your event'}".` };
+    }
     case 'friend_request':
-      return { title: `${actor} sent you a friend request`, body: `${actor} wants to connect with you on SyncCircle.` };
+      return { subject: `Socali - New friend request`, title: `${actor} sent you a friend request`, body: `${actor} wants to connect with you on Socali.` };
     case 'friend_accepted':
-      return { title: `${actor} accepted your friend request`, body: `You're now friends with ${actor} on SyncCircle.` };
+      return { subject: `Socali - Friend request accepted`, title: `${actor} accepted your friend request`, body: `You're now friends with ${actor} on Socali.` };
     default:
-      return { title: 'New notification', body: 'You have a new notification on SyncCircle.' };
+      return { subject: 'Socali - New notification', title: 'New notification', body: 'You have a new notification on Socali.' };
   }
 }
 
@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
       commentContent = c?.content;
     }
 
-    const { title, body } = buildContent(record.type, sourceName, eventTitle, commentContent);
+    const { subject, title, body } = buildContent(record.type, sourceName, eventTitle, commentContent);
     const link = record.event_id ? `${APP_URL}/event/${record.event_id}` : `${APP_URL}/activity`;
 
     const html = `<!doctype html><html><body style="font-family:system-ui,-apple-system,sans-serif;background:#FAFAFE;padding:24px;color:#1A1230;">
@@ -88,9 +88,9 @@ Deno.serve(async (req) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${RESEND_API_KEY}` },
       body: JSON.stringify({
-        from: 'SyncCircle <onboarding@resend.dev>',
+        from: 'Socali <onboarding@resend.dev>',
         to: [profile.email],
-        subject: title,
+        subject,
         html,
       }),
     });
