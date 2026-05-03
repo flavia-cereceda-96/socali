@@ -416,6 +416,7 @@ export type Database = {
           group_id: string
           id: string
           membership_status: string
+          role: string
           user_id: string
         }
         Insert: {
@@ -423,6 +424,7 @@ export type Database = {
           group_id: string
           id?: string
           membership_status?: string
+          role?: string
           user_id: string
         }
         Update: {
@@ -430,6 +432,7 @@ export type Database = {
           group_id?: string
           id?: string
           membership_status?: string
+          role?: string
           user_id?: string
         }
         Relationships: [
@@ -592,6 +595,10 @@ export type Database = {
       }
       is_event_participant: {
         Args: { _event_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_group_admin: {
+        Args: { _group_id: string; _user_id: string }
         Returns: boolean
       }
       is_group_creator: {
