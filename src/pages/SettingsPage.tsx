@@ -264,7 +264,7 @@ const SettingsPage = () => {
           )}
 
           {/* Logout */}
-          <Button onClick={handleLogout} variant="ghost" className="w-full text-muted-foreground gap-2">
+          <Button onClick={handleLogout} variant="outline" className="w-full font-semibold gap-2" size="lg">
             <LogOut className="h-4 w-4" /> {t('settings.logout')}
           </Button>
         </motion.div>
