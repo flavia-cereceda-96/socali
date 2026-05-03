@@ -549,6 +549,33 @@ const EventDetailPage = () => {
           <EventComments eventId={event.id} />
         </motion.div>
       </div>
+
+      <AlertDialog open={nudgeOpen} onOpenChange={setNudgeOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Notify pending RSVPs</AlertDialogTitle>
+            <AlertDialogDescription>
+              An email will be sent to these users asking them to confirm their invite.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <ul className="mt-1 max-h-48 overflow-y-auto rounded-xl bg-secondary/40 p-3 text-sm text-foreground">
+            {pendingAttendees.map(p => (
+              <li key={p.id} className="py-0.5">
+                @{p.profile?.username ?? 'unknown'}
+              </li>
+            ))}
+          </ul>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={nudgeSending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleSendNudges(); }}
+              disabled={nudgeSending}
+            >
+              {nudgeSending ? 'Sending...' : 'Send notification'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
