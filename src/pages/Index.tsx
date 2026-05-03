@@ -210,9 +210,6 @@ const Index = () => {
   return (
     <div className="min-h-screen pb-24">
       <EmailNotificationsPrompt userId={userId} />
-      <div className="mx-auto max-w-md px-4 pt-4">
-        <AvatarPrompt userId={userId} />
-      </div>
       <CoachMark
         id="home-fab"
         text="Tap here to create your first plan"
@@ -224,6 +221,8 @@ const Index = () => {
           <p className="text-sm font-medium text-muted-foreground">{greeting}</p>
           <h1 className="text-2xl font-bold text-foreground">Your Week</h1>
         </motion.div>
+
+        <AvatarPrompt userId={userId} />
 
         {hasNoEvents ? (
           <HomeEmptyState usage={profile?.usage} />
