@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
@@ -16,15 +16,18 @@ export function hasSeenSplash() {
 
 const SplashPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { t } = useTranslation();
+
+  const refSuffix = searchParams.get('ref') ? `?ref=${searchParams.get('ref')}` : '';
 
   const goOnboarding = () => {
     markSplashSeen();
-    navigate('/onboarding');
+    navigate(`/onboarding${refSuffix}`);
   };
   const goLogin = () => {
     markSplashSeen();
-    navigate('/login');
+    navigate(`/login${refSuffix}`);
   };
 
   return (
