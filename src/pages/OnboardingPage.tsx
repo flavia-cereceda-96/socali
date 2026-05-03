@@ -70,7 +70,7 @@ const OnboardingPage = () => {
       setUsernameStatus('idle');
       return;
     }
-    if (trimmed.length < 3 || /[^a-z0-9_]/.test(trimmed)) {
+    if (trimmed.length < 2 || /[^a-z0-9_-]/.test(trimmed)) {
       setUsernameStatus('invalid');
       return;
     }
@@ -126,9 +126,9 @@ const OnboardingPage = () => {
   const validate = () => {
     const errs: Record<string, string> = {};
     if (!username.trim()) errs.username = 'Required';
-    else if (usernameStatus === 'invalid') errs.username = 'Use lowercase letters, numbers, or underscores';
+    else if (usernameStatus === 'invalid') errs.username = 'Use lowercase letters, numbers, hyphens, or underscores';
     else if (usernameStatus === 'taken') errs.username = 'Username already taken';
-    else if (username.length < 3) errs.username = 'At least 3 characters';
+    else if (username.trim().length < 2) errs.username = 'At least 2 characters';
     if (!email.trim()) errs.email = 'Required';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = 'Invalid email';
     if (!password) errs.password = 'Required';
