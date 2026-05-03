@@ -1,21 +1,18 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useEvents, DbEvent, DbEventWithCreator } from '@/hooks/useEvents';
+import { useEvents, DbEventWithCreator } from '@/hooks/useEvents';
 import { useEventGroupHints } from '@/hooks/useGroups';
 import { UserAvatar } from '@/components/UserAvatar';
 import { motion } from 'framer-motion';
-import { CalendarDays, Check, X, HelpCircle, MapPin, Clock } from 'lucide-react';
+import { MapPin, Clock } from 'lucide-react';
 import { HomeEmptyState } from '@/components/HomeEmptyState';
 import { CoachMark } from '@/components/CoachMark';
 import { EmailNotificationsPrompt } from '@/components/EmailNotificationsPrompt';
-import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 const Index = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { data: events = [], isLoading } = useEvents();
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -45,71 +42,49 @@ const Index = () => {
     return 'Good evening 🌙';
   })();
 
-  const { upcomingEvents, pendingRsvps, weekCount, monthCount } = useMemo(() => {
+  const { todayEvents, weekEvents, todayCount, weekCount, pendingCount } = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const todayKey = today.toISOString().slice(0, 10);
 
-    const nextWeek = new Date(today);
-    nextWeek.setDate(nextWeek.getDate() + 7);
+    const weekEnd = new Date(today);
+    weekEnd.setDate(weekEnd.getDate() + 7);
 
-    const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    monthEnd.setHours(23, 59, 59, 999);
-
-    // All future events sorted by date
     const future = events
       .filter(e => new Date(e.date) >= today)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    // Pending RSVPs: events where MY participation is 'suggested'
+    const notDeclined = future.filter(e => {
+      const myP = e.participants.find(p => p.user_id === userId);
+      return !myP || myP.status !== 'declined';
+    });
+
+    const today_ = notDeclined.filter(e => e.date === todayKey);
+    const week_ = notDeclined.filter(e => e.date !== todayKey && new Date(e.date) <= weekEnd);
     const pending = future.filter(e => {
       const myP = e.participants.find(p => p.user_id === userId);
       return myP?.status === 'suggested';
     });
 
-    // Upcoming: next 7 events that are NOT pending for me
-    const nonPending = future.filter(e => {
-      const myP = e.participants.find(p => p.user_id === userId);
-      return !myP || myP.status !== 'suggested';
-    });
-
-    // Scorecards: count events in next 7 days / this month (excluding declined)
-    const countable = future.filter(e => {
-      const myP = e.participants.find(p => p.user_id === userId);
-      return !myP || myP.status !== 'declined';
-    });
-
-    const inWeek = countable.filter(e => new Date(e.date) <= nextWeek).length;
-    const inMonth = countable.filter(e => new Date(e.date) <= monthEnd).length;
-
     return {
-      upcomingEvents: nonPending.slice(0, 7),
-      pendingRsvps: pending,
-      weekCount: inWeek,
-      monthCount: inMonth,
+      todayEvents: today_,
+      weekEvents: week_,
+      todayCount: today_.length,
+      weekCount: notDeclined.filter(e => new Date(e.date) <= weekEnd).length,
+      pendingCount: pending.length,
     };
   }, [events, userId]);
 
-  // Build group hints for upcoming events (Change 6)
-  const upcomingEventIds = upcomingEvents.map(e => e.id);
+  const allListedEvents = useMemo(() => [...todayEvents, ...weekEvents], [todayEvents, weekEvents]);
+  const upcomingEventIds = allListedEvents.map(e => e.id);
   const participantsByEvent = useMemo(() => {
     const m: Record<string, string[]> = {};
-    upcomingEvents.forEach(e => {
+    allListedEvents.forEach(e => {
       m[e.id] = [e.created_by, ...e.participants.map(p => p.user_id)];
     });
     return m;
-  }, [upcomingEvents]);
+  }, [allListedEvents]);
   const { data: groupHints = {} } = useEventGroupHints(upcomingEventIds, participantsByEvent);
-
-  const handleRsvp = async (event: DbEvent, participantId: string, status: string) => {
-    const { error } = await supabase
-      .from('event_participants')
-      .update({ status })
-      .eq('id', participantId);
-    if (error) toast.error(error.message);
-    else {
-      queryClient.invalidateQueries({ queryKey: ['events'] });
-    }
-  };
 
   const formatTime = (t: string) => {
     const [h, m] = t.split(':');
@@ -135,6 +110,102 @@ const Index = () => {
 
   const hasNoEvents = events.length === 0;
 
+  const renderEventCard = (event: DbEventWithCreator, i: number) => {
+    const timeDisplay = getTimeDisplay(event);
+    const myP = event.participants.find(p => p.user_id === userId);
+    const replyNeeded = myP?.status === 'suggested';
+
+    // Confirmed count: include creator as confirmed
+    const total = event.participants.length + 1;
+    const confirmed = event.participants.filter(p => p.status === 'confirmed').length + 1;
+    const allConfirmed = confirmed === total;
+
+    return (
+      <motion.div
+        key={event.id}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 + i * 0.04 }}
+        onClick={() => navigate(`/event/${event.id}`)}
+        className="flex gap-3 rounded-2xl bg-card p-4 shadow-card cursor-pointer transition-shadow hover:shadow-elevated active:scale-[0.99]"
+      >
+        <div
+          className="flex flex-col items-center justify-center rounded-xl px-3 py-2 min-w-[52px]"
+          style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}
+        >
+          <span className="text-xs font-semibold uppercase">
+            {new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
+          </span>
+          <span className="text-lg font-bold">
+            {new Date(event.date + 'T00:00:00').getDate()}
+          </span>
+        </div>
+        <div className="flex flex-1 flex-col gap-1.5 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">{event.emoji}</span>
+            <span className="font-semibold text-foreground truncate">{event.title}</span>
+          </div>
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            {timeDisplay && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{timeDisplay}</span>}
+            {event.location && <span className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3" />{event.location}</span>}
+          </div>
+          <div className="flex items-center justify-between gap-2 mt-0.5">
+            {(() => {
+              const hint = groupHints[event.id];
+              if (hint) {
+                return (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-accent/60 border border-primary/20 px-2 py-0.5 text-[11px] font-semibold text-foreground">
+                    <span className="text-sm leading-none">{hint.emoji}</span>
+                    {hint.name}
+                  </span>
+                );
+              }
+              if (event.participants.length === 0) return <span />;
+              return (
+                <div className="flex items-center gap-1">
+                  {event.participants.slice(0, 5).map(p => (
+                    <UserAvatar
+                      key={p.id}
+                      avatarUrl={p.profile?.avatar_url}
+                      username={p.profile?.username}
+                      size="sm"
+                      className="h-6 w-6 text-[10px] -ml-1 first:ml-0 ring-2 ring-card"
+                    />
+                  ))}
+                  {event.participants.length > 5 && (
+                    <span className="ml-1 text-[10px] text-muted-foreground">+{event.participants.length - 5}</span>
+                  )}
+                </div>
+              );
+            })()}
+            <div className="flex items-center gap-1.5">
+              {replyNeeded && (
+                <span
+                  className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                  style={{ backgroundColor: '#FFF1B8', color: '#996500' }}
+                >
+                  Reply needed
+                </span>
+              )}
+              <span
+                className="rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap"
+                style={
+                  allConfirmed
+                    ? { backgroundColor: '#CFFCE3', color: '#1A9E55' }
+                    : { backgroundColor: '#FFF1B8', color: '#996500' }
+                }
+              >
+                {confirmed}/{total} confirmed
+              </span>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    );
+  };
+
+  const sectionHeaderCls = "mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground";
+
   return (
     <div className="min-h-screen pb-24">
       <EmailNotificationsPrompt userId={userId} />
@@ -159,152 +230,56 @@ const Index = () => {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 }}
-              className="mb-6 grid grid-cols-2 gap-3"
+              className="mb-6 grid grid-cols-3 gap-3"
             >
-              <div className="rounded-2xl bg-card p-4 shadow-card">
-                <div className="flex items-center gap-2 mb-1">
-                  <CalendarDays className="h-4 w-4 text-primary" />
-                  <span className="text-xs font-medium text-muted-foreground">Next 7 days</span>
-                </div>
-                <p className="text-2xl font-bold text-foreground">{weekCount}</p>
-                <p className="text-xs text-muted-foreground">plan{weekCount !== 1 ? 's' : ''} booked</p>
+              <div className="rounded-2xl p-4 shadow-card" style={{ backgroundColor: '#6B45F5', color: '#ffffff' }}>
+                <p className="text-xs font-medium opacity-90">Today</p>
+                <p className="text-2xl font-bold mt-1">{todayCount}</p>
+                <p className="text-[11px] opacity-80">plan{todayCount !== 1 ? 's' : ''}</p>
               </div>
-              <div className="rounded-2xl bg-card p-4 shadow-card">
-                <div className="flex items-center gap-2 mb-1">
-                  <CalendarDays className="h-4 w-4 text-primary" />
-                  <span className="text-xs font-medium text-muted-foreground">This month</span>
-                </div>
-                <p className="text-2xl font-bold text-foreground">{monthCount}</p>
-                <p className="text-xs text-muted-foreground">plan{monthCount !== 1 ? 's' : ''} remaining</p>
+              <div className="rounded-2xl p-4 shadow-card" style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}>
+                <p className="text-xs font-medium">This week</p>
+                <p className="text-2xl font-bold mt-1">{weekCount}</p>
+                <p className="text-[11px] opacity-80">next 7 days</p>
+              </div>
+              <div className="rounded-2xl p-4 shadow-card" style={{ backgroundColor: '#FFF1B8', color: '#996500' }}>
+                <p className="text-xs font-medium">Pending</p>
+                <p className="text-2xl font-bold mt-1">{pendingCount}</p>
+                <p className="text-[11px] opacity-80">reply needed</p>
               </div>
             </motion.div>
 
-            {/* Pending RSVPs */}
-            {pendingRsvps.length > 0 && (
-              <>
-                <motion.h2
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.1 }}
-                  className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground"
-                >
-                  Pending RSVPs ({pendingRsvps.length})
-                </motion.h2>
-                <div className="flex flex-col gap-3 mb-8">
-                  {pendingRsvps.map((event, i) => {
-                    const myParticipation = event.participants.find(p => p.user_id === userId && p.status === 'suggested');
-                    const timeDisplay = getTimeDisplay(event);
-                    return (
-                      <motion.div
-                        key={event.id}
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.12 + i * 0.06 }}
-                        className="rounded-2xl bg-card p-4 shadow-card"
-                      >
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-lg">{event.emoji}</span>
-                          <span className="font-semibold text-foreground">{event.title}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mb-3">
-                          {new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                          {timeDisplay && ` · ${timeDisplay}`}
-                          {event.location && ` · ${event.location}`}
-                        </p>
-                        {myParticipation && (
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="default" className="flex-1 gap-1" onClick={() => handleRsvp(event, myParticipation.id, 'confirmed')}>
-                              <Check className="h-3.5 w-3.5" /> Confirm
-                            </Button>
-                            <Button size="sm" variant="secondary" className="flex-1 gap-1" onClick={() => handleRsvp(event, myParticipation.id, 'maybe')}>
-                              <HelpCircle className="h-3.5 w-3.5" /> Maybe
-                            </Button>
-                            <Button size="sm" variant="ghost" className="flex-1 gap-1" onClick={() => handleRsvp(event, myParticipation.id, 'declined')}>
-                              <X className="h-3.5 w-3.5" /> Decline
-                            </Button>
-                          </div>
-                        )}
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </>
-            )}
+            {/* Today */}
+            <motion.h2
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className={sectionHeaderCls}
+            >
+              Today
+            </motion.h2>
+            <div className="flex flex-col gap-3 mb-8">
+              {todayEvents.length > 0 ? (
+                todayEvents.map((e, i) => renderEventCard(e, i))
+              ) : (
+                <p className="text-sm text-muted-foreground">Nothing on today — enjoy the free time! 🌿</p>
+              )}
+            </div>
 
-            {/* Upcoming Events */}
+            {/* This week */}
             <motion.h2
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.15 }}
-              className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground"
+              className={sectionHeaderCls}
             >
-              Upcoming Plans
+              This week
             </motion.h2>
             <div className="flex flex-col gap-3 mb-8">
-              {upcomingEvents.length > 0 ? (
-                upcomingEvents.map((event, i) => {
-                  const timeDisplay = getTimeDisplay(event);
-                  return (
-                    <motion.div
-                      key={event.id}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.17 + i * 0.06 }}
-                      onClick={() => navigate(`/event/${event.id}`)}
-                      className="flex gap-3 rounded-2xl bg-card p-4 shadow-card cursor-pointer transition-shadow hover:shadow-elevated active:scale-[0.99]"
-                    >
-                      <div className="flex flex-col items-center justify-center rounded-xl bg-primary/10 px-3 py-2 min-w-[52px]">
-                        <span className="text-xs font-semibold uppercase text-primary">
-                          {new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
-                        </span>
-                        <span className="text-lg font-bold text-primary">
-                          {new Date(event.date + 'T00:00:00').getDate()}
-                        </span>
-                      </div>
-                      <div className="flex flex-1 flex-col gap-1.5 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">{event.emoji}</span>
-                          <span className="font-semibold text-foreground truncate">{event.title}</span>
-                        </div>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          {timeDisplay && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{timeDisplay}</span>}
-                          {event.location && <span className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3" />{event.location}</span>}
-                        </div>
-                        {event.participants.length > 0 && (() => {
-                          const hint = groupHints[event.id];
-                          if (hint) {
-                            return (
-                              <div className="mt-0.5">
-                                <span className="inline-flex items-center gap-1 rounded-full bg-accent/60 border border-primary/20 px-2 py-0.5 text-[11px] font-semibold text-foreground">
-                                  <span className="text-sm leading-none">{hint.emoji}</span>
-                                  {hint.name}
-                                </span>
-                              </div>
-                            );
-                          }
-                          return (
-                            <div className="flex items-center gap-1 mt-0.5">
-                              {event.participants.slice(0, 5).map(p => (
-                                <UserAvatar
-                                  key={p.id}
-                                  avatarUrl={p.profile?.avatar_url}
-                                  username={p.profile?.username}
-                                  size="sm"
-                                  className="h-6 w-6 text-[10px] -ml-1 first:ml-0 ring-2 ring-card"
-                                />
-                              ))}
-                              {event.participants.length > 5 && (
-                                <span className="ml-1 text-[10px] text-muted-foreground">+{event.participants.length - 5}</span>
-                              )}
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    </motion.div>
-                  );
-                })
+              {weekEvents.length > 0 ? (
+                weekEvents.map((e, i) => renderEventCard(e, i))
               ) : (
-                <p className="text-sm text-muted-foreground">No upcoming plans — time to create one! ✨</p>
+                <p className="text-sm text-muted-foreground">Nothing planned this week yet ✨</p>
               )}
             </div>
           </>
