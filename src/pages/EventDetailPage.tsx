@@ -541,6 +541,29 @@ const EventDetailPage = () => {
               </button>
             )}
           </div>
+          {canManage && (
+            <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-secondary/40 px-3 py-2 text-[11px] text-muted-foreground">
+              <span className="font-semibold uppercase tracking-wide">Legend:</span>
+              {isCreator && (
+                <span className="flex items-center gap-1">
+                  <Shield className="h-3 w-3" /> Make co-admin
+                </span>
+              )}
+              {isCreator && (
+                <span className="flex items-center gap-1">
+                  <ShieldOff className="h-3 w-3" /> Revoke co-admin
+                </span>
+              )}
+              <span className="flex items-center gap-1">
+                <UserMinus className="h-3 w-3" /> Remove attendee
+              </span>
+              {pendingAttendees.length > 0 && (
+                <span className="flex items-center gap-1">
+                  <Bell className="h-3 w-3" /> Nudge pending RSVPs
+                </span>
+              )}
+            </div>
+          )}
           <div className="flex flex-col gap-2">
             {attendees.map((a, i) => (
               <motion.div
