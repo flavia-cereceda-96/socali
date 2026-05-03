@@ -472,6 +472,7 @@ export type Database = {
           usage: string
           user_id: string
           username: string
+          week_starts_on: string
         }
         Insert: {
           avatar_url?: string | null
@@ -484,6 +485,7 @@ export type Database = {
           usage: string
           user_id: string
           username: string
+          week_starts_on?: string
         }
         Update: {
           avatar_url?: string | null
@@ -496,6 +498,7 @@ export type Database = {
           usage?: string
           user_id?: string
           username?: string
+          week_starts_on?: string
         }
         Relationships: []
       }
