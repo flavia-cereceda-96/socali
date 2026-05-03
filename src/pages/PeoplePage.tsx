@@ -402,7 +402,7 @@ const PeoplePage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
                   onClick={() => navigate(`/person/${friend.user_id}`)}
-                  className="flex items-center gap-4 rounded-2xl bg-card p-4 shadow-card cursor-pointer hover:bg-accent/50 transition-colors"
+                  className="flex items-center gap-4 rounded-2xl bg-card p-4 shadow-card cursor-pointer hover:bg-accent/50 transition-[background-color] duration-100 ease-out"
                 >
                   <UserAvatar avatarUrl={friend.avatar_url} username={friend.username} size="lg" />
                   <div className="flex-1 min-w-0">
@@ -453,7 +453,7 @@ const PeoplePage = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.04 }}
                     onClick={() => navigate(`/people/groups/${g.id}`)}
-                    className="flex items-center gap-3 rounded-2xl bg-card p-3.5 shadow-card text-left hover:bg-accent/50 transition-colors"
+                    className="flex items-center gap-3 rounded-2xl bg-card p-3.5 shadow-card text-left hover:bg-accent/50 transition-[background-color] duration-100 ease-out"
                   >
                     <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-2xl">
                       {g.emoji}
