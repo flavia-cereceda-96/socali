@@ -441,6 +441,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           created_by: string
+          description: string | null
           emoji: string
           id: string
           name: string
@@ -449,6 +450,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           created_by: string
+          description?: string | null
           emoji?: string
           id?: string
           name: string
@@ -457,6 +459,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           created_by?: string
+          description?: string | null
           emoji?: string
           id?: string
           name?: string

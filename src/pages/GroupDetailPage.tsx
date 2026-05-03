@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, X, Plus, ArrowRight, Camera, Trash2 } from 'lucide-react';
+import { ArrowLeft, X, Plus, ArrowRight, Camera, Trash2, Pencil } from 'lucide-react';
 import { useFriends, DbProfile } from '@/hooks/useEvents';
 import {
   useGroup,
@@ -16,6 +16,9 @@ import { UserAvatar } from '@/components/UserAvatar';
 import { GroupAvatar } from '@/components/GroupAvatar';
 import { FriendChipPicker } from '@/components/FriendChipPicker';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +48,10 @@ const GroupDetailPage = () => {
   const [toAdd, setToAdd] = useState<DbProfile[]>([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setCurrentUserId(user?.id || null));
@@ -140,6 +147,30 @@ const GroupDetailPage = () => {
     toast.success('Photo removed');
   };
 
+  const openEdit = () => {
+    setEditName(group.name);
+    setEditDescription((group as any).description || '');
+    setShowEdit(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editName.trim()) {
+      toast.error('Name is required');
+      return;
+    }
+    setSavingEdit(true);
+    const { error } = await supabase
+      .from('groups')
+      .update({ name: editName.trim(), description: editDescription.trim() || null })
+      .eq('id', group.id);
+    setSavingEdit(false);
+    if (error) { toast.error(error.message); return; }
+    queryClient.invalidateQueries({ queryKey: ['group', group.id] });
+    queryClient.invalidateQueries({ queryKey: ['groups'] });
+    toast.success('Group updated');
+    setShowEdit(false);
+  };
+
   return (
     <div className="min-h-screen pb-24">
       <div className="mx-auto max-w-md px-4 pt-12">
@@ -150,7 +181,16 @@ const GroupDetailPage = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-xl font-bold text-foreground truncate">{group.name}</h1>
+          <h1 className="flex-1 text-xl font-bold text-foreground truncate">{group.name}</h1>
+          {isCreator && (
+            <button
+              onClick={openEdit}
+              className="rounded-lg p-2 text-muted-foreground hover:bg-secondary"
+              aria-label="Edit group"
+            >
+              <Pencil className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
         <div className="flex flex-col items-center gap-2 mb-6">
@@ -189,6 +229,12 @@ const GroupDetailPage = () => {
           </div>
           {uploadingAvatar && <p className="text-xs text-muted-foreground">Uploading...</p>}
         </div>
+
+        {(group as any).description && (
+          <p className="mb-6 text-center text-sm text-muted-foreground whitespace-pre-wrap">
+            {(group as any).description}
+          </p>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -329,6 +375,39 @@ const GroupDetailPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={showEdit} onOpenChange={setShowEdit}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit group</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-foreground">Name</label>
+              <Input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Group name"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-foreground">Description</label>
+              <Textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="What's this group about?"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setShowEdit(false)}>Cancel</Button>
+            <Button onClick={handleSaveEdit} disabled={savingEdit}>
+              {savingEdit ? 'Saving...' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
