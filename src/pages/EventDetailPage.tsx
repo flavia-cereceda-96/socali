@@ -421,9 +421,21 @@ const EventDetailPage = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-            Attendees ({attendees.length})
-          </h2>
+          <div className="mb-3 flex items-center gap-2">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Attendees ({attendees.length})
+            </h2>
+            {isCreator && pendingAttendees.length > 0 && (
+              <button
+                onClick={() => setNudgeOpen(true)}
+                disabled={nudgeOnCooldown}
+                title={nudgeOnCooldown ? 'Recently sent — try again in a few minutes' : 'Nudge pending RSVPs'}
+                className="rounded-full p-1.5 text-primary hover:bg-primary/10 transition-colors disabled:opacity-40 disabled:hover:bg-transparent"
+              >
+                <Bell className="h-4 w-4" />
+              </button>
+            )}
+          </div>
           <div className="flex flex-col gap-2">
             {attendees.map((a, i) => (
               <motion.div
