@@ -45,7 +45,7 @@ const Index = () => {
   const { todayEvents, weekEvents, todayCount, weekCount, pendingCount } = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const todayKey = today.toISOString().slice(0, 10);
+    const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
     const weekEnd = new Date(today);
     weekEnd.setDate(weekEnd.getDate() + 7);
