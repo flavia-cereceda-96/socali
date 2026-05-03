@@ -599,6 +599,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_invite_info: {
+        Args: { _token: string }
+        Returns: {
+          cover_image: string
+          emoji: string
+          event_date: string
+          event_end_date: string
+          event_end_time: string
+          event_id: string
+          event_time: string
+          inviter_avatar: string
+          inviter_id: string
+          inviter_username: string
+          location: string
+          title: string
+        }[]
+      }
       get_public_user_stats: {
         Args: { _user_id: string }
         Returns: {
@@ -632,6 +649,10 @@ export type Database = {
       is_group_member: {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
+      }
+      join_event_via_invite: {
+        Args: { _status?: string; _token: string }
+        Returns: string
       }
     }
     Enums: {
