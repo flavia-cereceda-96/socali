@@ -9,6 +9,7 @@ export interface DbGroup {
   created_by: string;
   created_at: string;
   member_count: number;
+  avatar_url?: string | null;
 }
 
 export interface DbGroupWithMembers extends DbGroup {
@@ -100,14 +101,14 @@ export function useGroup(groupId: string | undefined) {
 export function useCreateGroup() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ name, emoji, memberIds }: { name: string; emoji: string; memberIds: string[] }) => {
+    mutationFn: async ({ name, emoji, memberIds, avatarUrl }: { name: string; emoji: string; memberIds: string[]; avatarUrl?: string | null }) => {
       const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData.session?.user;
       if (!user) throw new Error('You must be signed in to create a group.');
 
       const { data: group, error } = await supabase
         .from('groups')
-        .insert({ name: name.trim(), emoji, created_by: user.id })
+        .insert({ name: name.trim(), emoji, created_by: user.id, avatar_url: avatarUrl || null })
         .select()
         .single();
 
