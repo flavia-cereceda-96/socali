@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
-import { ArrowLeft, LogOut, Megaphone, Languages, Users, Mail } from 'lucide-react';
+import { ArrowLeft, LogOut, Megaphone, Languages, Users, Mail, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -65,6 +65,35 @@ const SettingsPage = () => {
     }
     queryClient.setQueryData(['email-notifications-pref'], value);
     toast.success(value ? 'Email notifications enabled' : 'Email notifications disabled');
+  };
+
+  const { data: weekStart = 'monday' } = useQuery({
+    queryKey: ['week-starts-on'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return 'monday' as const;
+      const { data } = await supabase
+        .from('profiles')
+        .select('week_starts_on')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      return ((data?.week_starts_on as 'monday' | 'sunday') || 'monday');
+    },
+  });
+
+  const setWeekStart = async (value: 'monday' | 'sunday') => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ week_starts_on: value })
+      .eq('user_id', user.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    queryClient.setQueryData(['week-starts-on'], value);
+    toast.success(`Week now starts on ${value === 'monday' ? 'Monday' : 'Sunday'}`);
   };
 
   const handlePostUpdate = async () => {
@@ -138,6 +167,38 @@ const SettingsPage = () => {
               </div>
               <span className="text-muted-foreground">›</span>
             </button>
+          </section>
+
+          {/* Display preferences */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-semibold text-foreground">Calendar</h2>
+            </div>
+            <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+              <div>
+                <p className="text-sm font-semibold text-foreground">Week starts on</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Choose the first day of the week shown across calendars and date pickers.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {(['monday', 'sunday'] as const).map(opt => (
+                  <button
+                    key={opt}
+                    onClick={() => setWeekStart(opt)}
+                    className={
+                      'rounded-xl border px-3 py-2.5 text-sm font-medium transition-[background-color,border-color] duration-100 ' +
+                      (weekStart === opt
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border bg-background text-foreground hover:bg-secondary/40')
+                    }
+                  >
+                    {opt === 'monday' ? 'Monday' : 'Sunday'}
+                  </button>
+                ))}
+              </div>
+            </div>
           </section>
 
           {/* Notifications */}
