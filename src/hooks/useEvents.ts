@@ -25,6 +25,7 @@ export interface DbParticipant {
   id: string;
   user_id: string;
   status: string;
+  role?: string;
   decline_note: string | null;
   profile?: {
     username: string;
