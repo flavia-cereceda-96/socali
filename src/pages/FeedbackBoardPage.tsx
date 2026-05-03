@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 type Category = 'bug' | 'feature' | 'improvement' | 'other';
-type Status = 'under_review' | 'planned' | 'done' | null;
+type Status = 'created' | 'accepted' | 'rejected';
 
 interface FeedbackRow {
   id: string;
@@ -45,6 +45,7 @@ interface CommentRow {
   feedback_id: string;
   content: string;
   created_at: string;
+  is_developer_response: boolean;
 }
 
 interface CommentVoteRow {
@@ -59,16 +60,22 @@ const CATEGORY_LABELS: Record<Category, string> = {
   other: 'Other',
 };
 
-const STATUS_LABELS: Record<Exclude<Status, null>, string> = {
-  under_review: 'Under review',
-  planned: 'Planned',
-  done: 'Done',
+const STATUS_LABELS: Record<Status, string> = {
+  created: 'Created',
+  accepted: 'Accepted',
+  rejected: 'Rejected',
 };
 
-const STATUS_STYLES: Record<Exclude<Status, null>, string> = {
-  under_review: 'bg-amber-100 text-amber-800',
-  planned: 'bg-blue-100 text-blue-800',
-  done: 'bg-green-100 text-green-800',
+const STATUS_STYLES: Record<Status, string> = {
+  created: '',
+  accepted: '',
+  rejected: '',
+};
+
+const STATUS_INLINE: Record<Status, { backgroundColor: string; color: string }> = {
+  created: { backgroundColor: '#E5E7EB', color: '#374151' },
+  accepted: { backgroundColor: '#CFFCE3', color: '#1A9E55' },
+  rejected: { backgroundColor: '#FFE4E1', color: '#C0392B' },
 };
 
 const formatDate = (iso: string) => {
@@ -225,8 +232,7 @@ const FeedbackBoardPage = () => {
   };
 
   const handleStatusChange = async (feedbackId: string, status: string) => {
-    const newStatus = status === 'none' ? null : status;
-    const { error } = await supabase.from('feedback').update({ status: newStatus }).eq('id', feedbackId);
+    const { error } = await supabase.from('feedback').update({ status }).eq('id', feedbackId);
     if (error) toast.error(error.message);
     else queryClient.invalidateQueries({ queryKey: ['feedback'] });
   };
@@ -314,11 +320,13 @@ const FeedbackBoardPage = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start gap-2 flex-wrap">
                       <h3 className="font-semibold text-foreground leading-tight flex-1 min-w-0">{f.title}</h3>
-                      {f.status && (
-                        <Badge className={cn("text-[10px] font-medium", STATUS_STYLES[f.status])} variant="secondary">
-                          {STATUS_LABELS[f.status]}
-                        </Badge>
-                      )}
+                      <Badge
+                        className="text-[10px] font-medium border-0"
+                        style={STATUS_INLINE[f.status]}
+                        variant="secondary"
+                      >
+                        {STATUS_LABELS[f.status]}
+                      </Badge>
                     </div>
                     {f.description && (
                       <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{f.description}</p>
@@ -341,15 +349,14 @@ const FeedbackBoardPage = () => {
                         <span>{f.commentCount} {f.commentCount === 1 ? 'comment' : 'comments'}</span>
                       </button>
                       {isAdmin && (
-                        <Select value={f.status ?? 'none'} onValueChange={(v) => handleStatusChange(f.id, v)}>
-                          <SelectTrigger className="h-7 text-xs w-[140px]">
-                            <SelectValue placeholder="Set status" />
+                        <Select value={f.status} onValueChange={(v) => handleStatusChange(f.id, v)}>
+                          <SelectTrigger className="h-7 text-xs w-[130px]">
+                            <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="none">No status</SelectItem>
-                            <SelectItem value="under_review">Under review</SelectItem>
-                            <SelectItem value="planned">Planned</SelectItem>
-                            <SelectItem value="done">Done</SelectItem>
+                            <SelectItem value="created">Created</SelectItem>
+                            <SelectItem value="accepted">Accepted</SelectItem>
+                            <SelectItem value="rejected">Rejected</SelectItem>
                           </SelectContent>
                         </Select>
                       )}
@@ -369,6 +376,7 @@ const FeedbackBoardPage = () => {
                             commentVotes={commentVotes}
                             profileMap={profileMap}
                             userId={userId}
+                            isAdmin={isAdmin}
                           />
                         </motion.div>
                       )}
