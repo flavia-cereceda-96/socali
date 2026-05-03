@@ -300,6 +300,21 @@ const Index = () => {
               </div>
             </motion.div>
 
+            {/* Feedback Board entry point */}
+            <motion.button
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.07 }}
+              onClick={() => navigate('/feedback')}
+              className="w-full mb-6 rounded-2xl bg-muted/60 hover:bg-muted transition-colors p-3 flex items-center gap-3 text-left"
+            >
+              <span className="text-xl">💡</span>
+              <span className="text-sm text-foreground/80 flex-1">
+                Got feedback or feature ideas? <span className="font-medium text-foreground">Let us know</span>
+              </span>
+              <span className="text-muted-foreground text-sm">›</span>
+            </motion.button>
+
             {/* Today */}
             <motion.h2
               initial={{ opacity: 0 }}
