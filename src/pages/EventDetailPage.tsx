@@ -446,7 +446,12 @@ const EventDetailPage = () => {
                 className="rounded-2xl bg-card p-3 shadow-card"
               >
                 <div className="flex items-center gap-3">
-                  <UserAvatar avatarUrl={a.avatar_url} username={a.username} size="md" />
+                  <button
+                    onClick={() => navigate(`/person/${a.user_id}`)}
+                    aria-label={`View @${a.username}`}
+                  >
+                    <UserAvatar avatarUrl={a.avatar_url} username={a.username} size="md" />
+                  </button>
                   <ClickableName userId={a.user_id} name={a.username} className="flex-1" />
                   {a.isCreator ? (
                     <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
