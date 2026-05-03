@@ -31,6 +31,12 @@ function buildContent(type: string, sourceName: string, eventTitle?: string, com
       return { subject: `Socali - New friend request`, title: `${actor} sent you a friend request`, body: `${actor} wants to connect with you on Socali.` };
     case 'friend_accepted':
       return { subject: `Socali - Friend request accepted`, title: `${actor} accepted your friend request`, body: `You're now friends with ${actor} on Socali.` };
+    case 'rsvp_nudge':
+      return {
+        subject: `Socali - Please confirm your RSVP`,
+        title: `${actor} is asking you to confirm your RSVP`,
+        body: `${actor} would like you to confirm your RSVP for "${eventTitle ?? 'their event'}". Please open Socali to respond.`,
+      };
     default:
       return { subject: 'Socali - New notification', title: 'New notification', body: 'You have a new notification on Socali.' };
   }
