@@ -560,6 +560,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_public_user_stats: {
+        Args: { _user_id: string }
+        Returns: {
+          events_attended: number
+          friends_count: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

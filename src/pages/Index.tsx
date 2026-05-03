@@ -172,13 +172,19 @@ const Index = () => {
               return (
                 <div className="flex items-center gap-1">
                   {event.participants.slice(0, 5).map(p => (
-                    <UserAvatar
+                    <button
                       key={p.id}
-                      avatarUrl={p.profile?.avatar_url}
-                      username={p.profile?.username}
-                      size="sm"
-                      className="h-6 w-6 text-[10px] -ml-1 first:ml-0 ring-2 ring-card"
-                    />
+                      onClick={(e) => { e.stopPropagation(); navigate(`/person/${p.user_id}`); }}
+                      className="-ml-1 first:ml-0"
+                      aria-label={`View @${p.profile?.username || 'user'}`}
+                    >
+                      <UserAvatar
+                        avatarUrl={p.profile?.avatar_url}
+                        username={p.profile?.username}
+                        size="sm"
+                        className="h-6 w-6 text-[10px] ring-2 ring-card"
+                      />
+                    </button>
                   ))}
                   {event.participants.length > 5 && (
                     <span className="ml-1 text-[10px] text-muted-foreground">+{event.participants.length - 5}</span>
@@ -244,7 +250,11 @@ const Index = () => {
             const name = p.username || '';
             const first = name.charAt(0).toUpperCase() + name.slice(1);
             return (
-              <div key={p.user_id} className="flex flex-col items-center gap-1 w-12 flex-shrink-0">
+              <button
+                key={p.user_id}
+                onClick={() => navigate(`/person/${p.user_id}`)}
+                className="flex flex-col items-center gap-1 w-12 flex-shrink-0"
+              >
                 <UserAvatar
                   avatarUrl={p.avatar_url}
                   username={p.username}
@@ -254,7 +264,7 @@ const Index = () => {
                 <span className="text-[10px] text-muted-foreground truncate max-w-full text-center">
                   {first}
                 </span>
-              </div>
+              </button>
             );
           })}
         </div>
