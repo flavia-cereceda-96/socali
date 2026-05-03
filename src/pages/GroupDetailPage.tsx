@@ -247,7 +247,7 @@ const GroupDetailPage = () => {
         >
           <div>
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Members ({group.members.length})
+              Members ({group.members.length}{isCreator && pendingMembers.length > 0 ? ` · ${pendingMembers.length} pending` : ''})
             </h2>
             <div className="flex flex-col gap-2">
               {group.members.map(m => (
