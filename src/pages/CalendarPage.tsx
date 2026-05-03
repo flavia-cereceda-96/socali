@@ -10,8 +10,7 @@ import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/UserAvatar';
 import { CoachMark } from '@/components/CoachMark';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+import { useWeekStart, weekStartIndex, weekDayLabels } from '@/hooks/useWeekStart';
 
 // Exact hex per spec, applied at 70% opacity via inline style
 const FRIEND_TINTS = ['#DBEAFE', '#EDE9FE', '#DCFCE7'];
@@ -29,10 +28,11 @@ function isDateInRange(date: Date, startStr: string, endStr?: string | null) {
   return d >= s && d <= e;
 }
 
-// Build the 6-row x 7-col grid for a given month, padded with adjacent-month days
-function buildMonthGrid(viewMonth: Date): Date[] {
+// Build the 6-row x 7-col grid for a given month, padded with adjacent-month days.
+// `weekStart` is 0=Sunday or 1=Monday.
+function buildMonthGrid(viewMonth: Date, weekStart: 0 | 1): Date[] {
   const first = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1);
-  const startOffset = first.getDay(); // 0=Sun
+  const startOffset = (first.getDay() - weekStart + 7) % 7;
   const gridStart = new Date(first);
   gridStart.setDate(gridStart.getDate() - startOffset);
   return Array.from({ length: 42 }, (_, i) => {
@@ -59,6 +59,9 @@ const CalendarPage = () => {
   const { data: events = [] } = useEvents();
   const { data: friends = [] } = useFriends();
   const today = useMemo(() => new Date(), []);
+  const weekStart = useWeekStart();
+  const wsIdx = weekStartIndex(weekStart) as 0 | 1;
+  const DAYS = useMemo(() => weekDayLabels(weekStart), [weekStart]);
 
   const [viewMonth, setViewMonth] = useState<Date>(() => new Date(today.getFullYear(), today.getMonth(), 1));
   const [direction, setDirection] = useState<1 | -1>(1);
@@ -70,7 +73,7 @@ const CalendarPage = () => {
   const [maxWarning, setMaxWarning] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const monthDays = useMemo(() => buildMonthGrid(viewMonth), [viewMonth]);
+  const monthDays = useMemo(() => buildMonthGrid(viewMonth, wsIdx), [viewMonth, wsIdx]);
 
   const goPrevMonth = () => {
     setDirection(-1);
