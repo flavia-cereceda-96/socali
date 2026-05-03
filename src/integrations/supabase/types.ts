@@ -468,6 +468,7 @@ export type Database = {
           email: string
           email_notifications: boolean | null
           id: string
+          invite_to: string | null
           preferred_language: string
           usage: string
           user_id: string
@@ -481,6 +482,7 @@ export type Database = {
           email: string
           email_notifications?: boolean | null
           id?: string
+          invite_to?: string | null
           preferred_language?: string
           usage: string
           user_id: string
@@ -494,6 +496,7 @@ export type Database = {
           email?: string
           email_notifications?: boolean | null
           id?: string
+          invite_to?: string | null
           preferred_language?: string
           usage?: string
           user_id?: string
