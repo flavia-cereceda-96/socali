@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { Search, UserPlus, Check, X, Calendar, Share2, Plus, ChevronRight } from 'lucide-react';
 import { ClickableName } from '@/components/ClickableName';
 import { UserAvatar } from '@/components/UserAvatar';
+import { GroupAvatar } from '@/components/GroupAvatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
