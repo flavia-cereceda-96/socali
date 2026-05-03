@@ -408,19 +408,23 @@ function CommentsThread({
   commentVotes,
   profileMap,
   userId,
+  isAdmin,
 }: {
   feedbackId: string;
   comments: CommentRow[];
   commentVotes: CommentVoteRow[];
   profileMap: Map<string, Profile>;
   userId: string | null;
+  isAdmin: boolean;
 }) {
   const queryClient = useQueryClient();
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [devText, setDevText] = useState('');
+  const [devSubmitting, setDevSubmitting] = useState(false);
 
-  const enriched = useMemo(() => {
-    return comments
+  const { regularComments, devComments } = useMemo(() => {
+    const enrich = (list: CommentRow[]) => list
       .map(c => {
         const cVotes = commentVotes.filter(v => v.comment_id === c.id);
         const ups = cVotes.length;
@@ -428,6 +432,10 @@ function CommentsThread({
         return { ...c, ups, myUpvoted };
       })
       .sort((a, b) => b.ups - a.ups || a.created_at.localeCompare(b.created_at));
+    return {
+      regularComments: enrich(comments.filter(c => !c.is_developer_response)),
+      devComments: enrich(comments.filter(c => c.is_developer_response)),
+    };
   }, [comments, commentVotes, userId]);
 
   const handleUpvote = async (commentId: string, currentlyUpvoted: boolean) => {
@@ -463,9 +471,37 @@ function CommentsThread({
     queryClient.invalidateQueries({ queryKey: ['feedback_comments'] });
   };
 
+  const handleDevSubmit = async () => {
+    if (!userId || !devText.trim()) return;
+    setDevSubmitting(true);
+    const { error } = await supabase
+      .from('feedback_comments')
+      .insert({ user_id: userId, feedback_id: feedbackId, content: devText.trim(), is_developer_response: true });
+    setDevSubmitting(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setDevText('');
+    queryClient.invalidateQueries({ queryKey: ['feedback_comments'] });
+  };
+
+  const renderUpvote = (commentId: string, ups: number, myUpvoted: boolean) => (
+    <button
+      onClick={() => handleUpvote(commentId, myUpvoted)}
+      className={cn(
+        "flex items-center gap-0.5 text-xs px-1.5 rounded h-fit py-1 transition-colors",
+        myUpvoted ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:bg-muted'
+      )}
+    >
+      <ChevronUp className="w-3.5 h-3.5" />
+      <span className="tabular-nums">{ups}</span>
+    </button>
+  );
+
   return (
     <div className="mt-3 pt-3 border-t border-border space-y-3">
-      {enriched.map(c => {
+      {regularComments.map(c => {
         const author = profileMap.get(c.user_id);
         return (
           <div key={c.id} className="flex gap-2">
@@ -477,16 +513,7 @@ function CommentsThread({
               </div>
               <p className="text-sm text-foreground whitespace-pre-wrap">{c.content}</p>
             </div>
-            <button
-              onClick={() => handleUpvote(c.id, c.myUpvoted)}
-              className={cn(
-                "flex items-center gap-0.5 text-xs px-1.5 rounded h-fit py-1 transition-colors",
-                c.myUpvoted ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:bg-muted'
-              )}
-            >
-              <ChevronUp className="w-3.5 h-3.5" />
-              <span className="tabular-nums">{c.ups}</span>
-            </button>
+            {renderUpvote(c.id, c.ups, c.myUpvoted)}
           </div>
         );
       })}
@@ -506,6 +533,57 @@ function CommentsThread({
           Post
         </Button>
       </div>
+
+      {(devComments.length > 0 || isAdmin) && (
+        <div className="space-y-2 pt-2">
+          {devComments.map(c => {
+            const author = profileMap.get(c.user_id);
+            return (
+              <div
+                key={c.id}
+                className="rounded-xl p-3 flex gap-2"
+                style={{ backgroundColor: '#EBE5FF' }}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge className="text-[10px] font-semibold border-0" style={{ backgroundColor: '#6B45F5', color: '#ffffff' }}>
+                      Developer response
+                    </Badge>
+                    <span className="text-xs text-foreground/70">
+                      {author?.username || 'Team'} · {formatDate(c.created_at)}
+                    </span>
+                  </div>
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{c.content}</p>
+                </div>
+                {renderUpvote(c.id, c.ups, c.myUpvoted)}
+              </div>
+            );
+          })}
+
+          {isAdmin && (
+            <div className="rounded-xl p-3 space-y-2" style={{ backgroundColor: '#EBE5FF' }}>
+              <div className="flex items-center gap-2">
+                <Badge className="text-[10px] font-semibold border-0" style={{ backgroundColor: '#6B45F5', color: '#ffffff' }}>
+                  Developer response
+                </Badge>
+                <span className="text-xs text-foreground/70">Visible to everyone</span>
+              </div>
+              <Textarea
+                value={devText}
+                onChange={(e) => setDevText(e.target.value)}
+                placeholder="Post an official response from the team..."
+                rows={2}
+                className="bg-white"
+              />
+              <div className="flex justify-end">
+                <Button onClick={handleDevSubmit} disabled={!devText.trim() || devSubmitting} size="sm">
+                  Post response
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
