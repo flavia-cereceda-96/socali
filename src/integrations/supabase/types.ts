@@ -156,6 +156,30 @@ export type Database = {
           },
         ]
       }
+      event_invite_links: {
+        Row: {
+          created_at: string
+          created_by: string
+          event_id: string
+          id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          event_id: string
+          id?: string
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          event_id?: string
+          id?: string
+          token?: string
+        }
+        Relationships: []
+      }
       event_participants: {
         Row: {
           created_at: string
