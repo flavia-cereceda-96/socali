@@ -408,6 +408,9 @@ const PeoplePage = () => {
                   <div className="flex-1 min-w-0">
                     <ClickableName userId={friend.user_id} name={friend.username} className="font-semibold" />
                     <p className="text-xs text-muted-foreground">{friend.email}</p>
+                    {friend.bio && (
+                      <p className="text-xs text-muted-foreground/80 truncate">{friend.bio}</p>
+                    )}
                   </div>
                   <div className="flex flex-col items-center gap-0.5 text-muted-foreground">
                     <Calendar className="h-4 w-4" />
