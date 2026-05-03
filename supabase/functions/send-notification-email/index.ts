@@ -80,8 +80,8 @@ Deno.serve(async (req) => {
       <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:16px;padding:32px;border:1px solid rgba(160,130,255,0.2);">
         <h1 style="font-size:20px;margin:0 0 12px;color:#6B45F5;">${title}</h1>
         <p style="font-size:15px;line-height:1.5;margin:0 0 24px;">${body}</p>
-        <a href="${link}" style="display:inline-block;background:#B8A0FF;color:#fff;text-decoration:none;padding:12px 20px;border-radius:10px;font-weight:600;">Open SyncCircle</a>
-        <p style="font-size:12px;color:#888;margin:32px 0 0;">You received this email because you have notifications enabled on SyncCircle.</p>
+        <a href="${link}" style="display:inline-block;background:#B8A0FF;color:#fff;text-decoration:none;padding:12px 20px;border-radius:10px;font-weight:600;">Open Socali</a>
+        <p style="font-size:12px;color:#888;margin:32px 0 0;">You received this email because you have notifications enabled on Socali.</p>
       </div></body></html>`;
 
     const resp = await fetch('https://api.resend.com/emails', {
