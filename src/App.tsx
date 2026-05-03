@@ -22,6 +22,7 @@ import LoginPage from "./pages/LoginPage.tsx";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage.tsx";
 import ResetPasswordPage from "./pages/ResetPasswordPage.tsx";
 import PersonPage from "./pages/PersonPage.tsx";
+import FeedbackBoardPage from "./pages/FeedbackBoardPage.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import SplashPage, { hasSeenSplash } from "./pages/SplashPage.tsx";
 import { WhatsNewModal } from "./components/WhatsNewModal.tsx";
@@ -88,6 +89,7 @@ const App = () => {
             <Route path="/person/:userId" element={authed ? <PersonPage /> : <Navigate to="/login" replace />} />
             <Route path="/settings" element={authed ? <SettingsPage /> : <Navigate to="/login" replace />} />
             <Route path="/profile" element={authed ? <ProfilePage /> : <Navigate to="/login" replace />} />
+            <Route path="/feedback" element={authed ? <FeedbackBoardPage /> : <Navigate to="/login" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           {authed && <BottomNav />}
