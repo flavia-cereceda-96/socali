@@ -1,13 +1,14 @@
 import { useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, X, Plus, ArrowRight, Camera, Trash2, Pencil } from 'lucide-react';
+import { ArrowLeft, X, Plus, ArrowRight, Camera, Trash2, Pencil, Shield, ShieldOff, MoreVertical } from 'lucide-react';
 import { useFriends, DbProfile } from '@/hooks/useEvents';
 import {
   useGroup,
   useAddGroupMembers,
   useRemoveGroupMember,
   useDeleteGroup,
+  useSetGroupMemberRole,
 } from '@/hooks/useGroups';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
@@ -19,6 +20,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,6 +46,7 @@ const GroupDetailPage = () => {
   const addMembers = useAddGroupMembers();
   const removeMember = useRemoveGroupMember();
   const deleteGroup = useDeleteGroup();
+  const setRole = useSetGroupMemberRole();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -66,6 +74,8 @@ const GroupDetailPage = () => {
   }
 
   const isCreator = currentUserId === group.created_by;
+  const adminIds = new Set((group as any).admin_ids || []);
+  const isAdmin = isCreator || (currentUserId ? adminIds.has(currentUserId) : false);
   const pendingMembers = (group as any).pending_members || [];
   const memberIds = new Set([
     ...group.members.map(m => m.user_id),
@@ -94,6 +104,24 @@ const GroupDetailPage = () => {
       toast.success('Member removed');
     } catch (err: any) {
       toast.error(err.message || 'Failed to remove');
+    }
+  };
+
+  const handlePromote = async (userId: string, username: string) => {
+    try {
+      await setRole.mutateAsync({ groupId: group.id, userId, role: 'admin' });
+      toast.success(`@${username} is now an admin`);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to promote');
+    }
+  };
+
+  const handleDemote = async (userId: string, username: string) => {
+    try {
+      await setRole.mutateAsync({ groupId: group.id, userId, role: 'member' });
+      toast.success(`@${username} is no longer an admin`);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to demote');
     }
   };
 
@@ -186,7 +214,7 @@ const GroupDetailPage = () => {
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="flex-1 text-xl font-bold text-foreground truncate">{group.name}</h1>
-          {isCreator && (
+          {isAdmin && (
             <button
               onClick={openEdit}
               className="rounded-lg p-2 text-muted-foreground hover:bg-secondary"
@@ -200,7 +228,7 @@ const GroupDetailPage = () => {
         <div className="flex flex-col items-center gap-2 mb-6">
           <div className="relative">
             <GroupAvatar avatarUrl={(group as any).avatar_url} emoji={group.emoji} name={group.name} size="xl" />
-            {isCreator && (
+            {isAdmin && (
               <>
                 <button
                   type="button"
@@ -247,10 +275,13 @@ const GroupDetailPage = () => {
         >
           <div>
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Members ({group.members.length}{isCreator && pendingMembers.length > 0 ? ` · ${pendingMembers.length} pending` : ''})
+              Members ({group.members.length}{isAdmin && pendingMembers.length > 0 ? ` · ${pendingMembers.length} pending` : ''})
             </h2>
             <div className="flex flex-col gap-2">
-              {group.members.map(m => (
+              {group.members.map(m => {
+                const memberIsAdmin = m.user_id === group.created_by || adminIds.has(m.user_id);
+                const memberIsCreator = m.user_id === group.created_by;
+                return (
                 <div
                   key={m.user_id}
                   className="flex items-center gap-3 rounded-2xl bg-card p-3 shadow-card"
@@ -259,23 +290,44 @@ const GroupDetailPage = () => {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-foreground truncate">@{m.username}</p>
                   </div>
-                  {m.user_id === group.created_by && (
+                  {memberIsAdmin && (
                     <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
-                      Admin
+                      {memberIsCreator ? 'Owner' : 'Admin'}
                     </span>
                   )}
-                  {isCreator && m.user_id !== group.created_by && (
-                    <button
-                      onClick={() => handleRemove(m.user_id)}
-                      className="rounded-full p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                      aria-label={`Remove ${m.username}`}
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
+                  {isAdmin && !memberIsCreator && m.user_id !== currentUserId && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          className="rounded-full p-1.5 text-muted-foreground hover:bg-secondary"
+                          aria-label={`Manage ${m.username}`}
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {memberIsAdmin ? (
+                          <DropdownMenuItem onClick={() => handleDemote(m.user_id, m.username)}>
+                            <ShieldOff className="mr-2 h-4 w-4" /> Remove admin
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => handlePromote(m.user_id, m.username)}>
+                            <Shield className="mr-2 h-4 w-4" /> Make admin
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem
+                          onClick={() => handleRemove(m.user_id)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <X className="mr-2 h-4 w-4" /> Remove from group
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   )}
                 </div>
-              ))}
-              {isCreator && pendingMembers.map((m: any) => (
+                );
+              })}
+              {isAdmin && pendingMembers.map((m: any) => (
                 <div
                   key={`pending-${m.user_id}`}
                   className="flex items-center gap-3 rounded-2xl bg-card p-3 shadow-card opacity-70"
