@@ -3,7 +3,7 @@ import { useFriends, DbProfile } from '@/hooks/useEvents';
 import { useGroups, useGroup, DbGroup } from '@/hooks/useGroups';
 import { UserAvatar } from '@/components/UserAvatar';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Check, X, Users } from 'lucide-react';
+import { ArrowLeft, Check, X, Users, Shield } from 'lucide-react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -49,6 +49,15 @@ const CreateEventPage = () => {
   const [linkLabel, setLinkLabel] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [friendSearch, setFriendSearch] = useState('');
+  const [coAdminIds, setCoAdminIds] = useState<Set<string>>(new Set());
+
+  const toggleCoAdmin = (userId: string) => {
+    setCoAdminIds(prev => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId); else next.add(userId);
+      return next;
+    });
+  };
 
   // Auto-select friend if navigated from PersonPage
   useEffect(() => {
@@ -163,6 +172,7 @@ const CreateEventPage = () => {
             event_id: event.id,
             user_id: uid,
             status: 'suggested',
+            role: coAdminIds.has(uid) ? 'co-admin' : 'attendee',
           }))
         );
         if (pError) toast.error('Event created but failed to add participants');
