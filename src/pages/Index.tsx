@@ -314,7 +314,7 @@ const Index = () => {
                 <p className="text-2xl font-bold mt-1">{weekCount}</p>
                 <p className="text-[11px] opacity-80">plans</p>
               </div>
-              <div className="rounded-2xl p-4 shadow-card" style={{ backgroundColor: '#FFE0CC', color: '#C2410C' }}>
+              <div className="rounded-2xl p-4 shadow-card" style={{ backgroundColor: '#FFD6E5', color: '#B83268' }}>
                 <p className="text-xs font-medium">Pending</p>
                 <p className="text-2xl font-bold mt-1">{pendingCount}</p>
                 <p className="text-[11px] opacity-80">reply needed</p>
