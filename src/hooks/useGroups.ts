@@ -215,6 +215,39 @@ export function useDeleteGroup() {
   });
 }
 
+/** Respond to a group invite (accept/decline). */
+export function useRespondGroupInvite() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ groupId, accept }: { groupId: string; accept: boolean }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not signed in');
+      if (accept) {
+        const { error } = await supabase
+          .from('group_members')
+          .update({ membership_status: 'accepted' })
+          .eq('group_id', groupId)
+          .eq('user_id', user.id);
+        if (error) throw error;
+      } else {
+        // Remove the row so creator is not notified and user isn't tied to group
+        const { error } = await supabase
+          .from('group_members')
+          .delete()
+          .eq('group_id', groupId)
+          .eq('user_id', user.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['groups'] });
+      qc.invalidateQueries({ queryKey: ['group', vars.groupId] });
+      qc.invalidateQueries({ queryKey: ['activity-feed'] });
+      qc.invalidateQueries({ queryKey: ['unread-activity-count'] });
+    },
+  });
+}
+
 /** Returns a map: eventId -> group hint (if ≥80% of participants share one group) */
 export function useEventGroupHints(eventIds: string[], participantsByEvent: Record<string, string[]>) {
   return useQuery({
