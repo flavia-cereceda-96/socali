@@ -7,7 +7,7 @@ import { EventPhotos } from '@/components/EventPhotos';
 import { UserAvatar } from '@/components/UserAvatar';
 import { ClickableName } from '@/components/ClickableName';
 import { motion } from 'framer-motion';
-import { ArrowLeft, MapPin, Clock, Calendar, MessageSquare, Crown, Pencil, Check, X, UserPlus, UserMinus, Trash2, Link as LinkIcon, Bell } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Calendar, MessageSquare, Crown, Pencil, Check, X, UserPlus, UserMinus, Trash2, Link as LinkIcon, Bell, Share2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -489,6 +489,12 @@ const EventDetailPage = () => {
                 className="flex items-center gap-2 text-xs font-medium text-primary hover:underline"
               >
                 <UserPlus className="h-3.5 w-3.5" /> Invite more people
+              </button>
+              <button
+                onClick={handleShareInviteLink}
+                className="flex items-center gap-2 text-xs font-medium text-primary hover:underline"
+              >
+                <Share2 className="h-3.5 w-3.5" /> Share invite link
               </button>
               {managingPeople && (
                 <div className="space-y-2">
