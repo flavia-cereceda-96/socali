@@ -2,18 +2,20 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
-import { ArrowLeft, LogOut, Megaphone, Languages, Users } from 'lucide-react';
+import { ArrowLeft, LogOut, Megaphone, Languages, Users, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { LanguageToggle } from '@/components/LanguageToggle';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
   // Admin-only update composer
   const [updTitle, setUpdTitle] = useState('');
@@ -35,6 +37,35 @@ const SettingsPage = () => {
       return !!data;
     },
   });
+
+  const { data: emailPref } = useQuery({
+    queryKey: ['email-notifications-pref'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data } = await supabase
+        .from('profiles')
+        .select('email_notifications')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      return data?.email_notifications ?? false;
+    },
+  });
+
+  const toggleEmailPref = async (value: boolean) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ email_notifications: value })
+      .eq('user_id', user.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    queryClient.setQueryData(['email-notifications-pref'], value);
+    toast.success(value ? 'Email notifications enabled' : 'Email notifications disabled');
+  };
 
   const handlePostUpdate = async () => {
     if (!updTitle.trim() || !updSummary.trim()) {
@@ -107,6 +138,27 @@ const SettingsPage = () => {
               </div>
               <span className="text-muted-foreground">›</span>
             </button>
+          </section>
+
+          {/* Notifications */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-semibold text-foreground">Notifications</h2>
+            </div>
+            <div className="flex items-start justify-between gap-4 rounded-2xl border border-border bg-card px-4 py-3.5">
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-foreground">Email notifications</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Receive email updates when something needs your attention in Socali
+                </p>
+              </div>
+              <Switch
+                checked={!!emailPref}
+                onCheckedChange={toggleEmailPref}
+                aria-label="Toggle email notifications"
+              />
+            </div>
           </section>
 
           {/* Admin: post an update */}

@@ -49,12 +49,16 @@ Deno.serve(async (req) => {
     // Recipient email
     const { data: profile } = await supabase
       .from('profiles')
-      .select('email, username')
+      .select('email, username, email_notifications')
       .eq('user_id', record.user_id)
       .maybeSingle();
 
     if (!profile?.email) {
       return new Response(JSON.stringify({ skipped: 'no email' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    if (profile.email_notifications === false) {
+      return new Response(JSON.stringify({ skipped: 'opted_out' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     let sourceName = '';
