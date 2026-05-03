@@ -676,6 +676,34 @@ const EventDetailPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={!!roleDialog} onOpenChange={(o) => !o && setRoleDialog(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {roleDialog?.promote
+                ? `Give @${roleDialog?.username} admin rights to this event?`
+                : `Remove @${roleDialog?.username}'s admin rights?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {roleDialog?.promote
+                ? "Co-admins can edit the event and manage attendees, but can't delete it."
+                : "They'll go back to being a regular attendee."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                if (roleDialog) handleSetRole(roleDialog.userId, roleDialog.promote ? 'co-admin' : 'attendee');
+              }}
+            >
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
