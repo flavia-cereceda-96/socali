@@ -115,6 +115,7 @@ const OnboardingPage = () => {
     if (!password) errs.password = 'Required';
     else if (password.length < 8) errs.password = 'At least 8 characters';
     if (!usage) errs.usage = 'Pick one';
+    if (!bio.trim()) errs.bio = 'Required';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -324,7 +325,7 @@ const OnboardingPage = () => {
 
           {/* Username */}
           <div className="space-y-1.5">
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="username">Username *</Label>
             <div className="relative">
               <Input
                 id="username"
@@ -356,7 +357,7 @@ const OnboardingPage = () => {
 
           {/* Email */}
           <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Email *</Label>
             <Input
               id="email"
               type="email"
@@ -373,7 +374,7 @@ const OnboardingPage = () => {
 
           {/* Password */}
           <div className="space-y-1.5">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Password *</Label>
             <div className="relative">
               <Input
                 id="password"
@@ -400,7 +401,7 @@ const OnboardingPage = () => {
 
           {/* Usage */}
           <div className="space-y-2">
-            <Label>What will you use this for?</Label>
+            <Label>What will you use this for? *</Label>
             <div className="space-y-2">
               {usageOptions.map(opt => (
                 <UsageTile
@@ -419,7 +420,7 @@ const OnboardingPage = () => {
           {/* Vibe */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="bio">Your vibe</Label>
+              <Label htmlFor="bio">Your vibe * <span className="text-xs font-normal text-muted-foreground">(Mandatory because we want to make this fun)</span></Label>
               <button
                 type="button"
                 onClick={handleSuggestVibe}
@@ -447,6 +448,7 @@ const OnboardingPage = () => {
             <p className={cn('text-right text-[10px] font-medium transition-colors', bioCounterColor)}>
               {bio.length}/200
             </p>
+            {errors.bio && <p className="text-xs text-destructive">{errors.bio}</p>}
           </div>
         </div>
 
