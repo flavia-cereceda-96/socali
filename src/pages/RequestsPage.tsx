@@ -5,19 +5,23 @@ import { useActivityFeed, ActivityItem } from '@/hooks/useActivity';
 import { StatusBadge } from '@/components/StatusBadge';
 import { UserAvatar } from '@/components/UserAvatar';
 import { motion } from 'framer-motion';
-import { MapPin, Clock, Check, HelpCircle, X, MessageSquare, UserPlus, AtSign, Bell, CheckCircle2, XCircle, CircleHelp } from 'lucide-react';
+import { MapPin, Clock, Check, HelpCircle, X, MessageSquare, UserPlus, AtSign, Bell, CheckCircle2, XCircle, CircleHelp, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CoachMark } from '@/components/CoachMark';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { useRespondGroupInvite } from '@/hooks/useGroups';
+import { GroupAvatar } from '@/components/GroupAvatar';
+import { Button } from '@/components/ui/button';
 
 const RequestsPage = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { data: events = [], isLoading: eventsLoading } = useEvents();
   const { data: activities = [], isLoading: activitiesLoading } = useActivityFeed();
+  const respondGroupInvite = useRespondGroupInvite();
   const [userId, setUserId] = useState<string | null>(null);
   const [decliningId, setDecliningId] = useState<string | null>(null);
   const [declineNote, setDeclineNote] = useState('');
@@ -26,9 +30,13 @@ const RequestsPage = () => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id || null));
   }, []);
 
-  // Mark activities as read when page is viewed
+  // Pending group invites (don't auto-mark as read; need user action)
+  const pendingGroupInvites = activities.filter(a => a.type === 'group_invite' && !a.is_read);
+  const otherActivities = activities.filter(a => a.type !== 'group_invite' || a.is_read);
+
+  // Mark non-group-invite activities as read when page is viewed
   useEffect(() => {
-    const unreadIds = activities.filter(a => !a.is_read).map(a => a.id);
+    const unreadIds = activities.filter(a => !a.is_read && a.type !== 'group_invite').map(a => a.id);
     if (unreadIds.length > 0) {
       supabase
         .from('activity_feed')
@@ -73,6 +81,7 @@ const RequestsPage = () => {
       case 'rsvp_accepted': return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
       case 'rsvp_declined': return <XCircle className="h-4 w-4 text-rose-500" />;
       case 'rsvp_maybe': return <CircleHelp className="h-4 w-4 text-amber-500" />;
+      case 'group_invite': return <Users className="h-4 w-4 text-primary" />;
       default: return <Bell className="h-4 w-4 text-muted-foreground" />;
     }
   };
@@ -93,6 +102,10 @@ const RequestsPage = () => {
         return <><span className="font-semibold">{name}</span> can't make it to <span className="font-semibold">{eventTitle}</span></>;
       case 'rsvp_maybe':
         return <><span className="font-semibold">{name}</span> might come to <span className="font-semibold">{eventTitle}</span></>;
+      case 'group_invite': {
+        const gname = item.group?.name || 'a group';
+        return <><span className="font-semibold">{name}</span> added you to <span className="font-semibold">{gname}</span></>;
+      }
       default:
         return <><span className="font-semibold">{name}</span> activity on <span className="font-semibold">{eventTitle}</span></>;
     }
@@ -106,6 +119,20 @@ const RequestsPage = () => {
     const hrs = Math.floor(mins / 60);
     if (hrs < 24) return `${hrs}h ago`;
     return `${Math.floor(hrs / 24)}d ago`;
+  };
+
+  const handleGroupInviteResponse = async (item: ActivityItem, accept: boolean) => {
+    if (!item.group_id) return;
+    try {
+      await respondGroupInvite.mutateAsync({ groupId: item.group_id, accept });
+      // Mark this notification as read
+      await supabase.from('activity_feed').update({ is_read: true }).eq('id', item.id);
+      queryClient.invalidateQueries({ queryKey: ['activity-feed'] });
+      queryClient.invalidateQueries({ queryKey: ['unread-activity-count'] });
+      toast.success(accept ? `You joined ${item.group?.name || 'the group'} 🎉` : 'Invite declined');
+    } catch (e: any) {
+      toast.error(e.message || 'Something went wrong');
+    }
   };
 
   if (isLoading) {
@@ -225,20 +252,74 @@ const RequestsPage = () => {
           </>
         )}
 
+        {/* Pending group invites */}
+        {pendingGroupInvites.length > 0 && (
+          <>
+            <h2 className="mb-3 mt-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Group Invites ({pendingGroupInvites.length})
+            </h2>
+            <div className="mb-6 flex flex-col gap-3">
+              {pendingGroupInvites.map(item => {
+                const creatorName = item.source_profile?.username || 'Someone';
+                const groupName = item.group?.name || 'a group';
+                return (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-2xl bg-card p-4 shadow-card"
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <GroupAvatar avatarUrl={item.group?.avatar_url} emoji={item.group?.emoji} name={groupName} size="md" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-foreground leading-snug">
+                          You've been added to <span className="font-semibold">{groupName}</span> by <span className="font-semibold">@{creatorName}</span>. Do you want to join?
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleGroupInviteResponse(item, true)}
+                        disabled={respondGroupInvite.isPending}
+                        className="flex-1 gap-1"
+                      >
+                        <Check className="h-3.5 w-3.5" /> Accept
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleGroupInviteResponse(item, false)}
+                        disabled={respondGroupInvite.isPending}
+                        className="flex-1 gap-1 text-muted-foreground"
+                      >
+                        <X className="h-3.5 w-3.5" /> Decline
+                      </Button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
         {/* Activity feed */}
-        {activities.length > 0 && (
+        {otherActivities.length > 0 && (
           <>
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               Recent Activity
             </h2>
             <div className="flex flex-col gap-2">
-              {activities.map((item, i) => (
+              {otherActivities.map((item, i) => (
                 <motion.div
                   key={item.id}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.03 }}
-                  onClick={() => item.event_id && navigate(`/event/${item.event_id}`)}
+                  onClick={() => {
+                    if (item.event_id) navigate(`/event/${item.event_id}`);
+                    else if (item.group_id) navigate(`/people/groups/${item.group_id}`);
+                  }}
                   className={cn(
                     'flex items-start gap-3 rounded-2xl bg-card p-3 shadow-card cursor-pointer transition-colors hover:bg-secondary/50',
                     !item.is_read && 'ring-1 ring-primary/20'
@@ -272,7 +353,7 @@ const RequestsPage = () => {
           </>
         )}
 
-        {pendingInvitations.length === 0 && activities.length === 0 && (
+        {pendingInvitations.length === 0 && pendingGroupInvites.length === 0 && otherActivities.length === 0 && (
           <div data-coach="activity-empty" className="relative">
             <p className="text-center text-muted-foreground py-12">No new activity yet ✨</p>
             <CoachMark
