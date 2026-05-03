@@ -44,10 +44,15 @@ export function CoachMark({ id, text, anchorRef, anchorSelector, placement = 'to
   if (!visible || !pos) return null;
 
   const offset = 12;
+  const margin = 12;
+  const maxWidth = 240;
+  const vw = typeof window !== 'undefined' ? window.innerWidth : 360;
+  const half = maxWidth / 2;
+  const clampedLeft = Math.min(Math.max(pos.left, margin + half), vw - margin - half);
   const style: React.CSSProperties =
     placement === 'top'
-      ? { top: pos.top - offset, left: pos.left, transform: 'translate(-50%, -100%)' }
-      : { top: pos.bottom + offset, left: pos.left, transform: 'translate(-50%, 0)' };
+      ? { top: pos.top - offset, left: clampedLeft, transform: 'translate(-50%, -100%)', maxWidth: `calc(100vw - ${margin * 2}px)` }
+      : { top: pos.bottom + offset, left: clampedLeft, transform: 'translate(-50%, 0)', maxWidth: `calc(100vw - ${margin * 2}px)` };
 
   return createPortal(
     <AnimatePresence>
