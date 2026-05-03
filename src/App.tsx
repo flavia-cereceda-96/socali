@@ -23,6 +23,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage.tsx";
 import ResetPasswordPage from "./pages/ResetPasswordPage.tsx";
 import PersonPage from "./pages/PersonPage.tsx";
 import FeedbackBoardPage from "./pages/FeedbackBoardPage.tsx";
+import InviteEventPage, { consumePendingInvite } from "./pages/InviteEventPage.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import SplashPage, { hasSeenSplash } from "./pages/SplashPage.tsx";
 import { WhatsNewModal } from "./components/WhatsNewModal.tsx";
@@ -42,9 +43,18 @@ const App = () => {
   const { t } = useTranslation();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setLoading(false);
+      if (event === 'SIGNED_IN' && session) {
+        const token = await consumePendingInvite();
+        if (token) {
+          // Defer to give router time to mount
+          setTimeout(() => {
+            window.location.assign(`/invite/event/${token}`);
+          }, 50);
+        }
+      }
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -90,6 +100,7 @@ const App = () => {
             <Route path="/settings" element={authed ? <SettingsPage /> : <Navigate to="/login" replace />} />
             <Route path="/profile" element={authed ? <ProfilePage /> : <Navigate to="/login" replace />} />
             <Route path="/feedback" element={authed ? <FeedbackBoardPage /> : <Navigate to="/login" replace />} />
+            <Route path="/invite/event/:token" element={<InviteEventPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           {authed && <BottomNav />}
