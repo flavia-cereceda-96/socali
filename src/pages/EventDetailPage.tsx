@@ -328,7 +328,7 @@ const EventDetailPage = () => {
           >
             {event.title}
           </motion.h1>
-          {isCreator && !editing && (
+          {canManage && !editing && (
             <button
               onClick={() => setEditing(true)}
               className="rounded-lg p-2 text-muted-foreground hover:bg-secondary"
@@ -415,9 +415,11 @@ const EventDetailPage = () => {
                 <X className="h-4 w-4" /> Cancel
               </Button>
             </div>
-            <Button variant="destructive" onClick={handleDelete} className="w-full gap-1 mt-2">
-              <Trash2 className="h-4 w-4" /> Delete Event
-            </Button>
+            {isCreator && (
+              <Button variant="destructive" onClick={handleDelete} className="w-full gap-1 mt-2">
+                <Trash2 className="h-4 w-4" /> Delete Event
+              </Button>
+            )}
           </motion.div>
         ) : (
           <>
@@ -489,7 +491,7 @@ const EventDetailPage = () => {
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               Attendees ({attendees.length})
             </h2>
-            {isCreator && pendingAttendees.length > 0 && (
+            {canManage && pendingAttendees.length > 0 && (
               <button
                 onClick={() => setNudgeOpen(true)}
                 disabled={nudgeOnCooldown}
@@ -523,8 +525,31 @@ const EventDetailPage = () => {
                     </span>
                   ) : (
                     <div className="flex items-center gap-2">
+                        {(a as any).role === 'co-admin' && (
+                          <span
+                            className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium"
+                            style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}
+                          >
+                            <Shield className="h-3 w-3" /> Co-admin
+                          </span>
+                        )}
                       <StatusBadge status={a.status as any} size="md" />
-                      {isCreator && (
+                        {isCreator && a.status === 'confirmed' && (
+                          <button
+                            onClick={() => setRoleDialog({
+                              userId: a.user_id,
+                              username: a.username,
+                              promote: (a as any).role !== 'co-admin',
+                            })}
+                            className="rounded-full p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                            title={(a as any).role === 'co-admin' ? 'Remove admin rights' : 'Make co-admin'}
+                          >
+                            {(a as any).role === 'co-admin'
+                              ? <ShieldOff className="h-3.5 w-3.5" />
+                              : <Shield className="h-3.5 w-3.5" />}
+                          </button>
+                        )}
+                        {canManage && (a as any).role !== 'co-admin' && (
                         <button
                           onClick={() => handleRemoveParticipant(a.user_id)}
                           className="rounded-full p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
@@ -546,7 +571,7 @@ const EventDetailPage = () => {
           </div>
 
           {/* Invite friends - organizer only */}
-          {isCreator && (
+          {canManage && (
             <div className="mt-3 space-y-2">
               <button
                 onClick={() => setManagingPeople(!managingPeople)}
