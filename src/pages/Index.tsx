@@ -126,6 +126,7 @@ const Index = () => {
     const timeDisplay = getTimeDisplay(event);
     const myP = event.participants.find(p => p.user_id === userId);
     const replyNeeded = myP?.status === 'pending' || myP?.status === 'suggested';
+    const isTbd = !event.date || (event as any).date_confirmed === false;
 
     // Confirmed count: include creator's own RSVP
     const creatorRsvp = (event as any).creator_rsvp || 'confirmed';
@@ -144,21 +145,36 @@ const Index = () => {
         onClick={() => navigate(`/event/${event.id}`)}
         className="flex gap-3 rounded-2xl bg-card p-4 shadow-card cursor-pointer transition-shadow hover:shadow-elevated active:scale-[0.99]"
       >
-        <div
-          className="flex flex-col items-center justify-center rounded-xl px-3 py-2 min-w-[52px]"
-          style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}
-        >
-          <span className="text-xs font-semibold uppercase">
-            {new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
-          </span>
-          <span className="text-lg font-bold">
-            {new Date(event.date + 'T00:00:00').getDate()}
-          </span>
-        </div>
+        {isTbd ? (
+          <div className="flex flex-col items-center justify-center rounded-xl px-3 py-2 min-w-[52px] bg-muted text-muted-foreground">
+            <span className="text-[10px] font-semibold uppercase tracking-wide">Date</span>
+            <span className="text-sm font-bold">TBD</span>
+          </div>
+        ) : (
+          <div
+            className="flex flex-col items-center justify-center rounded-xl px-3 py-2 min-w-[52px]"
+            style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}
+          >
+            <span className="text-xs font-semibold uppercase">
+              {new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
+            </span>
+            <span className="text-lg font-bold">
+              {new Date(event.date + 'T00:00:00').getDate()}
+            </span>
+          </div>
+        )}
         <div className="flex flex-1 flex-col gap-1.5 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-lg">{event.emoji}</span>
             <span className="font-semibold text-foreground truncate">{event.title}</span>
+            {isTbd && (
+              <span
+                className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap"
+                style={{ backgroundColor: '#FFD6E5', color: '#B83268' }}
+              >
+                Vote now
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             {timeDisplay && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{timeDisplay}</span>}
