@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { LocationPicker, LocationValue } from '@/components/LocationPicker';
 import { LocationMap } from '@/components/LocationMap';
 import { RsvpSheet, RsvpValue } from '@/components/RsvpSheet';
+import { DatePoll } from '@/components/DatePoll';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -310,7 +311,10 @@ const EventDetailPage = () => {
   };
 
   const fmt = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-  const dateStr = event.end_date
+  const isPoll = (event as any).date_confirmed === false;
+  const dateStr = !event.date
+    ? 'Date TBD'
+    : event.end_date
     ? `${fmt(event.date)} – ${fmt(event.end_date)}`
     : fmt(event.date);
 
