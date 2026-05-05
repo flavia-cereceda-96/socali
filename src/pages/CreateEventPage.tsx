@@ -659,6 +659,63 @@ const CreateEventPage = () => {
           </div>
 
           <div className="space-y-2 rounded-2xl border border-border bg-secondary/30 p-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {whatPoll ? 'Activity options' : 'Activity / venue'}
+              </Label>
+              <button
+                type="button"
+                onClick={() => setWhatPoll(p => !p)}
+                className={cn(
+                  'rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors',
+                  whatPoll ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
+                )}
+              >
+                {whatPoll ? 'Poll on' : 'Not sure what?'}
+              </button>
+            </div>
+            {whatPoll && (
+              <div className="space-y-2">
+                {whatOptions.map((opt, i) => (
+                  <div key={i} className="rounded-xl border border-border bg-card p-2 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground w-12">Option {i + 1}</span>
+                      {whatOptions.length > 2 && (
+                        <button
+                          type="button"
+                          onClick={() => removeWhatOption(i)}
+                          className="ml-auto text-muted-foreground hover:text-destructive p-1"
+                          aria-label="Remove option"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    <Input
+                      value={opt.title}
+                      onChange={e => updateWhatOption(i, { title: e.target.value })}
+                      placeholder="e.g. Dinner at Café Bloom"
+                    />
+                    <Input
+                      value={opt.link}
+                      onChange={e => updateWhatOption(i, { link: e.target.value })}
+                      placeholder="Optional link (https://…)"
+                    />
+                  </div>
+                ))}
+                {whatOptions.length < 8 && (
+                  <Button type="button" size="sm" variant="outline" className="w-full gap-1.5" onClick={addWhatOption}>
+                    <Plus className="h-3.5 w-3.5" /> Add option
+                  </Button>
+                )}
+                <p className="text-[11px] text-muted-foreground">
+                  Attendees can vote and suggest more options. You'll pick the winner.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2 rounded-2xl border border-border bg-secondary/30 p-3">
             <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Add a link (optional)
             </Label>
