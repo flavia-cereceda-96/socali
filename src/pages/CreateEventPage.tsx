@@ -171,7 +171,7 @@ const CreateEventPage = () => {
           participantIds.map(uid => ({
             event_id: event.id,
             user_id: uid,
-            status: 'suggested',
+            status: 'pending',
             role: coAdminIds.has(uid) ? 'co-admin' : 'attendee',
           }))
         );
