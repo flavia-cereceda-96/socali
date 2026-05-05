@@ -11,6 +11,8 @@ import { UserAvatar } from '@/components/UserAvatar';
 import { CoachMark } from '@/components/CoachMark';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useWeekStart, weekStartIndex, weekDayLabels } from '@/hooks/useWeekStart';
+import { AppHeader } from '@/components/AppHeader';
+import { FloatingActionButton } from '@/components/FloatingActionButton';
 
 // Exact hex per spec, applied at 70% opacity via inline style
 const FRIEND_TINTS = ['#DBEAFE', '#EDE9FE', '#DCFCE7'];
@@ -232,8 +234,8 @@ const CalendarPage = () => {
         placement="top"
       />
 
-      <div className="mx-auto max-w-md px-4 pt-12">
-        <h1 className="text-2xl font-bold text-foreground mb-4">Calendar</h1>
+      <AppHeader title="Calendar" />
+      <div className="mx-auto max-w-md px-4 pt-2">
 
         {/* @-mention input */}
         <div className="relative mb-2">
