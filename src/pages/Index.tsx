@@ -44,7 +44,7 @@ const Index = () => {
     return 'Good evening 🌙';
   })();
 
-  const { todayEvents, weekEvents, monthEvents, todayCount, weekCount, pendingCount } = useMemo(() => {
+  const { todayEvents, weekEvents, monthEvents, tbdEvents, todayCount, weekCount, pendingCount } = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -55,8 +55,10 @@ const Index = () => {
     monthEnd.setDate(monthEnd.getDate() + 30);
 
     const future = events
-      .filter(e => new Date(e.date) >= today)
+      .filter(e => !!e.date && new Date(e.date) >= today)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    const tbd = events.filter(e => (e as any).date_confirmed === false || !e.date);
 
     const notDeclined = future.filter(e => {
       const myP = e.participants.find(p => p.user_id === userId);
@@ -69,7 +71,7 @@ const Index = () => {
       const d = new Date(e.date);
       return d > weekEnd && d <= monthEnd;
     });
-    const pending = future.filter(e => {
+    const pending = [...future, ...tbd].filter(e => {
       const myP = e.participants.find(p => p.user_id === userId);
       return myP?.status === 'pending' || myP?.status === 'suggested';
     });
@@ -78,6 +80,7 @@ const Index = () => {
       todayEvents: today_,
       weekEvents: week_,
       monthEvents: month_,
+      tbdEvents: tbd,
       todayCount: today_.length,
       weekCount: notDeclined.filter(e => new Date(e.date) <= weekEnd).length,
       pendingCount: pending.length,
