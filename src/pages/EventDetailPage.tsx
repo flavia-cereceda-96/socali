@@ -626,15 +626,13 @@ const EventDetailPage = () => {
                         <Crown className="h-3 w-3" /> Organizer
                       </span>
                     )}
-                    {!a.isCreator && (
-                        {(a as any).role === 'co-admin' && (
-                          <span
-                            className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium"
-                            style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}
-                          >
-                            <Shield className="h-3 w-3" /> Co-admin
-                          </span>
-                        )
+                    {!a.isCreator && (a as any).role === 'co-admin' && (
+                      <span
+                        className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium"
+                        style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}
+                      >
+                        <Shield className="h-3 w-3" /> Co-admin
+                      </span>
                     )}
                     {a.user_id === userId ? (
                       <button
@@ -647,22 +645,20 @@ const EventDetailPage = () => {
                     ) : (
                       <StatusBadge status={a.status as any} size="md" />
                     )}
-                        {isCreator && a.status === 'confirmed' && (
-                      !a.isCreator && (
-                          <button
-                            onClick={() => setRoleDialog({
-                              userId: a.user_id,
-                              username: a.username,
-                              promote: (a as any).role !== 'co-admin',
-                            })}
-                            className="rounded-full p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                            title={(a as any).role === 'co-admin' ? 'Remove admin rights' : 'Make co-admin'}
-                          >
-                            {(a as any).role === 'co-admin'
-                              ? <ShieldOff className="h-3.5 w-3.5" />
-                              : <Shield className="h-3.5 w-3.5" />}
-                          </button>
-                      )
+                    {isCreator && !a.isCreator && a.status === 'confirmed' && (
+                      <button
+                        onClick={() => setRoleDialog({
+                          userId: a.user_id,
+                          username: a.username,
+                          promote: (a as any).role !== 'co-admin',
+                        })}
+                        className="rounded-full p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                        title={(a as any).role === 'co-admin' ? 'Remove admin rights' : 'Make co-admin'}
+                      >
+                        {(a as any).role === 'co-admin'
+                          ? <ShieldOff className="h-3.5 w-3.5" />
+                          : <Shield className="h-3.5 w-3.5" />}
+                      </button>
                     )}
                     {canManage && !a.isCreator && (a as any).role !== 'co-admin' && (
                         <button
