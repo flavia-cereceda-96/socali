@@ -29,6 +29,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
 const EventDetailPage = () => {
@@ -236,7 +237,10 @@ const EventDetailPage = () => {
   };
 
   const handleDelete = async () => {
-    if (!event || !window.confirm('Are you sure you want to delete this event? This cannot be undone.')) return;
+    if (!event) return;
+    // Clean up dependent rows that may not cascade in production
+    await supabase.from('event_what_options').delete().eq('event_id', event.id);
+    await supabase.from('event_invite_links').delete().eq('event_id', event.id);
     const { error } = await supabase.from('events').delete().eq('id', event.id);
     if (error) { toast.error(error.message); return; }
     toast.success('Event deleted');
@@ -497,9 +501,25 @@ const EventDetailPage = () => {
               </div>
             )}
             {isCreator && (
-              <Button variant="destructive" onClick={handleDelete} className="w-full gap-1 mt-2">
-                <Trash2 className="h-4 w-4" /> Delete Event
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="w-full gap-1 mt-2">
+                    <Trash2 className="h-4 w-4" /> Delete Event
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete this event?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This cannot be undone. All RSVPs, comments, and photos for this event will be removed.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </motion.div>
         ) : (
