@@ -620,12 +620,13 @@ const EventDetailPage = () => {
                     <UserAvatar avatarUrl={a.avatar_url} username={a.username} size="md" />
                   </button>
                   <ClickableName userId={a.user_id} name={a.username} className="flex-1" />
-                  {a.isCreator ? (
-                    <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-                      <Crown className="h-3 w-3" /> Organizer
-                    </span>
-                  ) : (
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    {a.isCreator && (
+                      <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                        <Crown className="h-3 w-3" /> Organizer
+                      </span>
+                    )}
+                    {!a.isCreator && (
                         {(a as any).role === 'co-admin' && (
                           <span
                             className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium"
@@ -633,9 +634,21 @@ const EventDetailPage = () => {
                           >
                             <Shield className="h-3 w-3" /> Co-admin
                           </span>
-                        )}
+                        )
+                    )}
+                    {a.user_id === userId ? (
+                      <button
+                        onClick={() => setRsvpSheetOpen(true)}
+                        className="rounded-full transition-transform hover:scale-105 active:scale-95"
+                        title="Tap to update your RSVP"
+                      >
+                        <StatusBadge status={a.status as any} size="md" />
+                      </button>
+                    ) : (
                       <StatusBadge status={a.status as any} size="md" />
+                    )}
                         {isCreator && a.status === 'confirmed' && (
+                      !a.isCreator && (
                           <button
                             onClick={() => setRoleDialog({
                               userId: a.user_id,
@@ -649,8 +662,9 @@ const EventDetailPage = () => {
                               ? <ShieldOff className="h-3.5 w-3.5" />
                               : <Shield className="h-3.5 w-3.5" />}
                           </button>
-                        )}
-                        {canManage && (a as any).role !== 'co-admin' && (
+                      )
+                    )}
+                    {canManage && !a.isCreator && (a as any).role !== 'co-admin' && (
                         <button
                           onClick={() => handleRemoveParticipant(a.user_id)}
                           className="rounded-full p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
@@ -659,8 +673,7 @@ const EventDetailPage = () => {
                           <UserMinus className="h-3.5 w-3.5" />
                         </button>
                       )}
-                    </div>
-                  )}
+                  </div>
                 </div>
                 {a.status === 'declined' && a.decline_note && (
                   <p className="mt-2 ml-13 text-xs text-muted-foreground italic pl-[52px]">
