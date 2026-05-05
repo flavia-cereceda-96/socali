@@ -39,27 +39,10 @@ export function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background pb-[env(safe-area-inset-bottom)]">
       <div className="mx-auto flex max-w-md items-stretch justify-around px-1 pt-1.5 pb-1.5">
         {tabs.map((tab, idx) => {
-          // Inject the create button between Friends (idx 2) and Groups (idx 3)
-          const createBtn = idx === 3 ? (
-            <button
-              key="create"
-              onClick={() => navigate('/create')}
-              aria-label="Create event"
-              className="relative flex flex-1 items-center justify-center px-1"
-            >
-              <span
-                className="flex h-12 w-12 items-center justify-center rounded-full shadow-elevated -mt-4"
-                style={{ backgroundColor: '#6B45F5' }}
-              >
-                <Plus className="h-6 w-6 text-white" strokeWidth={2.75} />
-              </span>
-            </button>
-          ) : null;
           const active = tab.match(location.pathname, location.search);
           const badgeCount = getBadgeCount(tab.path);
           return (
             <Fragment key={tab.label}>
-            {createBtn}
             <button
               onClick={() => navigate(tab.path)}
               className={cn(
@@ -91,6 +74,15 @@ export function BottomNav() {
             </Fragment>
           );
         })}
+        <button
+          onClick={() => navigate('/create')}
+          aria-label="Create event"
+          className="relative flex flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1 text-[11px] transition-colors"
+          style={{ color: '#6B45F5' }}
+        >
+          <Plus className="h-[26px] w-[26px]" strokeWidth={2.25} />
+          <span className="font-medium">Create</span>
+        </button>
       </div>
     </nav>
   );
