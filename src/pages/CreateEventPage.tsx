@@ -246,6 +246,17 @@ const CreateEventPage = () => {
 
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['unread-activity-count'] });
+
+      // Link bucket list item to the new event if applicable
+      if (bucketItemId && event) {
+        await (supabase as any)
+          .from('bucket_list_items')
+          .update({ linked_event_id: event.id })
+          .eq('id', bucketItemId);
+        queryClient.invalidateQueries({ queryKey: ['bucket-list-items'] });
+        queryClient.invalidateQueries({ queryKey: ['my-bucket-lists'] });
+      }
+
       const peopleSummary = selectedGroups.length > 0
         ? selectedGroups.map(g => `${g.emoji} ${g.name}`).join(', ')
         : selectedFriends.map(f => f.username).join(', ');
