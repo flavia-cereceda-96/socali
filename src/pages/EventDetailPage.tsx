@@ -454,16 +454,14 @@ const EventDetailPage = () => {
                 <X className="h-4 w-4" /> Cancel
               </Button>
             </div>
-            {isCreator && event.participants.filter(p => p.status === 'confirmed').length > 0 && (
+            {isCreator && event.participants.length > 0 && (
               <div className="space-y-2 rounded-xl border border-border bg-secondary/30 p-3">
                 <div className="space-y-0.5">
                   <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Admin rights</span>
                   <p className="text-xs text-muted-foreground">Co-admins can edit the event and manage attendees, but can't delete it.</p>
                 </div>
                 <div className="space-y-1.5">
-                  {event.participants
-                    .filter(p => p.status === 'confirmed')
-                    .map(p => {
+                  {event.participants.map(p => {
                       const isCo = (p as any).role === 'co-admin';
                       return (
                         <div key={p.id} className="flex items-center gap-2 rounded-lg bg-card px-2 py-1.5">
