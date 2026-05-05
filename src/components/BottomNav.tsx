@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { Home, CalendarDays, Users, UsersRound, User, Plus } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -57,10 +58,9 @@ export function BottomNav() {
           const active = tab.match(location.pathname, location.search);
           const badgeCount = getBadgeCount(tab.path);
           return (
-            <>
+            <Fragment key={tab.label}>
             {createBtn}
             <button
-              key={tab.label}
               onClick={() => navigate(tab.path)}
               className={cn(
                 'relative flex flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1 text-[11px] transition-colors',
@@ -88,7 +88,7 @@ export function BottomNav() {
                 />
               )}
             </button>
-            </>
+            </Fragment>
           );
         })}
       </div>
