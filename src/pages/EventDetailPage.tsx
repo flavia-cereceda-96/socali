@@ -561,6 +561,32 @@ const EventDetailPage = () => {
           </>
         )}
 
+        {isPoll && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08 }}
+            className="mb-6"
+          >
+            <DatePoll
+              eventId={event.id}
+              userId={userId}
+              canManage={canManage}
+              pollDeadline={(event as any).poll_deadline}
+              participantProfiles={Object.fromEntries([
+                [event.created_by, {
+                  username: event.creator_profile?.username || 'Unknown',
+                  avatar_url: event.creator_profile?.avatar_url || null,
+                }],
+                ...event.participants.map(p => [p.user_id, {
+                  username: p.profile?.username || 'Unknown',
+                  avatar_url: p.profile?.avatar_url || null,
+                }]),
+              ])}
+            />
+          </motion.div>
+        )}
+
         {/* Attendees */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
