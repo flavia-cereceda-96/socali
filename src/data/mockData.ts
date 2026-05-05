@@ -5,7 +5,7 @@ import avatarTaylor from '@/assets/avatar-taylor.jpg';
 import avatarCasey from '@/assets/avatar-casey.jpg';
 import avatarMorgan from '@/assets/avatar-morgan.jpg';
 
-export type EventStatus = 'suggested' | 'maybe' | 'confirmed' | 'declined';
+export type EventStatus = 'suggested' | 'maybe' | 'confirmed' | 'declined' | 'pending' | 'organizer';
 
 export interface Friend {
   id: string;
