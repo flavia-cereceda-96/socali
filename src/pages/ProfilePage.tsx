@@ -6,7 +6,7 @@ import { GroupAvatar } from '@/components/GroupAvatar';
 import { supabase } from '@/integrations/supabase/client';
 import { UserAvatar } from '@/components/UserAvatar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Camera, Settings as SettingsIcon, Pencil, Clock, MapPin, X, Sparkles } from 'lucide-react';
+import { ArrowLeft, Bell, Camera, Settings as SettingsIcon, Pencil, Clock, MapPin, X, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,8 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { BucketListsRow } from '@/components/BucketListsRow';
+import { FloatingActionButton } from '@/components/FloatingActionButton';
+import { useUnreadActivityCount } from '@/hooks/useActivity';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
