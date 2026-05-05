@@ -156,6 +156,73 @@ export type Database = {
           },
         ]
       }
+      event_date_options: {
+        Row: {
+          created_at: string
+          end_time: string | null
+          event_id: string
+          id: string
+          proposed_date: string
+          start_time: string | null
+        }
+        Insert: {
+          created_at?: string
+          end_time?: string | null
+          event_id: string
+          id?: string
+          proposed_date: string
+          start_time?: string | null
+        }
+        Update: {
+          created_at?: string
+          end_time?: string | null
+          event_id?: string
+          id?: string
+          proposed_date?: string
+          start_time?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_date_options_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_date_votes: {
+        Row: {
+          created_at: string
+          date_option_id: string
+          id: string
+          user_id: string
+          vote: string
+        }
+        Insert: {
+          created_at?: string
+          date_option_id: string
+          id?: string
+          user_id: string
+          vote: string
+        }
+        Update: {
+          created_at?: string
+          date_option_id?: string
+          id?: string
+          user_id?: string
+          vote?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_date_votes_date_option_id_fkey"
+            columns: ["date_option_id"]
+            isOneToOne: false
+            referencedRelation: "event_date_options"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_invite_links: {
         Row: {
           created_at: string
@@ -256,7 +323,8 @@ export type Database = {
           created_at: string
           created_by: string
           creator_rsvp: string
-          date: string
+          date: string | null
+          date_confirmed: boolean
           emoji: string
           end_date: string | null
           end_time: string | null
@@ -268,6 +336,7 @@ export type Database = {
           location: string | null
           longitude: number | null
           notes: string | null
+          poll_deadline: string | null
           time: string | null
           title: string
           updated_at: string
@@ -277,7 +346,8 @@ export type Database = {
           created_at?: string
           created_by: string
           creator_rsvp?: string
-          date: string
+          date?: string | null
+          date_confirmed?: boolean
           emoji?: string
           end_date?: string | null
           end_time?: string | null
@@ -289,6 +359,7 @@ export type Database = {
           location?: string | null
           longitude?: number | null
           notes?: string | null
+          poll_deadline?: string | null
           time?: string | null
           title: string
           updated_at?: string
@@ -298,7 +369,8 @@ export type Database = {
           created_at?: string
           created_by?: string
           creator_rsvp?: string
-          date?: string
+          date?: string | null
+          date_confirmed?: boolean
           emoji?: string
           end_date?: string | null
           end_time?: string | null
@@ -310,6 +382,7 @@ export type Database = {
           location?: string | null
           longitude?: number | null
           notes?: string | null
+          poll_deadline?: string | null
           time?: string | null
           title?: string
           updated_at?: string
@@ -629,6 +702,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      event_id_for_date_option: {
+        Args: { _option_id: string }
+        Returns: string
+      }
       get_invite_info: {
         Args: { _token: string }
         Returns: {
