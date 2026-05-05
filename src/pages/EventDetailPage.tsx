@@ -19,6 +19,7 @@ import { LocationPicker, LocationValue } from '@/components/LocationPicker';
 import { LocationMap } from '@/components/LocationMap';
 import { RsvpSheet, RsvpValue } from '@/components/RsvpSheet';
 import { DatePoll } from '@/components/DatePoll';
+import { WhatPoll } from '@/components/WhatPoll';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -586,6 +587,31 @@ const EventDetailPage = () => {
             />
           </motion.div>
         )}
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.085 }}
+          className="mb-6"
+        >
+          <WhatPoll
+            eventId={event.id}
+            userId={userId}
+            canManage={canManage}
+            organizerId={event.created_by}
+            confirmedOptionId={(event as any).confirmed_what_option_id}
+            participantProfiles={Object.fromEntries([
+              [event.created_by, {
+                username: event.creator_profile?.username || 'Unknown',
+                avatar_url: event.creator_profile?.avatar_url || null,
+              }],
+              ...event.participants.map(p => [p.user_id, {
+                username: p.profile?.username || 'Unknown',
+                avatar_url: p.profile?.avatar_url || null,
+              }]),
+            ])}
+          />
+        </motion.div>
 
         {/* Attendees */}
         <motion.div

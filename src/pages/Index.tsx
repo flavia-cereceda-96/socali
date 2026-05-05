@@ -11,6 +11,7 @@ import { EmailNotificationsPrompt } from '@/components/EmailNotificationsPrompt'
 import { AvatarPrompt } from '@/components/AvatarPrompt';
 import { BucketListsRow } from '@/components/BucketListsRow';
 import { InlineDatePoll } from '@/components/InlineDatePoll';
+import { InlineWhatPoll } from '@/components/InlineWhatPoll';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -192,6 +193,17 @@ const Index = () => {
               participantProfiles={participantProfiles}
               totalEligible={total}
             />
+          )}
+          {!(event as any).confirmed_what_option_id && (
+            <>
+              {isTbd && <div className="my-2 border-t border-border/50" />}
+              <InlineWhatPoll
+                eventId={event.id}
+                userId={userId}
+                participantProfiles={participantProfiles}
+                totalEligible={total}
+              />
+            </>
           )}
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             {timeDisplay && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{timeDisplay}</span>}

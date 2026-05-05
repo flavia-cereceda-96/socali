@@ -391,8 +391,68 @@ export type Database = {
           },
         ]
       }
+      event_what_options: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          link: string | null
+          suggested_by: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          link?: string | null
+          suggested_by: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          link?: string | null
+          suggested_by?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      event_what_votes: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+          vote: string
+          what_option_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+          vote: string
+          what_option_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+          vote?: string
+          what_option_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_what_votes_what_option_id_fkey"
+            columns: ["what_option_id"]
+            isOneToOne: false
+            referencedRelation: "event_what_options"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
+          confirmed_what_option_id: string | null
           cover_image: string | null
           created_at: string
           created_by: string
@@ -416,6 +476,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          confirmed_what_option_id?: string | null
           cover_image?: string | null
           created_at?: string
           created_by: string
@@ -439,6 +500,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          confirmed_what_option_id?: string | null
           cover_image?: string | null
           created_at?: string
           created_by?: string
@@ -777,6 +839,10 @@ export type Database = {
     }
     Functions: {
       event_id_for_date_option: {
+        Args: { _option_id: string }
+        Returns: string
+      }
+      event_id_for_what_option: {
         Args: { _option_id: string }
         Returns: string
       }
