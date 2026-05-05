@@ -25,6 +25,7 @@ const ProfilePage = () => {
   const { data: friends = [] } = useFriends();
   const { data: groups = [] } = useGroups();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { data: unreadActivity = 0 } = useUnreadActivityCount();
 
   const [editing, setEditing] = useState(false);
   const [username, setUsername] = useState('');
