@@ -17,6 +17,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { LocationPicker, LocationValue } from '@/components/LocationPicker';
 import { LocationMap } from '@/components/LocationMap';
+import { RsvpSheet, RsvpValue } from '@/components/RsvpSheet';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,6 +57,8 @@ const EventDetailPage = () => {
   const [nudgeSending, setNudgeSending] = useState(false);
   const [nudgeCooldownUntil, setNudgeCooldownUntil] = useState<number>(0);
   const [roleDialog, setRoleDialog] = useState<{ userId: string; username: string; promote: boolean } | null>(null);
+  const [rsvpSheetOpen, setRsvpSheetOpen] = useState(false);
+  const [rsvpSaving, setRsvpSaving] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id || null));
@@ -100,6 +103,42 @@ const EventDetailPage = () => {
   const myParticipation = event.participants.find(p => p.user_id === userId);
   const isCoAdmin = (myParticipation as any)?.role === 'co-admin';
   const canManage = isCreator || isCoAdmin;
+
+  const normalizeRsvp = (s: string | undefined | null): RsvpValue => {
+    if (s === 'confirmed' || s === 'declined') return s;
+    return 'pending';
+  };
+
+  const myRsvp: RsvpValue = isCreator
+    ? normalizeRsvp((event as any).creator_rsvp || 'confirmed')
+    : normalizeRsvp(myParticipation?.status);
+
+  const canEditOwnRsvp = isCreator || !!myParticipation;
+
+  const handleSaveRsvp = async (value: RsvpValue) => {
+    if (!event || !userId) return;
+    setRsvpSaving(true);
+    try {
+      if (isCreator) {
+        const { error } = await supabase
+          .from('events')
+          .update({ creator_rsvp: value } as any)
+          .eq('id', event.id);
+        if (error) { toast.error(error.message); return; }
+      } else if (myParticipation) {
+        const { error } = await supabase
+          .from('event_participants')
+          .update({ status: value })
+          .eq('id', myParticipation.id);
+        if (error) { toast.error(error.message); return; }
+      }
+      toast.success('RSVP updated');
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      setRsvpSheetOpen(false);
+    } finally {
+      setRsvpSaving(false);
+    }
+  };
 
   const handleShareInviteLink = async () => {
     if (!event) return;
@@ -208,7 +247,7 @@ const EventDetailPage = () => {
     const { error } = await supabase.from('event_participants').insert({
       event_id: event.id,
       user_id: friend.user_id,
-      status: 'suggested',
+      status: 'pending',
     });
     if (error) { toast.error(error.message); return; }
     await supabase.from('activity_feed').insert({
@@ -247,7 +286,7 @@ const EventDetailPage = () => {
     setRoleDialog(null);
   };
 
-  const pendingAttendees = (event?.participants || []).filter(p => p.status === 'suggested');
+  const pendingAttendees = (event?.participants || []).filter(p => p.status === 'pending' || p.status === 'suggested');
   const nudgeOnCooldown = Date.now() < nudgeCooldownUntil;
 
   const handleSendNudges = async () => {
@@ -298,7 +337,7 @@ const EventDetailPage = () => {
       user_id: event.created_by,
       username: event.creator_profile?.username || 'Unknown',
       avatar_url: event.creator_profile?.avatar_url || null,
-      status: 'organizer' as const,
+      status: normalizeRsvp((event as any).creator_rsvp || 'confirmed'),
       isCreator: true,
       decline_note: null as string | null,
     },
@@ -307,7 +346,7 @@ const EventDetailPage = () => {
       user_id: p.user_id,
       username: p.profile?.username || 'Unknown',
       avatar_url: p.profile?.avatar_url || null,
-      status: p.status,
+      status: normalizeRsvp(p.status),
       isCreator: false,
       decline_note: (p as any).decline_note || null,
     })),
@@ -581,37 +620,47 @@ const EventDetailPage = () => {
                     <UserAvatar avatarUrl={a.avatar_url} username={a.username} size="md" />
                   </button>
                   <ClickableName userId={a.user_id} name={a.username} className="flex-1" />
-                  {a.isCreator ? (
-                    <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-                      <Crown className="h-3 w-3" /> Organizer
-                    </span>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                        {(a as any).role === 'co-admin' && (
-                          <span
-                            className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium"
-                            style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}
-                          >
-                            <Shield className="h-3 w-3" /> Co-admin
-                          </span>
-                        )}
+                  <div className="flex items-center gap-2">
+                    {a.isCreator && (
+                      <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                        <Crown className="h-3 w-3" /> Organizer
+                      </span>
+                    )}
+                    {!a.isCreator && (a as any).role === 'co-admin' && (
+                      <span
+                        className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium"
+                        style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}
+                      >
+                        <Shield className="h-3 w-3" /> Co-admin
+                      </span>
+                    )}
+                    {a.user_id === userId ? (
+                      <button
+                        onClick={() => setRsvpSheetOpen(true)}
+                        className="rounded-full transition-transform hover:scale-105 active:scale-95"
+                        title="Tap to update your RSVP"
+                      >
+                        <StatusBadge status={a.status as any} size="md" />
+                      </button>
+                    ) : (
                       <StatusBadge status={a.status as any} size="md" />
-                        {isCreator && a.status === 'confirmed' && (
-                          <button
-                            onClick={() => setRoleDialog({
-                              userId: a.user_id,
-                              username: a.username,
-                              promote: (a as any).role !== 'co-admin',
-                            })}
-                            className="rounded-full p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                            title={(a as any).role === 'co-admin' ? 'Remove admin rights' : 'Make co-admin'}
-                          >
-                            {(a as any).role === 'co-admin'
-                              ? <ShieldOff className="h-3.5 w-3.5" />
-                              : <Shield className="h-3.5 w-3.5" />}
-                          </button>
-                        )}
-                        {canManage && (a as any).role !== 'co-admin' && (
+                    )}
+                    {isCreator && !a.isCreator && a.status === 'confirmed' && (
+                      <button
+                        onClick={() => setRoleDialog({
+                          userId: a.user_id,
+                          username: a.username,
+                          promote: (a as any).role !== 'co-admin',
+                        })}
+                        className="rounded-full p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                        title={(a as any).role === 'co-admin' ? 'Remove admin rights' : 'Make co-admin'}
+                      >
+                        {(a as any).role === 'co-admin'
+                          ? <ShieldOff className="h-3.5 w-3.5" />
+                          : <Shield className="h-3.5 w-3.5" />}
+                      </button>
+                    )}
+                    {canManage && !a.isCreator && (a as any).role !== 'co-admin' && (
                         <button
                           onClick={() => handleRemoveParticipant(a.user_id)}
                           className="rounded-full p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
@@ -620,8 +669,7 @@ const EventDetailPage = () => {
                           <UserMinus className="h-3.5 w-3.5" />
                         </button>
                       )}
-                    </div>
-                  )}
+                  </div>
                 </div>
                 {a.status === 'declined' && a.decline_note && (
                   <p className="mt-2 ml-13 text-xs text-muted-foreground italic pl-[52px]">
@@ -766,6 +814,14 @@ const EventDetailPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <RsvpSheet
+        open={rsvpSheetOpen && canEditOwnRsvp}
+        onOpenChange={setRsvpSheetOpen}
+        current={myRsvp}
+        onSave={handleSaveRsvp}
+        saving={rsvpSaving}
+      />
     </div>
   );
 };

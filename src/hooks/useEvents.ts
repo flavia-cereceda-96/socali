@@ -18,6 +18,7 @@ export interface DbEvent {
   longitude: number | null;
   created_by: string;
   created_at: string;
+  creator_rsvp?: string;
   participants: DbParticipant[];
 }
 
@@ -248,7 +249,7 @@ export function usePendingRequestCount() {
         .from('event_participants')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
-        .eq('status', 'suggested');
+        .eq('status', 'pending');
 
       return count || 0;
     },

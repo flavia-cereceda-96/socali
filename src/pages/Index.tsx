@@ -71,7 +71,7 @@ const Index = () => {
     });
     const pending = future.filter(e => {
       const myP = e.participants.find(p => p.user_id === userId);
-      return myP?.status === 'suggested';
+      return myP?.status === 'pending' || myP?.status === 'suggested';
     });
 
     return {
@@ -122,11 +122,14 @@ const Index = () => {
   const renderEventCard = (event: DbEventWithCreator, i: number) => {
     const timeDisplay = getTimeDisplay(event);
     const myP = event.participants.find(p => p.user_id === userId);
-    const replyNeeded = myP?.status === 'suggested';
+    const replyNeeded = myP?.status === 'pending' || myP?.status === 'suggested';
 
-    // Confirmed count: include creator as confirmed
+    // Confirmed count: include creator's own RSVP
+    const creatorRsvp = (event as any).creator_rsvp || 'confirmed';
     const total = event.participants.length + 1;
-    const confirmed = event.participants.filter(p => p.status === 'confirmed').length + 1;
+    const confirmed =
+      event.participants.filter(p => p.status === 'confirmed').length +
+      (creatorRsvp === 'confirmed' ? 1 : 0);
     const allConfirmed = confirmed === total;
 
     return (
