@@ -18,6 +18,7 @@ export interface DbEvent {
   longitude: number | null;
   created_by: string;
   created_at: string;
+  creator_rsvp?: string;
   participants: DbParticipant[];
 }
 
