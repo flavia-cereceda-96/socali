@@ -17,6 +17,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { LocationPicker, LocationValue } from '@/components/LocationPicker';
 import { LocationMap } from '@/components/LocationMap';
+import { RsvpSheet, RsvpValue } from '@/components/RsvpSheet';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,6 +57,8 @@ const EventDetailPage = () => {
   const [nudgeSending, setNudgeSending] = useState(false);
   const [nudgeCooldownUntil, setNudgeCooldownUntil] = useState<number>(0);
   const [roleDialog, setRoleDialog] = useState<{ userId: string; username: string; promote: boolean } | null>(null);
+  const [rsvpSheetOpen, setRsvpSheetOpen] = useState(false);
+  const [rsvpSaving, setRsvpSaving] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id || null));
@@ -100,6 +103,42 @@ const EventDetailPage = () => {
   const myParticipation = event.participants.find(p => p.user_id === userId);
   const isCoAdmin = (myParticipation as any)?.role === 'co-admin';
   const canManage = isCreator || isCoAdmin;
+
+  const normalizeRsvp = (s: string | undefined | null): RsvpValue => {
+    if (s === 'confirmed' || s === 'declined') return s;
+    return 'pending';
+  };
+
+  const myRsvp: RsvpValue = isCreator
+    ? normalizeRsvp((event as any).creator_rsvp || 'confirmed')
+    : normalizeRsvp(myParticipation?.status);
+
+  const canEditOwnRsvp = isCreator || !!myParticipation;
+
+  const handleSaveRsvp = async (value: RsvpValue) => {
+    if (!event || !userId) return;
+    setRsvpSaving(true);
+    try {
+      if (isCreator) {
+        const { error } = await supabase
+          .from('events')
+          .update({ creator_rsvp: value } as any)
+          .eq('id', event.id);
+        if (error) { toast.error(error.message); return; }
+      } else if (myParticipation) {
+        const { error } = await supabase
+          .from('event_participants')
+          .update({ status: value })
+          .eq('id', myParticipation.id);
+        if (error) { toast.error(error.message); return; }
+      }
+      toast.success('RSVP updated');
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      setRsvpSheetOpen(false);
+    } finally {
+      setRsvpSaving(false);
+    }
+  };
 
   const handleShareInviteLink = async () => {
     if (!event) return;
