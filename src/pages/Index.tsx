@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { MapPin, Clock } from 'lucide-react';
 import { HomeEmptyState } from '@/components/HomeEmptyState';
 import { CoachMark } from '@/components/CoachMark';
+import { AppHeader } from '@/components/AppHeader';
 import { EmailNotificationsPrompt } from '@/components/EmailNotificationsPrompt';
 import { AvatarPrompt } from '@/components/AvatarPrompt';
 import { useNavigate } from 'react-router-dom';
@@ -278,6 +279,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen pb-24">
+      <AppHeader title="SyncCircle" />
       <EmailNotificationsPrompt userId={userId} />
       <CoachMark
         id="home-fab"
@@ -285,7 +287,7 @@ const Index = () => {
         anchorSelector='[data-coach="home-fab"]'
         placement="top"
       />
-      <div className="mx-auto max-w-md px-4 pt-12">
+      <div className="mx-auto max-w-md px-4 pt-4">
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
           <p className="text-sm font-medium text-muted-foreground">{greeting}</p>
           <h1 className="text-2xl font-bold text-foreground">Your Week</h1>
