@@ -186,6 +186,16 @@ const ProfilePage = () => {
           </div>
           <div className="flex items-center gap-1">
             <button
+              onClick={() => navigate('/requests')}
+              className="relative rounded-lg p-2 text-muted-foreground hover:bg-secondary"
+              aria-label="Notifications"
+            >
+              <Bell className="h-5 w-5" />
+              {unreadActivity > 0 && (
+                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-[#FF3040]" />
+              )}
+            </button>
+            <button
               onClick={() => setEditing(true)}
               className="rounded-lg p-2 text-muted-foreground hover:bg-secondary"
               aria-label="Edit profile"
