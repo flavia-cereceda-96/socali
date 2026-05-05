@@ -15,6 +15,8 @@ import { toast } from 'sonner';
 import { CoachMark } from '@/components/CoachMark';
 import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
 import { cn } from '@/lib/utils';
+import { AppHeader } from '@/components/AppHeader';
+import { FloatingActionButton } from '@/components/FloatingActionButton';
 
 const PeoplePage = () => {
   const navigate = useNavigate();
@@ -205,14 +207,8 @@ const PeoplePage = () => {
       />
       <InviteFriendsSheet open={inviteOpen} onOpenChange={setInviteOpen} />
 
-      <div className="mx-auto max-w-md px-4 pt-12">
-        <motion.h1
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-4 text-2xl font-bold text-foreground"
-        >
-          Your People
-        </motion.h1>
+      <AppHeader title="Your People" />
+      <div className="mx-auto max-w-md px-4 pt-2">
 
         {/* Tabs */}
         <div className="mb-6 grid grid-cols-2 gap-2 rounded-full bg-secondary/60 p-1">
@@ -482,6 +478,7 @@ const PeoplePage = () => {
           </div>
         )}
       </div>
+      <FloatingActionButton />
     </div>
   );
 };

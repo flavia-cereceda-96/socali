@@ -6,7 +6,7 @@ import { GroupAvatar } from '@/components/GroupAvatar';
 import { supabase } from '@/integrations/supabase/client';
 import { UserAvatar } from '@/components/UserAvatar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Camera, Settings as SettingsIcon, Pencil, Clock, MapPin, X, Sparkles } from 'lucide-react';
+import { ArrowLeft, Bell, Camera, Settings as SettingsIcon, Pencil, Clock, MapPin, X, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,8 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { BucketListsRow } from '@/components/BucketListsRow';
+import { FloatingActionButton } from '@/components/FloatingActionButton';
+import { useUnreadActivityCount } from '@/hooks/useActivity';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -23,6 +25,7 @@ const ProfilePage = () => {
   const { data: friends = [] } = useFriends();
   const { data: groups = [] } = useGroups();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { data: unreadActivity = 0 } = useUnreadActivityCount();
 
   const [editing, setEditing] = useState(false);
   const [username, setUsername] = useState('');
@@ -182,6 +185,16 @@ const ProfilePage = () => {
             </motion.h1>
           </div>
           <div className="flex items-center gap-1">
+            <button
+              onClick={() => navigate('/requests')}
+              className="relative rounded-lg p-2 text-muted-foreground hover:bg-secondary"
+              aria-label="Notifications"
+            >
+              <Bell className="h-5 w-5" />
+              {unreadActivity > 0 && (
+                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-[#FF3040]" />
+              )}
+            </button>
             <button
               onClick={() => setEditing(true)}
               className="rounded-lg p-2 text-muted-foreground hover:bg-secondary"
@@ -470,6 +483,7 @@ const ProfilePage = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      <FloatingActionButton />
     </div>
   );
 };
