@@ -483,6 +483,7 @@ const ProfilePage = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      <FloatingActionButton />
     </div>
   );
 };
