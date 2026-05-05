@@ -328,6 +328,9 @@ const PeoplePage = () => {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-foreground">{profile.username}</p>
                     <p className="text-xs text-muted-foreground">{profile.email}</p>
+                    {profile.bio && (
+                      <p className="text-xs truncate" style={{ color: '#1A9E55' }}>{profile.bio}</p>
+                    )}
                   </div>
                   <Button
                     size="sm"
