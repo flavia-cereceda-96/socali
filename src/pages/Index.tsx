@@ -449,6 +449,8 @@ const Index = () => {
               )}
             </div>
 
+            <BucketListsRow />
+
             {/* Next 30 days */}
             <motion.h2
               initial={{ opacity: 0 }}
@@ -466,8 +468,6 @@ const Index = () => {
                 <p className="text-sm text-muted-foreground">Nothing planned yet — a good time to make plans!</p>
               )}
             </div>
-
-            <BucketListsRow />
           </>
         )}
       </div>
