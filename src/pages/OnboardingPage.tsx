@@ -99,7 +99,7 @@ const OnboardingPage = () => {
 
   const handleSuggestVibe = async () => {
     if (!usage) {
-      toast.error('Pick what you\'ll use Cali for first ✨');
+      toast.error('Pick what you\'ll use C A L I for first ✨');
       return;
     }
     setSuggestingBio(true);
@@ -324,8 +324,8 @@ const OnboardingPage = () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Join me on Socali',
-          text: 'Let\'s plan things together on Socali ✨',
+          title: 'Join me on C A L I',
+          text: 'Let\'s plan things together on C A L I ✨',
           url: inviteLink,
         });
       } catch { /* user cancelled */ }
@@ -355,7 +355,7 @@ const OnboardingPage = () => {
             <div className="mb-3 text-5xl">👯</div>
             <h1 className="text-2xl font-bold text-foreground">Add your people</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Add 2-3 friends you make plans with often. The more people you add, the better Socali works for you.
+              Add 2-3 friends you make plans with often. The more people you add, the better C A L I works for you.
             </p>
           </div>
 
@@ -439,7 +439,7 @@ const OnboardingPage = () => {
           {/* Invite via link */}
           <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
             <div>
-              <h3 className="text-sm font-semibold">Not on Socali yet?</h3>
+              <h3 className="text-sm font-semibold">Not on C A L I yet?</h3>
               <p className="text-xs text-muted-foreground mt-1">
                 Share this link with friends to invite them. When they join, you'll be connected automatically.
               </p>
@@ -479,7 +479,7 @@ const OnboardingPage = () => {
               <AlertDialogTitle>Skip adding friends?</AlertDialogTitle>
               <AlertDialogDescription>
                 {addedFriends.length === 0
-                  ? "You haven't added anyone yet. Socali is better with friends — are you sure you want to skip?"
+                  ? "You haven't added anyone yet. C A L I is better with friends — are you sure you want to skip?"
                   : `You've added ${addedFriends.length} friend${addedFriends.length === 1 ? '' : 's'} so far. We recommend at least 2 — are you sure you want to continue?`}
               </AlertDialogDescription>
             </AlertDialogHeader>

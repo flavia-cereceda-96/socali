@@ -330,7 +330,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen pb-24">
-      <AppHeader title="SyncCircle" />
+      <AppHeader title="C A L I" />
       <EmailNotificationsPrompt userId={userId} />
       <CoachMark
         id="home-fab"
