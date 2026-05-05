@@ -239,6 +239,27 @@ const CreateEventPage = () => {
         if (optErr) toast.error('Event created but failed to add poll options');
       }
 
+      // Insert what options if what poll is enabled
+      if (whatPoll && event && validWhatOptions.length > 0) {
+        const { error: woErr } = await (supabase as any).from('event_what_options').insert(
+          validWhatOptions.map(o => {
+            let normLink: string | null = null;
+            if (o.link.trim()) {
+              let candidate = o.link.trim();
+              if (!/^https?:\/\//i.test(candidate)) candidate = `https://${candidate}`;
+              try { normLink = new URL(candidate).toString(); } catch { normLink = null; }
+            }
+            return {
+              event_id: event.id,
+              title: o.title.trim(),
+              link: normLink,
+              suggested_by: user.id,
+            };
+          })
+        );
+        if (woErr) toast.error('Event created but failed to add activity options');
+      }
+
       // Resolve final participants from friends + groups (deduped, excludes creator)
       const participantIds = await resolveParticipants(user.id);
 
