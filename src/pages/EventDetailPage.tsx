@@ -247,7 +247,7 @@ const EventDetailPage = () => {
     const { error } = await supabase.from('event_participants').insert({
       event_id: event.id,
       user_id: friend.user_id,
-      status: 'suggested',
+      status: 'pending',
     });
     if (error) { toast.error(error.message); return; }
     await supabase.from('activity_feed').insert({
@@ -286,7 +286,7 @@ const EventDetailPage = () => {
     setRoleDialog(null);
   };
 
-  const pendingAttendees = (event?.participants || []).filter(p => p.status === 'suggested');
+  const pendingAttendees = (event?.participants || []).filter(p => p.status === 'pending' || p.status === 'suggested');
   const nudgeOnCooldown = Date.now() < nudgeCooldownUntil;
 
   const handleSendNudges = async () => {
