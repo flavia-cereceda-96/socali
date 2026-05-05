@@ -174,6 +174,21 @@ const PersonPage = () => {
           </div>
         </motion.div>
 
+        {/* Bucket list */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.09 }}
+          className="mb-8"
+        >
+          <BucketList
+            bucketListId={bucketListId}
+            currentUserId={meId}
+            inviteFriendId={userId}
+            inviteFriendName={profile.username}
+          />
+        </motion.div>
+
         {/* Plans together */}
         <motion.section
           initial={{ opacity: 0, y: 12 }}
@@ -220,21 +235,6 @@ const PersonPage = () => {
             </div>
           )}
         </motion.section>
-
-        {/* Bucket list */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.11 }}
-          className="mb-8"
-        >
-          <BucketList
-            bucketListId={bucketListId}
-            currentUserId={meId}
-            inviteFriendId={userId}
-            inviteFriendName={profile.username}
-          />
-        </motion.div>
 
         {/* Groups */}
         <motion.section
