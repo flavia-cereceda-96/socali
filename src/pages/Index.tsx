@@ -461,6 +461,19 @@ const Index = () => {
               Next 30 days
             </motion.h2>
             {renderFriendsRow(monthEvents)}
+            <div className="mb-3 grid grid-cols-2 gap-2">
+              <div className="rounded-xl px-3 py-2 shadow-card" style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}>
+                <p className="text-[10px] font-medium opacity-90">Plans</p>
+                <p className="text-lg font-bold leading-tight">{monthEvents.length}</p>
+              </div>
+              <div className="rounded-xl px-3 py-2 shadow-card" style={{ backgroundColor: '#FFE4E1', color: '#C0392B' }}>
+                <p className="text-[10px] font-medium opacity-90">Pending reply</p>
+                <p className="text-lg font-bold leading-tight">{monthEvents.filter(e => {
+                  const myP = e.participants.find(p => p.user_id === userId);
+                  return myP?.status === 'pending' || myP?.status === 'suggested';
+                }).length}</p>
+              </div>
+            </div>
             <div className="flex flex-col gap-3 mb-8">
               {monthEvents.length > 0 ? (
                 monthEvents.map((e, i) => renderEventCard(e, i))
