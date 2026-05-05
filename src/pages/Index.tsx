@@ -279,7 +279,8 @@ const Index = () => {
   const renderFriendsRow = (list: DbEventWithCreator[]) => {
     const seen = new Map<string, { user_id: string; username?: string; avatar_url?: string | null }>();
     list.forEach(e => {
-      if (e.created_by && e.created_by !== userId && !seen.has(e.created_by)) {
+      const creatorRsvp = (e as any).creator_rsvp || 'confirmed';
+      if (e.created_by && e.created_by !== userId && creatorRsvp === 'confirmed' && !seen.has(e.created_by)) {
         seen.set(e.created_by, {
           user_id: e.created_by,
           username: e.creator_profile?.username,
@@ -287,7 +288,7 @@ const Index = () => {
         });
       }
       e.participants.forEach(p => {
-        if (p.user_id !== userId && !seen.has(p.user_id)) {
+        if (p.user_id !== userId && p.status === 'confirmed' && !seen.has(p.user_id)) {
           seen.set(p.user_id, {
             user_id: p.user_id,
             username: p.profile?.username,
@@ -298,9 +299,16 @@ const Index = () => {
     });
     const people = Array.from(seen.values());
     if (people.length === 0) return null;
+    const n = people.length;
+    let label: string;
+    if (n === 1) label = "You're seeing 1 friend 😊";
+    else if (n <= 3) label = `You're seeing ${n} friends — a cosy few!`;
+    else if (n <= 6) label = `You're seeing ${n} friends this period — busy social life!`;
+    else if (n <= 10) label = `You're seeing ${n} friends — you're on fire! 🔥`;
+    else label = `You're seeing ${n} friends — absolute social butterfly! 🦋`;
     return (
       <div className="mb-4 -mx-4 px-4 overflow-x-auto scrollbar-hide">
-        <p className="mb-2 text-xs text-muted-foreground">Friends you're seeing</p>
+        <p className="mb-2 text-xs text-muted-foreground">{label}</p>
         <div className="flex gap-3 pb-1">
           {people.map(p => {
             const name = p.username || '';
