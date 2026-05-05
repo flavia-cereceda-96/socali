@@ -19,6 +19,8 @@ export interface DbEvent {
   created_by: string;
   created_at: string;
   creator_rsvp?: string;
+  date_confirmed?: boolean;
+  poll_deadline?: string | null;
   participants: DbParticipant[];
 }
 
