@@ -360,6 +360,22 @@ const Index = () => {
               <span className="text-muted-foreground text-sm">›</span>
             </motion.button>
 
+            {tbdEvents.length > 0 && (
+              <>
+                <motion.h2
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.08 }}
+                  className={sectionHeaderCls}
+                >
+                  Date TBD — Vote
+                </motion.h2>
+                <div className="flex flex-col gap-3 mb-8">
+                  {tbdEvents.map((e, i) => renderEventCard(e, i))}
+                </div>
+              </>
+            )}
+
             {/* Today */}
             <motion.h2
               initial={{ opacity: 0 }}
