@@ -92,6 +92,80 @@ export type Database = {
         }
         Relationships: []
       }
+      bucket_list_items: {
+        Row: {
+          added_by: string
+          bucket_list_id: string
+          created_at: string
+          description: string | null
+          done_at: string | null
+          emoji: string | null
+          id: string
+          linked_event_id: string | null
+          status: string
+          title: string
+        }
+        Insert: {
+          added_by: string
+          bucket_list_id: string
+          created_at?: string
+          description?: string | null
+          done_at?: string | null
+          emoji?: string | null
+          id?: string
+          linked_event_id?: string | null
+          status?: string
+          title: string
+        }
+        Update: {
+          added_by?: string
+          bucket_list_id?: string
+          created_at?: string
+          description?: string | null
+          done_at?: string | null
+          emoji?: string | null
+          id?: string
+          linked_event_id?: string | null
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bucket_list_items_bucket_list_id_fkey"
+            columns: ["bucket_list_id"]
+            isOneToOne: false
+            referencedRelation: "bucket_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bucket_lists: {
+        Row: {
+          created_at: string
+          group_id: string | null
+          id: string
+          type: string
+          user_a: string | null
+          user_b: string | null
+        }
+        Insert: {
+          created_at?: string
+          group_id?: string | null
+          id?: string
+          type: string
+          user_a?: string | null
+          user_b?: string | null
+        }
+        Update: {
+          created_at?: string
+          group_id?: string | null
+          id?: string
+          type?: string
+          user_a?: string | null
+          user_b?: string | null
+        }
+        Relationships: []
+      }
       comment_votes: {
         Row: {
           comment_id: string
@@ -723,6 +797,25 @@ export type Database = {
           title: string
         }[]
       }
+      get_my_bucket_lists: {
+        Args: never
+        Returns: {
+          done_count: number
+          group_id: string
+          id: string
+          other_user_id: string
+          total_count: number
+          type: string
+        }[]
+      }
+      get_or_create_friend_bucket_list: {
+        Args: { _other_user: string }
+        Returns: string
+      }
+      get_or_create_group_bucket_list: {
+        Args: { _group_id: string }
+        Returns: string
+      }
       get_public_user_stats: {
         Args: { _user_id: string }
         Returns: {
@@ -739,6 +832,10 @@ export type Database = {
       }
       is_accepted_group_member: {
         Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_bucket_list_member: {
+        Args: { _bucket_list_id: string; _user_id: string }
         Returns: boolean
       }
       is_event_admin: {
