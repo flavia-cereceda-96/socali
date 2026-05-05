@@ -255,6 +255,7 @@ export type Database = {
           cover_image: string | null
           created_at: string
           created_by: string
+          creator_rsvp: string
           date: string
           emoji: string
           end_date: string | null
@@ -275,6 +276,7 @@ export type Database = {
           cover_image?: string | null
           created_at?: string
           created_by: string
+          creator_rsvp?: string
           date: string
           emoji?: string
           end_date?: string | null
@@ -295,6 +297,7 @@ export type Database = {
           cover_image?: string | null
           created_at?: string
           created_by?: string
+          creator_rsvp?: string
           date?: string
           emoji?: string
           end_date?: string | null
