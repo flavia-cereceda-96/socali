@@ -19,7 +19,7 @@ export function AppHeader({ title, className }: AppHeaderProps) {
         className
       )}
     >
-      <h1 className="text-lg font-bold text-foreground truncate">{title ?? 'SyncCircle'}</h1>
+      <h1 className="text-lg font-bold text-foreground truncate">{title ?? 'C A L I'}</h1>
       <button
         aria-label="Notifications"
         onClick={() => navigate('/requests')}
