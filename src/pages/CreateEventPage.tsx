@@ -328,26 +328,92 @@ const CreateEventPage = () => {
         >
           <div className="space-y-2">
             <Label>What are you planning? *</Label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {quickEmojis.map(e => (
+            <div className="flex items-center gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary text-xl hover:bg-secondary/80 transition-colors"
+                    aria-label="Pick emoji"
+                  >
+                    {emoji || <Smile className="h-5 w-5 text-muted-foreground" />}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto border-0 p-0" align="start">
+                  <EmojiPicker
+                    onEmojiClick={(d) => setEmoji(d.emoji)}
+                    emojiStyle={EmojiStyle.NATIVE}
+                    width={320}
+                    height={400}
+                    previewConfig={{ showPreview: false }}
+                    skinTonesDisabled
+                  />
+                </PopoverContent>
+              </Popover>
+              <Input
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                placeholder={isMultiDay ? "e.g. Weekend Trip, Camping..." : "e.g. Dinner, Movie Night..."}
+              />
+            </div>
+
+            {/* Not sure what — what poll toggle */}
+            <div className="space-y-2 rounded-2xl border border-border bg-secondary/30 p-3 mt-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {whatPoll ? 'Activity options' : 'Not sure what to do?'}
+                </Label>
                 <button
-                  key={e}
                   type="button"
-                  onClick={() => setEmoji(e)}
+                  onClick={() => setWhatPoll(p => !p)}
                   className={cn(
-                    'flex h-10 w-10 items-center justify-center rounded-xl text-lg transition-all',
-                    emoji === e ? 'bg-primary/20 scale-110 ring-2 ring-primary/40' : 'bg-secondary hover:bg-secondary/80'
+                    'rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors',
+                    whatPoll ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
                   )}
                 >
-                  {e}
+                  {whatPoll ? 'Poll on' : 'Create a what poll'}
                 </button>
-              ))}
+              </div>
+              {whatPoll && (
+                <div className="space-y-2">
+                  {whatOptions.map((opt, i) => (
+                    <div key={i} className="rounded-xl border border-border bg-card p-2 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground w-12">Option {i + 1}</span>
+                        {whatOptions.length > 2 && (
+                          <button
+                            type="button"
+                            onClick={() => removeWhatOption(i)}
+                            className="ml-auto text-muted-foreground hover:text-destructive p-1"
+                            aria-label="Remove option"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      <Input
+                        value={opt.title}
+                        onChange={e => updateWhatOption(i, { title: e.target.value })}
+                        placeholder="e.g. Dinner at Café Bloom"
+                      />
+                      <Input
+                        value={opt.link}
+                        onChange={e => updateWhatOption(i, { link: e.target.value })}
+                        placeholder="Optional link (https://…)"
+                      />
+                    </div>
+                  ))}
+                  {whatOptions.length < 8 && (
+                    <Button type="button" size="sm" variant="outline" className="w-full gap-1.5" onClick={addWhatOption}>
+                      <Plus className="h-3.5 w-3.5" /> Add option
+                    </Button>
+                  )}
+                  <p className="text-[11px] text-muted-foreground">
+                    Attendees can vote and suggest more options. You'll pick the winner.
+                  </p>
+                </div>
+              )}
             </div>
-            <Input
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              placeholder={isMultiDay ? "e.g. Weekend Trip, Camping..." : "e.g. Dinner, Movie Night..."}
-            />
           </div>
 
           <button
