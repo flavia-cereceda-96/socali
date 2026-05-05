@@ -498,6 +498,7 @@ const CalendarPage = () => {
           </div>
         </SheetContent>
       </Sheet>
+      <FloatingActionButton />
     </div>
   );
 };
