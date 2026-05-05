@@ -249,7 +249,7 @@ export function usePendingRequestCount() {
         .from('event_participants')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
-        .eq('status', 'suggested');
+        .eq('status', 'pending');
 
       return count || 0;
     },
