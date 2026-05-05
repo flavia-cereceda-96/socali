@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { BucketListsRow } from '@/components/BucketListsRow';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -329,6 +330,8 @@ const ProfilePage = () => {
               </div>
             )}
           </section>
+
+          <BucketListsRow />
 
           {/* Invite preferences */}
           {inviteTo && (

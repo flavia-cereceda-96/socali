@@ -17,6 +17,8 @@ import { UserAvatar } from '@/components/UserAvatar';
 import { GroupAvatar } from '@/components/GroupAvatar';
 import { FriendChipPicker } from '@/components/FriendChipPicker';
 import { GroupChat } from '@/components/GroupChat';
+import { BucketList } from '@/components/BucketList';
+import { useGroupBucketListId } from '@/hooks/useBucketList';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -61,6 +63,8 @@ const GroupDetailPage = () => {
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
+
+  const { data: groupBucketListId } = useGroupBucketListId(id);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setCurrentUserId(user?.id || null));
@@ -395,6 +399,12 @@ const GroupDetailPage = () => {
             </h2>
             <GroupChat groupId={group.id} />
           </div>
+
+          <BucketList
+            bucketListId={groupBucketListId}
+            currentUserId={currentUserId}
+            inviteGroupId={group.id}
+          />
 
           <Button
             onClick={() => navigate(`/create?groupId=${group.id}`)}

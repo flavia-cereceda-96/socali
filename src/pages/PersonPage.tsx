@@ -8,6 +8,8 @@ import { ArrowLeft, CalendarPlus, Clock, MapPin, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/UserAvatar';
 import { GroupAvatar } from '@/components/GroupAvatar';
+import { BucketList } from '@/components/BucketList';
+import { useFriendBucketListId } from '@/hooks/useBucketList';
 
 const PersonPage = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -48,6 +50,9 @@ const PersonPage = () => {
 
   // Use existing events query (viewer's own visible events) to compute shared & upcoming together
   const { data: events = [] } = useEvents();
+
+  // Friend bucket list (lazily created)
+  const { data: bucketListId } = useFriendBucketListId(userId);
 
   // Shared and other groups
   const { data: groupData } = useQuery({
@@ -215,6 +220,21 @@ const PersonPage = () => {
             </div>
           )}
         </motion.section>
+
+        {/* Bucket list */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.11 }}
+          className="mb-8"
+        >
+          <BucketList
+            bucketListId={bucketListId}
+            currentUserId={meId}
+            inviteFriendId={userId}
+            inviteFriendName={profile.username}
+          />
+        </motion.div>
 
         {/* Groups */}
         <motion.section

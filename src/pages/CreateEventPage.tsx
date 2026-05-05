@@ -25,6 +25,9 @@ const CreateEventPage = () => {
   const routeLocation = useLocation();
   const prefilledDate = searchParams.get('date') || '';
   const prefilledGroupId = searchParams.get('groupId') || '';
+  const prefilledTitle = searchParams.get('title') || '';
+  const prefilledEmoji = searchParams.get('emoji') || '';
+  const bucketItemId = searchParams.get('bucketItemId') || '';
   const { data: friends = [] } = useFriends();
   const { data: groups = [] } = useGroups();
   const { data: prefilledGroup } = useGroup(prefilledGroupId || undefined);
@@ -32,9 +35,10 @@ const CreateEventPage = () => {
   // Pre-invite a friend if navigated from PersonPage
   const inviteFriendId = (routeLocation.state as any)?.inviteFriendId;
   const inviteFriendName = (routeLocation.state as any)?.inviteFriendName;
+  const inviteGroupIdFromState = (routeLocation.state as any)?.inviteGroupId;
 
-  const [title, setTitle] = useState('');
-  const [emoji, setEmoji] = useState('🎉');
+  const [title, setTitle] = useState(prefilledTitle);
+  const [emoji, setEmoji] = useState(prefilledEmoji || '🎉');
   const [isMultiDay, setIsMultiDay] = useState(false);
   const [selectedFriends, setSelectedFriends] = useState<DbProfile[]>([]);
   const [selectedGroups, setSelectedGroups] = useState<DbGroup[]>([]);
@@ -102,6 +106,21 @@ const CreateEventPage = () => {
       }]);
     }
   }, [prefilledGroup]);
+
+  // Auto-select group if navigated from group bucket list
+  const { data: bucketGroup } = useGroup(inviteGroupIdFromState || undefined);
+  useEffect(() => {
+    if (bucketGroup && !selectedGroups.find(g => g.id === bucketGroup.id)) {
+      setSelectedGroups(prev => [...prev, {
+        id: bucketGroup.id,
+        name: bucketGroup.name,
+        emoji: bucketGroup.emoji,
+        created_by: bucketGroup.created_by,
+        created_at: bucketGroup.created_at,
+        member_count: bucketGroup.member_count,
+      }]);
+    }
+  }, [bucketGroup]);
 
   const toggleFriend = (f: DbProfile) => {
     setSelectedFriends(prev =>
@@ -227,6 +246,17 @@ const CreateEventPage = () => {
 
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['unread-activity-count'] });
+
+      // Link bucket list item to the new event if applicable
+      if (bucketItemId && event) {
+        await (supabase as any)
+          .from('bucket_list_items')
+          .update({ linked_event_id: event.id })
+          .eq('id', bucketItemId);
+        queryClient.invalidateQueries({ queryKey: ['bucket-list-items'] });
+        queryClient.invalidateQueries({ queryKey: ['my-bucket-lists'] });
+      }
+
       const peopleSummary = selectedGroups.length > 0
         ? selectedGroups.map(g => `${g.emoji} ${g.name}`).join(', ')
         : selectedFriends.map(f => f.username).join(', ');

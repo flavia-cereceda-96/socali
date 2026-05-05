@@ -9,6 +9,7 @@ import { CoachMark } from '@/components/CoachMark';
 import { AppHeader } from '@/components/AppHeader';
 import { EmailNotificationsPrompt } from '@/components/EmailNotificationsPrompt';
 import { AvatarPrompt } from '@/components/AvatarPrompt';
+import { BucketListsRow } from '@/components/BucketListsRow';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -429,6 +430,8 @@ const Index = () => {
                 <p className="text-sm text-muted-foreground">Nothing planned yet — a good time to make plans!</p>
               )}
             </div>
+
+            <BucketListsRow />
           </>
         )}
       </div>
