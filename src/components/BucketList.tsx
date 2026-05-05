@@ -201,9 +201,13 @@ export function BucketList({ bucketListId, currentUserId, inviteFriendId, invite
                 {!isDone && (
                   <div className="flex gap-2">
                     {!item.linked_event_id && (
-                      <Button size="sm" variant="secondary" onClick={() => planThis(item)} className="flex-1 gap-1.5 h-8">
+                      <button
+                        onClick={() => planThis(item)}
+                        className="inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
+                        style={{ backgroundColor: '#EBE5FF', color: '#6B45F5' }}
+                      >
                         <CalendarPlus className="h-3.5 w-3.5" /> Plan this!
-                      </Button>
+                      </button>
                     )}
                     {item.linked_event_id && (
                       <Button
