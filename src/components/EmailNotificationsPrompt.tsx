@@ -69,7 +69,7 @@ export function EmailNotificationsPrompt({ userId }: Props) {
             </div>
             <h2 className="text-xl font-bold text-foreground">Stay in the loop</h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Get email updates when something needs your attention in Socali. You can always change this later in Settings.
+              Get email updates when something needs your attention in C A L I. You can always change this later in Settings.
             </p>
             <div className="mt-6 flex flex-col gap-2">
               <Button

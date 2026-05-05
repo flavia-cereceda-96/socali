@@ -211,7 +211,7 @@ const SettingsPage = () => {
               <div className="flex-1">
                 <p className="text-sm font-semibold text-foreground">Email notifications</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Receive email updates when something needs your attention in Socali
+                  Receive email updates when something needs your attention in C A L I
                 </p>
               </div>
               <Switch

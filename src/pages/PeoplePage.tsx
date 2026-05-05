@@ -243,7 +243,7 @@ const PeoplePage = () => {
           className="mb-6 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-primary/30 bg-primary/5 p-3.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
         >
           <Share2 className="h-4 w-4" />
-          Invite friends to join Cali
+          Invite friends to join C A L I
         </motion.button>
 
         {friendRequests.length > 0 && (

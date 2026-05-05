@@ -39,7 +39,7 @@ const SplashPage = () => {
         className="flex flex-col items-center text-center"
       >
         <div className="mb-5 text-6xl">🗓️</div>
-        <h1 className="text-4xl font-bold tracking-tight text-foreground">Cali</h1>
+        <h1 className="text-4xl font-bold tracking-tight text-foreground">C A L I</h1>
         <p className="mt-3 text-base text-muted-foreground">
           {t('splash.tagline')}
         </p>

@@ -48,7 +48,7 @@ export function AvatarPrompt({ userId }: Props) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground">Add a profile photo 📸</p>
-            <p className="text-xs text-muted-foreground">Help your friends recognise you — Socali is more fun with faces!</p>
+            <p className="text-xs text-muted-foreground">Help your friends recognise you — C A L I is more fun with faces!</p>
           </div>
           <span
             role="button"
