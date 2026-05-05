@@ -478,6 +478,7 @@ const PeoplePage = () => {
           </div>
         )}
       </div>
+      <FloatingActionButton />
     </div>
   );
 };
