@@ -10,6 +10,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { EmailNotificationsPrompt } from '@/components/EmailNotificationsPrompt';
 import { AvatarPrompt } from '@/components/AvatarPrompt';
 import { BucketListsRow } from '@/components/BucketListsRow';
+import { InlineDatePoll } from '@/components/InlineDatePoll';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -137,6 +138,20 @@ const Index = () => {
       (creatorRsvp === 'confirmed' ? 1 : 0);
     const allConfirmed = confirmed === total;
 
+    const participantProfiles: Record<string, { username?: string; avatar_url?: string | null }> = {};
+    if (event.creator_profile) {
+      participantProfiles[event.created_by] = {
+        username: event.creator_profile.username,
+        avatar_url: event.creator_profile.avatar_url,
+      };
+    }
+    event.participants.forEach(p => {
+      participantProfiles[p.user_id] = {
+        username: p.profile?.username,
+        avatar_url: p.profile?.avatar_url,
+      };
+    });
+
     return (
       <motion.div
         key={event.id}
@@ -168,15 +183,16 @@ const Index = () => {
           <div className="flex items-center gap-2">
             <span className="text-lg">{event.emoji}</span>
             <span className="font-semibold text-foreground truncate">{event.title}</span>
-            {isTbd && (
-              <span
-                className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap"
-                style={{ backgroundColor: '#FFD6E5', color: '#B83268' }}
-              >
-                Vote now
-              </span>
-            )}
           </div>
+          {isTbd && (
+            <InlineDatePoll
+              eventId={event.id}
+              userId={userId}
+              pollDeadline={(event as any).poll_deadline}
+              participantProfiles={participantProfiles}
+              totalEligible={total}
+            />
+          )}
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             {timeDisplay && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{timeDisplay}</span>}
             {event.location && <span className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3" />{event.location}</span>}
