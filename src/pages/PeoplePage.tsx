@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useFriends, useFriendRequests } from '@/hooks/useEvents';
 import { useGroups } from '@/hooks/useGroups';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,11 +18,19 @@ import { cn } from '@/lib/utils';
 
 const PeoplePage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { data: friends = [], isLoading } = useFriends();
   const { data: friendRequests = [] } = useFriendRequests();
   const { data: groups = [], isLoading: groupsLoading } = useGroups();
-  const [activeTab, setActiveTab] = useState<'friends' | 'groups'>('friends');
+  const [activeTab, setActiveTab] = useState<'friends' | 'groups'>(() =>
+    new URLSearchParams(location.search).get('tab') === 'groups' ? 'groups' : 'friends'
+  );
+
+  useEffect(() => {
+    const tab = new URLSearchParams(location.search).get('tab');
+    if (tab === 'groups' || tab === 'friends') setActiveTab(tab);
+  }, [location.search]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
