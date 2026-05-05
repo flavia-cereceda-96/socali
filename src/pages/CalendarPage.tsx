@@ -12,7 +12,6 @@ import { CoachMark } from '@/components/CoachMark';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useWeekStart, weekStartIndex, weekDayLabels } from '@/hooks/useWeekStart';
 import { AppHeader } from '@/components/AppHeader';
-import { FloatingActionButton } from '@/components/FloatingActionButton';
 
 // Exact hex per spec, applied at 70% opacity via inline style
 const FRIEND_TINTS = ['#DBEAFE', '#EDE9FE', '#DCFCE7'];
@@ -498,7 +497,6 @@ const CalendarPage = () => {
           </div>
         </SheetContent>
       </Sheet>
-      <FloatingActionButton />
     </div>
   );
 };

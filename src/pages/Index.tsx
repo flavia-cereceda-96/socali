@@ -7,7 +7,6 @@ import { MapPin, Clock } from 'lucide-react';
 import { HomeEmptyState } from '@/components/HomeEmptyState';
 import { CoachMark } from '@/components/CoachMark';
 import { AppHeader } from '@/components/AppHeader';
-import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { EmailNotificationsPrompt } from '@/components/EmailNotificationsPrompt';
 import { AvatarPrompt } from '@/components/AvatarPrompt';
 import { BucketListsRow } from '@/components/BucketListsRow';
@@ -464,7 +463,6 @@ const Index = () => {
           </>
         )}
       </div>
-      <FloatingActionButton />
     </div>
   );
 };
