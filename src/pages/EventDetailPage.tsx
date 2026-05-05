@@ -516,7 +516,7 @@ const EventDetailPage = () => {
             >
               <div className="flex items-center gap-3 text-sm text-foreground">
                 <Calendar className="h-4 w-4 text-primary" />
-                <span>{dateStr}</span>
+                <span className={!event.date ? 'text-muted-foreground italic' : ''}>{dateStr}</span>
               </div>
               {timeStr && (
                 <div className="flex items-center gap-3 text-sm text-foreground">
