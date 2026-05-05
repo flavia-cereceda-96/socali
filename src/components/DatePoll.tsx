@@ -3,10 +3,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/UserAvatar';
-import { Check, X, CalendarCheck, Lock } from 'lucide-react';
+import { Check, X, CalendarCheck, Lock, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,6 +60,11 @@ export function DatePoll({ eventId, userId, canManage, pollDeadline, participant
   const queryClient = useQueryClient();
   const [confirming, setConfirming] = useState<DateOption | null>(null);
   const [busy, setBusy] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [newDate, setNewDate] = useState('');
+  const [newStart, setNewStart] = useState('');
+  const [newEnd, setNewEnd] = useState('');
+  const [adding, setAdding] = useState(false);
 
   const pollClosed = !!pollDeadline && new Date(pollDeadline + 'T23:59:59') < new Date();
 
@@ -145,6 +151,26 @@ export function DatePoll({ eventId, userId, canManage, pollDeadline, participant
   };
 
   if (options.length === 0) return null;
+
+  const handleAddOption = async () => {
+    if (!newDate) return;
+    setAdding(true);
+    try {
+      const { error } = await supabase.from('event_date_options').insert({
+        event_id: eventId,
+        proposed_date: newDate,
+        start_time: newStart || null,
+        end_time: newEnd || null,
+      } as any);
+      if (error) { toast.error(error.message); return; }
+      setNewDate(''); setNewStart(''); setNewEnd('');
+      setAddOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['date-options', eventId] });
+      toast.success('Date added');
+    } finally {
+      setAdding(false);
+    }
+  };
 
   return (
     <div>
@@ -250,6 +276,30 @@ export function DatePoll({ eventId, userId, canManage, pollDeadline, participant
           );
         })}
       </div>
+
+      {!pollClosed && userId && (
+        <div className="mt-3">
+          {addOpen ? (
+            <div className="rounded-2xl border border-border bg-card p-3 shadow-card space-y-2">
+              <Input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} />
+              <div className="flex gap-2">
+                <Input type="time" value={newStart} onChange={e => setNewStart(e.target.value)} placeholder="Start" />
+                <Input type="time" value={newEnd} onChange={e => setNewEnd(e.target.value)} placeholder="End" />
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" variant="ghost" onClick={() => setAddOpen(false)} className="flex-1">Cancel</Button>
+                <Button size="sm" onClick={handleAddOption} disabled={!newDate || adding} className="flex-1">
+                  {adding ? 'Adding…' : 'Suggest date'}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button size="sm" variant="outline" className="w-full gap-1.5" onClick={() => setAddOpen(true)}>
+              <Plus className="h-3.5 w-3.5" /> Suggest another date
+            </Button>
+          )}
+        </div>
+      )}
 
       <AlertDialog open={!!confirming} onOpenChange={o => !o && setConfirming(null)}>
         <AlertDialogContent>
