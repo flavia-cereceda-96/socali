@@ -16,7 +16,6 @@ import { CoachMark } from '@/components/CoachMark';
 import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
 import { cn } from '@/lib/utils';
 import { AppHeader } from '@/components/AppHeader';
-import { FloatingActionButton } from '@/components/FloatingActionButton';
 
 const PeoplePage = () => {
   const navigate = useNavigate();
@@ -478,7 +477,6 @@ const PeoplePage = () => {
           </div>
         )}
       </div>
-      <FloatingActionButton />
     </div>
   );
 };

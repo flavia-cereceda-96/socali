@@ -14,7 +14,6 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { BucketListsRow } from '@/components/BucketListsRow';
-import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { useUnreadActivityCount } from '@/hooks/useActivity';
 
 const ProfilePage = () => {
@@ -483,7 +482,6 @@ const ProfilePage = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      <FloatingActionButton />
     </div>
   );
 };
