@@ -48,9 +48,9 @@ const RequestsPage = () => {
     }
   }, [activities, queryClient]);
 
-  // Events where the current user is a participant with 'suggested' status
   const pendingInvitations = events.filter(e =>
-    e.created_by !== userId && e.participants.some(p => p.user_id === userId && p.status === 'suggested')
+    e.created_by !== userId &&
+    e.participants.some(p => p.user_id === userId && (p.status === 'pending' || p.status === 'suggested'))
   );
 
   const handleRsvp = async (participantId: string, status: string, note?: string, event?: DbEvent) => {
@@ -188,7 +188,7 @@ const RequestsPage = () => {
                           )}
                         </div>
                       </div>
-                      <StatusBadge status="suggested" />
+                      <StatusBadge status="pending" />
                     </div>
 
                     <div className="mb-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
@@ -235,12 +235,6 @@ const RequestsPage = () => {
                           className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-secondary py-2 text-sm font-medium text-muted-foreground transition-all hover:bg-green-500/10 hover:text-green-600"
                         >
                           <Check className="h-4 w-4" /> Going
-                        </button>
-                        <button
-                          onClick={() => handleRsvp(myP.id, 'maybe', undefined, event)}
-                          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-secondary py-2 text-sm font-medium text-muted-foreground transition-all hover:bg-amber-500/10 hover:text-amber-600"
-                        >
-                          <HelpCircle className="h-4 w-4" /> Maybe
                         </button>
                         <button
                           onClick={() => setDecliningId(myP.id)}
