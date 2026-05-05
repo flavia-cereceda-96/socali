@@ -44,7 +44,7 @@ const Index = () => {
     return 'Good evening 🌙';
   })();
 
-  const { todayEvents, weekEvents, monthEvents, todayCount, weekCount, pendingCount } = useMemo(() => {
+  const { todayEvents, weekEvents, monthEvents, tbdEvents, todayCount, weekCount, pendingCount } = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -55,8 +55,10 @@ const Index = () => {
     monthEnd.setDate(monthEnd.getDate() + 30);
 
     const future = events
-      .filter(e => new Date(e.date) >= today)
+      .filter(e => !!e.date && new Date(e.date) >= today)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    const tbd = events.filter(e => (e as any).date_confirmed === false || !e.date);
 
     const notDeclined = future.filter(e => {
       const myP = e.participants.find(p => p.user_id === userId);
@@ -69,7 +71,7 @@ const Index = () => {
       const d = new Date(e.date);
       return d > weekEnd && d <= monthEnd;
     });
-    const pending = future.filter(e => {
+    const pending = [...future, ...tbd].filter(e => {
       const myP = e.participants.find(p => p.user_id === userId);
       return myP?.status === 'pending' || myP?.status === 'suggested';
     });
@@ -78,6 +80,7 @@ const Index = () => {
       todayEvents: today_,
       weekEvents: week_,
       monthEvents: month_,
+      tbdEvents: tbd,
       todayCount: today_.length,
       weekCount: notDeclined.filter(e => new Date(e.date) <= weekEnd).length,
       pendingCount: pending.length,
@@ -123,6 +126,7 @@ const Index = () => {
     const timeDisplay = getTimeDisplay(event);
     const myP = event.participants.find(p => p.user_id === userId);
     const replyNeeded = myP?.status === 'pending' || myP?.status === 'suggested';
+    const isTbd = !event.date || (event as any).date_confirmed === false;
 
     // Confirmed count: include creator's own RSVP
     const creatorRsvp = (event as any).creator_rsvp || 'confirmed';
@@ -141,21 +145,36 @@ const Index = () => {
         onClick={() => navigate(`/event/${event.id}`)}
         className="flex gap-3 rounded-2xl bg-card p-4 shadow-card cursor-pointer transition-shadow hover:shadow-elevated active:scale-[0.99]"
       >
-        <div
-          className="flex flex-col items-center justify-center rounded-xl px-3 py-2 min-w-[52px]"
-          style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}
-        >
-          <span className="text-xs font-semibold uppercase">
-            {new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
-          </span>
-          <span className="text-lg font-bold">
-            {new Date(event.date + 'T00:00:00').getDate()}
-          </span>
-        </div>
+        {isTbd ? (
+          <div className="flex flex-col items-center justify-center rounded-xl px-3 py-2 min-w-[52px] bg-muted text-muted-foreground">
+            <span className="text-[10px] font-semibold uppercase tracking-wide">Date</span>
+            <span className="text-sm font-bold">TBD</span>
+          </div>
+        ) : (
+          <div
+            className="flex flex-col items-center justify-center rounded-xl px-3 py-2 min-w-[52px]"
+            style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}
+          >
+            <span className="text-xs font-semibold uppercase">
+              {new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
+            </span>
+            <span className="text-lg font-bold">
+              {new Date(event.date + 'T00:00:00').getDate()}
+            </span>
+          </div>
+        )}
         <div className="flex flex-1 flex-col gap-1.5 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-lg">{event.emoji}</span>
             <span className="font-semibold text-foreground truncate">{event.title}</span>
+            {isTbd && (
+              <span
+                className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap"
+                style={{ backgroundColor: '#FFD6E5', color: '#B83268' }}
+              >
+                Vote now
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             {timeDisplay && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{timeDisplay}</span>}
@@ -340,6 +359,22 @@ const Index = () => {
               </span>
               <span className="text-muted-foreground text-sm">›</span>
             </motion.button>
+
+            {tbdEvents.length > 0 && (
+              <>
+                <motion.h2
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.08 }}
+                  className={sectionHeaderCls}
+                >
+                  Date TBD — Vote
+                </motion.h2>
+                <div className="flex flex-col gap-3 mb-8">
+                  {tbdEvents.map((e, i) => renderEventCard(e, i))}
+                </div>
+              </>
+            )}
 
             {/* Today */}
             <motion.h2

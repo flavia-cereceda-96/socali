@@ -3,7 +3,7 @@ import { useFriends, DbProfile } from '@/hooks/useEvents';
 import { useGroups, useGroup, DbGroup } from '@/hooks/useGroups';
 import { UserAvatar } from '@/components/UserAvatar';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Check, X, Users, Shield } from 'lucide-react';
+import { ArrowLeft, Check, X, Users, Shield, Plus, CalendarClock } from 'lucide-react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -51,6 +51,26 @@ const CreateEventPage = () => {
   const [friendSearch, setFriendSearch] = useState('');
   const [coAdminIds, setCoAdminIds] = useState<Set<string>>(new Set());
 
+  // Date poll state
+  const [datePoll, setDatePoll] = useState(false);
+  type DateOption = { proposed_date: string; start_time: string; end_time: string };
+  const [dateOptions, setDateOptions] = useState<DateOption[]>([
+    { proposed_date: '', start_time: '', end_time: '' },
+    { proposed_date: '', start_time: '', end_time: '' },
+  ]);
+  const [pollDeadline, setPollDeadline] = useState('');
+
+  const updateDateOption = (i: number, patch: Partial<DateOption>) => {
+    setDateOptions(prev => prev.map((o, idx) => (idx === i ? { ...o, ...patch } : o)));
+  };
+  const addDateOption = () => {
+    if (dateOptions.length >= 6) return;
+    setDateOptions(prev => [...prev, { proposed_date: '', start_time: '', end_time: '' }]);
+  };
+  const removeDateOption = (i: number) => {
+    setDateOptions(prev => prev.filter((_, idx) => idx !== i));
+  };
+
   const toggleCoAdmin = (userId: string) => {
     setCoAdminIds(prev => {
       const next = new Set(prev);
@@ -95,7 +115,10 @@ const CreateEventPage = () => {
     );
   };
 
-  const canSubmit = title.trim() && dateStr && (isMultiDay ? endDateStr : startTime);
+  const validPollOptions = dateOptions.filter(o => o.proposed_date);
+  const canSubmit = datePoll
+    ? !!title.trim() && validPollOptions.length >= 2
+    : !!title.trim() && !!dateStr && (isMultiDay ? !!endDateStr : !!startTime);
 
   /** Resolve final unique participant user_ids from friends + groups (excluding current user). */
   async function resolveParticipants(currentUserId: string): Promise<string[]> {
@@ -143,10 +166,12 @@ const CreateEventPage = () => {
       const { data: event, error } = await supabase.from('events').insert({
         title,
         emoji,
-        date: dateStr,
-        end_date: isMultiDay ? endDateStr : null,
-        time: isMultiDay ? null : (startTime || null),
-        end_time: isMultiDay ? null : (endTime || null),
+        date: datePoll ? null : dateStr,
+        end_date: !datePoll && isMultiDay ? endDateStr : null,
+        time: !datePoll && !isMultiDay ? (startTime || null) : null,
+        end_time: !datePoll && !isMultiDay ? (endTime || null) : null,
+        date_confirmed: !datePoll,
+        poll_deadline: datePoll && pollDeadline ? pollDeadline : null,
         location: location.address.trim() || null,
         latitude: location.latitude,
         longitude: location.longitude,
@@ -154,13 +179,26 @@ const CreateEventPage = () => {
         cover_image: coverImage.trim() || null,
         link_url: normalizedLink,
         link_label: normalizedLink ? (linkLabel.trim() || 'Open link') : null,
-        is_trip: isMultiDay,
+        is_trip: !datePoll && isMultiDay,
         created_by: user.id,
-      }).select().single();
+      } as any).select().single();
 
       if (error) {
         toast.error(error.message);
         return;
+      }
+
+      // Insert date options if poll is enabled
+      if (datePoll && event && validPollOptions.length > 0) {
+        const { error: optErr } = await supabase.from('event_date_options').insert(
+          validPollOptions.map(o => ({
+            event_id: event.id,
+            proposed_date: o.proposed_date,
+            start_time: o.start_time || null,
+            end_time: o.end_time || null,
+          }))
+        );
+        if (optErr) toast.error('Event created but failed to add poll options');
       }
 
       // Resolve final participants from friends + groups (deduped, excludes creator)
@@ -180,7 +218,7 @@ const CreateEventPage = () => {
         await supabase.from('activity_feed').insert(
           participantIds.map(uid => ({
             user_id: uid,
-            type: 'invitation',
+            type: datePoll ? 'date_poll_invite' : 'invitation',
             event_id: event.id,
             source_user_id: user.id,
           }))
@@ -400,8 +438,83 @@ const CreateEventPage = () => {
           )}
 
           <div className="space-y-2">
-            <Label>{isMultiDay ? 'Dates *' : 'Date & Time *'}</Label>
-            {isMultiDay ? (
+            <div className="flex items-center justify-between">
+              <Label>
+                {datePoll ? 'Date options *' : isMultiDay ? 'Dates *' : 'Date & Time *'}
+              </Label>
+              <button
+                type="button"
+                onClick={() => setDatePoll(p => !p)}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium transition-all',
+                  datePoll ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
+                )}
+              >
+                <CalendarClock className="h-3 w-3" />
+                {datePoll ? 'Poll on' : 'Not sure when?'}
+              </button>
+            </div>
+            {datePoll ? (
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Add 2–6 dates and let attendees vote. You can confirm a final date later.
+                </p>
+                <div className="space-y-2">
+                  {dateOptions.map((opt, i) => (
+                    <div key={i} className="rounded-xl border border-border bg-card p-2.5 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-semibold text-muted-foreground w-6">#{i + 1}</span>
+                        <Input
+                          type="date"
+                          value={opt.proposed_date}
+                          onChange={e => updateDateOption(i, { proposed_date: e.target.value })}
+                          className="flex-1"
+                        />
+                        {dateOptions.length > 2 && (
+                          <button
+                            type="button"
+                            onClick={() => removeDateOption(i)}
+                            className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                            aria-label="Remove option"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <span className="text-[10px] text-muted-foreground">Start (optional)</span>
+                          <Input type="time" value={opt.start_time} onChange={e => updateDateOption(i, { start_time: e.target.value })} />
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-muted-foreground">End (optional)</span>
+                          <Input type="time" value={opt.end_time} onChange={e => updateDateOption(i, { end_time: e.target.value })} />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {dateOptions.length < 6 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={addDateOption}
+                    className="w-full gap-1.5"
+                  >
+                    <Plus className="h-4 w-4" /> Add date option
+                  </Button>
+                )}
+                <div className="rounded-xl border border-border bg-secondary/30 p-3 space-y-1.5">
+                  <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Voting deadline (optional)
+                  </Label>
+                  <Input type="date" value={pollDeadline} onChange={e => setPollDeadline(e.target.value)} />
+                  <p className="text-[11px] text-muted-foreground">
+                    Voting will close on this date.
+                  </p>
+                </div>
+              </div>
+            ) : isMultiDay ? (
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <span className="text-xs text-muted-foreground">Start</span>

@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { LocationPicker, LocationValue } from '@/components/LocationPicker';
 import { LocationMap } from '@/components/LocationMap';
 import { RsvpSheet, RsvpValue } from '@/components/RsvpSheet';
+import { DatePoll } from '@/components/DatePoll';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -310,7 +311,10 @@ const EventDetailPage = () => {
   };
 
   const fmt = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-  const dateStr = event.end_date
+  const isPoll = (event as any).date_confirmed === false;
+  const dateStr = !event.date
+    ? 'Date TBD'
+    : event.end_date
     ? `${fmt(event.date)} – ${fmt(event.end_date)}`
     : fmt(event.date);
 
@@ -512,7 +516,7 @@ const EventDetailPage = () => {
             >
               <div className="flex items-center gap-3 text-sm text-foreground">
                 <Calendar className="h-4 w-4 text-primary" />
-                <span>{dateStr}</span>
+                <span className={!event.date ? 'text-muted-foreground italic' : ''}>{dateStr}</span>
               </div>
               {timeStr && (
                 <div className="flex items-center gap-3 text-sm text-foreground">
@@ -555,6 +559,32 @@ const EventDetailPage = () => {
               )}
             </motion.div>
           </>
+        )}
+
+        {isPoll && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08 }}
+            className="mb-6"
+          >
+            <DatePoll
+              eventId={event.id}
+              userId={userId}
+              canManage={canManage}
+              pollDeadline={(event as any).poll_deadline}
+              participantProfiles={Object.fromEntries([
+                [event.created_by, {
+                  username: event.creator_profile?.username || 'Unknown',
+                  avatar_url: event.creator_profile?.avatar_url || null,
+                }],
+                ...event.participants.map(p => [p.user_id, {
+                  username: p.profile?.username || 'Unknown',
+                  avatar_url: p.profile?.avatar_url || null,
+                }]),
+              ])}
+            />
+          </motion.div>
         )}
 
         {/* Attendees */}
