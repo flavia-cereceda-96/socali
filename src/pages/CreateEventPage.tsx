@@ -3,7 +3,7 @@ import { useFriends, DbProfile } from '@/hooks/useEvents';
 import { useGroups, useGroup, DbGroup } from '@/hooks/useGroups';
 import { UserAvatar } from '@/components/UserAvatar';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Check, X, Users, Shield } from 'lucide-react';
+import { ArrowLeft, Check, X, Users, Shield, Plus, CalendarClock } from 'lucide-react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -51,6 +51,26 @@ const CreateEventPage = () => {
   const [friendSearch, setFriendSearch] = useState('');
   const [coAdminIds, setCoAdminIds] = useState<Set<string>>(new Set());
 
+  // Date poll state
+  const [datePoll, setDatePoll] = useState(false);
+  type DateOption = { proposed_date: string; start_time: string; end_time: string };
+  const [dateOptions, setDateOptions] = useState<DateOption[]>([
+    { proposed_date: '', start_time: '', end_time: '' },
+    { proposed_date: '', start_time: '', end_time: '' },
+  ]);
+  const [pollDeadline, setPollDeadline] = useState('');
+
+  const updateDateOption = (i: number, patch: Partial<DateOption>) => {
+    setDateOptions(prev => prev.map((o, idx) => (idx === i ? { ...o, ...patch } : o)));
+  };
+  const addDateOption = () => {
+    if (dateOptions.length >= 6) return;
+    setDateOptions(prev => [...prev, { proposed_date: '', start_time: '', end_time: '' }]);
+  };
+  const removeDateOption = (i: number) => {
+    setDateOptions(prev => prev.filter((_, idx) => idx !== i));
+  };
+
   const toggleCoAdmin = (userId: string) => {
     setCoAdminIds(prev => {
       const next = new Set(prev);
@@ -95,7 +115,10 @@ const CreateEventPage = () => {
     );
   };
 
-  const canSubmit = title.trim() && dateStr && (isMultiDay ? endDateStr : startTime);
+  const validPollOptions = dateOptions.filter(o => o.proposed_date);
+  const canSubmit = datePoll
+    ? !!title.trim() && validPollOptions.length >= 2
+    : !!title.trim() && !!dateStr && (isMultiDay ? !!endDateStr : !!startTime);
 
   /** Resolve final unique participant user_ids from friends + groups (excluding current user). */
   async function resolveParticipants(currentUserId: string): Promise<string[]> {
@@ -143,10 +166,12 @@ const CreateEventPage = () => {
       const { data: event, error } = await supabase.from('events').insert({
         title,
         emoji,
-        date: dateStr,
-        end_date: isMultiDay ? endDateStr : null,
-        time: isMultiDay ? null : (startTime || null),
-        end_time: isMultiDay ? null : (endTime || null),
+        date: datePoll ? null : dateStr,
+        end_date: !datePoll && isMultiDay ? endDateStr : null,
+        time: !datePoll && !isMultiDay ? (startTime || null) : null,
+        end_time: !datePoll && !isMultiDay ? (endTime || null) : null,
+        date_confirmed: !datePoll,
+        poll_deadline: datePoll && pollDeadline ? pollDeadline : null,
         location: location.address.trim() || null,
         latitude: location.latitude,
         longitude: location.longitude,
@@ -154,13 +179,26 @@ const CreateEventPage = () => {
         cover_image: coverImage.trim() || null,
         link_url: normalizedLink,
         link_label: normalizedLink ? (linkLabel.trim() || 'Open link') : null,
-        is_trip: isMultiDay,
+        is_trip: !datePoll && isMultiDay,
         created_by: user.id,
-      }).select().single();
+      } as any).select().single();
 
       if (error) {
         toast.error(error.message);
         return;
+      }
+
+      // Insert date options if poll is enabled
+      if (datePoll && event && validPollOptions.length > 0) {
+        const { error: optErr } = await supabase.from('event_date_options').insert(
+          validPollOptions.map(o => ({
+            event_id: event.id,
+            proposed_date: o.proposed_date,
+            start_time: o.start_time || null,
+            end_time: o.end_time || null,
+          }))
+        );
+        if (optErr) toast.error('Event created but failed to add poll options');
       }
 
       // Resolve final participants from friends + groups (deduped, excludes creator)
@@ -180,7 +218,7 @@ const CreateEventPage = () => {
         await supabase.from('activity_feed').insert(
           participantIds.map(uid => ({
             user_id: uid,
-            type: 'invitation',
+            type: datePoll ? 'date_poll_invite' : 'invitation',
             event_id: event.id,
             source_user_id: user.id,
           }))
