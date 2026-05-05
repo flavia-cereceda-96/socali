@@ -814,6 +814,14 @@ const EventDetailPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <RsvpSheet
+        open={rsvpSheetOpen && canEditOwnRsvp}
+        onOpenChange={setRsvpSheetOpen}
+        current={myRsvp}
+        onSave={handleSaveRsvp}
+        saving={rsvpSaving}
+      />
     </div>
   );
 };
