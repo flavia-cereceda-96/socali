@@ -64,6 +64,25 @@ const CreateEventPage = () => {
   ]);
   const [pollDeadline, setPollDeadline] = useState('');
 
+  // What poll state
+  type WhatOption = { title: string; link: string };
+  const [whatPoll, setWhatPoll] = useState(false);
+  const [whatOptions, setWhatOptions] = useState<WhatOption[]>([
+    { title: '', link: '' },
+    { title: '', link: '' },
+  ]);
+  const updateWhatOption = (i: number, patch: Partial<WhatOption>) => {
+    setWhatOptions(prev => prev.map((o, idx) => (idx === i ? { ...o, ...patch } : o)));
+  };
+  const addWhatOption = () => {
+    if (whatOptions.length >= 8) return;
+    setWhatOptions(prev => [...prev, { title: '', link: '' }]);
+  };
+  const removeWhatOption = (i: number) => {
+    setWhatOptions(prev => prev.filter((_, idx) => idx !== i));
+  };
+  const validWhatOptions = whatOptions.filter(o => o.title.trim());
+
   const updateDateOption = (i: number, patch: Partial<DateOption>) => {
     setDateOptions(prev => prev.map((o, idx) => (idx === i ? { ...o, ...patch } : o)));
   };
