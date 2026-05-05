@@ -645,7 +645,7 @@ const EventDetailPage = () => {
                     ) : (
                       <StatusBadge status={a.status as any} size="md" />
                     )}
-                    {isCreator && !a.isCreator && a.status === 'confirmed' && (
+                    {isCreator && !a.isCreator && (
                       <button
                         onClick={() => setRoleDialog({
                           userId: a.user_id,
