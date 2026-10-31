@@ -17,6 +17,7 @@ import { LocationPicker, LocationValue } from '@/components/LocationPicker';
 import { LocationMap } from '@/components/LocationMap';
 import EmojiPicker, { EmojiStyle } from 'emoji-picker-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ChatEventCreator, ChatDraft } from '@/components/ChatEventCreator';
 
 const CreateEventPage = () => {
   const navigate = useNavigate();
@@ -156,7 +157,20 @@ const CreateEventPage = () => {
   const validPollOptions = dateOptions.filter(o => o.proposed_date);
   const canSubmit = datePoll
     ? !!title.trim() && validPollOptions.length >= 2
-    : !!title.trim() && !!dateStr && (isMultiDay ? !!endDateStr : !!startTime);
+    : !!title.trim() && !!dateStr && (isMultiDay ? !!endDateStr : true);
+
+  // Chat-first mode (default unless arriving from a group)
+  const [mode, setMode] = useState<'chat' | 'form'>(prefilledGroupId || inviteGroupIdFromState ? 'form' : 'chat');
+  const [autoSubmit, setAutoSubmit] = useState(false);
+  const applyDraft = (d: ChatDraft) => {
+    setTitle(d.title); setEmoji(d.emoji); setDateStr(d.date);
+    setStartTime(d.noTime ? '' : d.startTime); setEndTime(d.noTime ? '' : d.endTime);
+    setSelectedFriends(d.friends); setIsMultiDay(false); setDatePoll(false);
+  };
+  useEffect(() => {
+    if (autoSubmit) { setAutoSubmit(false); handleSubmit(); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSubmit]);
 
   /** Resolve final unique participant user_ids from friends + groups (excluding current user). */
   async function resolveParticipants(currentUserId: string): Promise<string[]> {
@@ -310,6 +324,18 @@ const CreateEventPage = () => {
       setSubmitting(false);
     }
   };
+
+  if (mode === 'chat') {
+    return (
+      <ChatEventCreator
+        friends={friends}
+        initial={{ title: prefilledTitle, emoji: prefilledEmoji, date: prefilledDate, friends: selectedFriends }}
+        submitting={submitting}
+        onCreate={d => { applyDraft(d); setAutoSubmit(true); }}
+        onMoreDetails={d => { applyDraft(d); setMode('form'); }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen pb-24">
