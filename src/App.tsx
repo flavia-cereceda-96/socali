@@ -78,7 +78,6 @@ const App = () => {
   }
 
   const authed = !!session;
-  const seenSplash = hasSeenSplash();
 
   return (
     <QueryClientProvider client={queryClient}>
