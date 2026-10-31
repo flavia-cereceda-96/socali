@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { Home, CalendarDays, Users, UsersRound, User, Plus } from 'lucide-react';
+import { Home, CalendarDays, Users, User, Plus } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -13,14 +13,7 @@ const tabs = [
     icon: Users,
     label: 'Friends',
     match: (p: string, s: string) =>
-      (p === '/people' || p.startsWith('/person')) && !s.includes('tab=groups'),
-  },
-  {
-    path: '/people?tab=groups',
-    icon: UsersRound,
-    label: 'Groups',
-    match: (p: string, s: string) =>
-      p.startsWith('/people/groups') || (p === '/people' && s.includes('tab=groups')),
+      p === '/people' || p.startsWith('/person') || p.startsWith('/people/groups'),
   },
   { path: '/profile', icon: User, label: 'Profile', match: (p: string) => p.startsWith('/profile') },
 ];
