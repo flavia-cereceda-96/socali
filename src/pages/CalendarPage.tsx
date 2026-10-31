@@ -1,18 +1,18 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
-import { useEvents, useFriends, DbEvent } from '@/hooks/useEvents';
+import { useState, useMemo, useRef } from 'react';
+import { useEvents, useFriends } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, ChevronLeft, ChevronRight, MapPin, Clock } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/UserAvatar';
 import { CoachMark } from '@/components/CoachMark';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { useWeekStart, weekStartIndex, weekDayLabels } from '@/hooks/useWeekStart';
+import { useWeekStart, weekStartIndex } from '@/hooks/useWeekStart';
 import { AppHeader } from '@/components/AppHeader';
 import { FortnightCalendar } from '@/components/FortnightCalendar';
+import { CalendarDayTimeline } from '@/components/CalendarDayTimeline';
 import { buildFortnight, calendarDateKey } from '@/lib/calendarDisplay';
 import { addDays, format } from 'date-fns';
 
@@ -65,7 +65,6 @@ const CalendarPage = () => {
   const today = useMemo(() => new Date(), []);
   const weekStart = useWeekStart();
   const wsIdx = weekStartIndex(weekStart) as 0 | 1;
-  const DAYS = useMemo(() => weekDayLabels(weekStart), [weekStart]);
 
   const [viewMonth, setViewMonth] = useState<Date>(() => new Date(today.getFullYear(), today.getMonth(), 1));
   const [view, setView] = useState<'fortnight' | 'month'>('fortnight');
@@ -76,8 +75,7 @@ const CalendarPage = () => {
     return user?.id;
   }});
   const [direction, setDirection] = useState<1 | -1>(1);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(today);
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [query, setQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
@@ -88,16 +86,17 @@ const CalendarPage = () => {
 
   const goPrevMonth = () => {
     setDirection(-1);
-    if (view === 'fortnight') { setAnchor(day => addDays(day, -14)); return; }
-    setViewMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1));
+    if (view === 'fortnight') { const next = addDays(anchor, -14); setAnchor(next); setSelectedDate(buildFortnight(next, wsIdx)[0]); return; }
+    setViewMonth(m => { const next = new Date(m.getFullYear(), m.getMonth() - 1, 1); setSelectedDate(next); return next; });
   };
   const goNextMonth = () => {
     setDirection(1);
-    if (view === 'fortnight') { setAnchor(day => addDays(day, 14)); return; }
-    setViewMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1));
+    if (view === 'fortnight') { const next = addDays(anchor, 14); setAnchor(next); setSelectedDate(buildFortnight(next, wsIdx)[0]); return; }
+    setViewMonth(m => { const next = new Date(m.getFullYear(), m.getMonth() + 1, 1); setSelectedDate(next); return next; });
   };
   const goToday = () => {
     setAnchor(today);
+    setSelectedDate(today);
     const cur = new Date(today.getFullYear(), today.getMonth(), 1);
     setDirection(cur > viewMonth ? 1 : -1);
     setViewMonth(cur);
@@ -194,46 +193,11 @@ const CalendarPage = () => {
 
   const openDay = (date: Date) => {
     setSelectedDate(date);
-    setSheetOpen(true);
+
   };
 
   const dayEvents = selectedDate ? getEventsForDate(selectedDate) : [];
   const dayFriendEvents = selectedDate ? getFriendEventsForDate(selectedDate) : [];
-
-  const renderEventCard = (event: DbEvent, i: number) => (
-    <motion.div
-      key={event.id}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: i * 0.04 }}
-      onClick={() => navigate(`/event/${event.id}`)}
-      className="flex gap-3 rounded-2xl bg-card p-4 shadow-card cursor-pointer transition-shadow hover:shadow-elevated active:scale-[0.99]"
-    >
-      <div className="flex flex-col items-center justify-center rounded-xl bg-primary/10 px-3 py-2 min-w-[52px]">
-        <span className="text-xs font-semibold uppercase text-primary">
-          {new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
-        </span>
-        <span className="text-lg font-bold text-primary">
-          {new Date(event.date + 'T00:00:00').getDate()}
-        </span>
-      </div>
-      <div className="flex flex-1 flex-col gap-1.5 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-lg">{event.emoji}</span>
-          <span className="font-semibold text-foreground truncate">{event.title}</span>
-        </div>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          {event.time && (
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {event.time}{event.end_time ? ` – ${event.end_time}` : ''}
-            </span>
-          )}
-          {event.location && <span className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3" />{event.location}</span>}
-        </div>
-      </div>
-    </motion.div>
-  );
 
   const monthLabel = view === 'month' ? viewMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : `${format(fortnightDays[0], 'd MMM')} – ${format(fortnightDays[13], 'd MMM yyyy')}`;
 
@@ -247,9 +211,9 @@ const CalendarPage = () => {
       />
 
       <AppHeader title="Calendar" />
-      <div className="mx-auto max-w-4xl px-4 pt-2">
+      <div className="mx-auto max-w-2xl px-4 pt-2">
         <div className="mb-3 flex gap-1 rounded-full bg-muted p-1" role="group" aria-label="Calendar view">
-          {(['fortnight', 'month'] as const).map(mode => <Button key={mode} variant={view === mode ? 'secondary' : 'ghost'} aria-pressed={view === mode} onClick={() => { setView(mode); if (mode === 'month') setViewMonth(new Date(anchor.getFullYear(), anchor.getMonth(), 1)); else setAnchor(previous => previous.getMonth() === viewMonth.getMonth() && previous.getFullYear() === viewMonth.getFullYear() ? previous : viewMonth); }} className={cn('flex-1 rounded-full', view === mode && 'bg-secondary-foreground text-primary-foreground hover:bg-secondary-foreground/90')}>{mode === 'fortnight' ? '2 weeks' : 'Month'}</Button>)}
+          {(['fortnight', 'month'] as const).map(mode => <Button key={mode} variant={view === mode ? 'secondary' : 'ghost'} aria-pressed={view === mode} onClick={() => { setView(mode); if (mode === 'month') setViewMonth(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)); else setAnchor(selectedDate); }} className={cn('flex-1 rounded-full', view === mode && 'bg-secondary-foreground text-primary-foreground hover:bg-secondary-foreground/90')}>{mode === 'fortnight' ? '2 weeks' : 'Month'}</Button>)}
         </div>
 
         {/* @-mention input */}
@@ -337,184 +301,10 @@ const CalendarPage = () => {
           </Button>
         </div>
 
-        {view === 'fortnight' ? <FortnightCalendar days={fortnightDays} events={events} today={today} userId={userId} direction={direction} onOpenDay={openDay} onOpenEvent={id => navigate(`/event/${id}`)} getBusyPlans={getFriendEventsForDate} friendName={id => friends.find(friend => friend.user_id === id)?.username || 'Friend'} /> : <>
-        {/* Sticky day-of-week labels */}
-        <div className="sticky top-[57px] z-10 -mx-4 grid grid-cols-7 bg-background px-4 pb-1 text-center text-[12px] font-semibold uppercase tracking-wider text-muted-foreground">
-          {DAYS.map(d => <div key={d}>{d}</div>)}
-        </div>
-
-        {/* Animated month grid */}
-        <div data-coach="calendar-grid" className="relative overflow-hidden">
-          <AnimatePresence initial={false} mode="wait" custom={direction}>
-            <motion.div
-              key={viewMonth.toISOString()}
-              custom={direction}
-              initial={{ x: direction * 30, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -direction * 30, opacity: 0 }}
-              transition={{ duration: 0.15, ease: 'easeOut' }}
-              className="grid grid-cols-7 gap-0.5"
-            >
-              {monthDays.map((date, i) => {
-                const inMonth = date.getMonth() === viewMonth.getMonth();
-                const isToday = isSameDay(date, today);
-                const myEvts = getEventsForDate(date);
-                const fEvts = getFriendEventsForDate(date);
-
-                // Compute friend tint background — diagonal gradient if multiple
-                const busyFriendIdxs = Array.from(
-                  new Set(fEvts.map(e => getFriendColorIndex(e.friendUserId)))
-                );
-                let bgStyle: React.CSSProperties = {};
-                if (busyFriendIdxs.length === 1) {
-                  bgStyle = { backgroundColor: FRIEND_TINTS[busyFriendIdxs[0]], opacity: inMonth ? 0.7 : 0.2 };
-                } else if (busyFriendIdxs.length > 1) {
-                  const stops = busyFriendIdxs
-                    .map((cIdx, j) => {
-                      const start = (j / busyFriendIdxs.length) * 100;
-                      const end = ((j + 1) / busyFriendIdxs.length) * 100;
-                      return `${FRIEND_TINTS[cIdx]} ${start}%, ${FRIEND_TINTS[cIdx]} ${end}%`;
-                    })
-                    .join(', ');
-                  bgStyle = { backgroundImage: `linear-gradient(135deg, ${stops})`, opacity: inMonth ? 0.7 : 0.2 };
-                }
-
-                return (
-                  <button
-                    key={i}
-                    disabled={!inMonth}
-                    onClick={() => openDay(date)}
-                    className={cn(
-                      'relative flex flex-col items-center justify-start min-h-[56px] rounded-lg p-1 transition-all',
-                      !inMonth && 'opacity-30 pointer-events-none',
-                      inMonth && 'hover:bg-secondary/40 active:scale-95'
-                    )}
-                    style={bgStyle}
-                  >
-                    {/* Date number — terracotta circle if today */}
-                    <div className={cn(
-                      'flex h-7 w-7 items-center justify-center rounded-full text-[13px] font-medium',
-                      isToday ? 'bg-primary text-primary-foreground font-bold' : 'text-foreground'
-                    )}>
-                      {date.getDate()}
-                    </div>
-
-                    {/* User event dots */}
-                    {myEvts.length > 0 && (
-                      <div className="mt-1 flex items-center gap-0.5">
-                        {myEvts.length <= 2 ? (
-                          myEvts.slice(0, 2).map(e => (
-                            <span key={e.id} className="h-[7px] w-[7px] rounded-full bg-primary" />
-                          ))
-                        ) : (
-                          <>
-                            <span className="h-[7px] w-[7px] rounded-full bg-primary" />
-                            <span className="h-[7px] w-[7px] rounded-full bg-primary" />
-                            <span className="text-[10px] font-bold leading-none text-primary">+</span>
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-        </>}
+        <FortnightCalendar days={view === 'fortnight' ? fortnightDays : monthDays} events={events} today={today} selectedDate={selectedDate} direction={direction} onOpenDay={openDay} getBusyPlans={getFriendEventsForDate} month={view === 'month' ? viewMonth : undefined} />
+        <CalendarDayTimeline date={selectedDate} events={dayEvents} busyPlans={dayFriendEvents} userId={userId} friendName={id => friends.find(friend => friend.user_id === id)?.username || 'Friend'} onOpenEvent={id => navigate(`/event/${id}`)} onCreate={() => navigate(`/create?date=${calendarDateKey(selectedDate)}`)} />
       </div>
 
-      {/* Day detail bottom sheet */}
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="bottom" className="h-[60vh] rounded-t-2xl p-0 flex flex-col">
-          {/* Drag handle */}
-          <div className="flex justify-center pt-2 pb-1 shrink-0">
-            <div className="h-1.5 w-10 rounded-full bg-muted" />
-          </div>
-
-          <SheetHeader className="px-5 pb-3 shrink-0">
-            <SheetTitle className="text-left text-base font-bold text-foreground">
-              {selectedDate?.toLocaleDateString('en-US', {
-                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-              })}
-            </SheetTitle>
-          </SheetHeader>
-
-          <div className="flex-1 overflow-y-auto px-5 pb-6">
-            {dayEvents.length === 0 && dayFriendEvents.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 text-center">
-                <p className="mb-4 text-sm text-muted-foreground">Nothing planned — tap + to add something ✨</p>
-                <Button
-                  onClick={() => {
-                    if (!selectedDate) return;
-                    setSheetOpen(false);
-                    navigate(`/create?date=${calendarDateKey(selectedDate)}`);
-                  }}
-                  className="gap-2"
-                >
-                  <Plus className="h-4 w-4" /> Create event
-                </Button>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {dayEvents.map((e, i) => renderEventCard(e, i))}
-                {dayFriendEvents.map(e => {
-                  const cIdx = getFriendColorIndex(e.friendUserId);
-                  const friend = friends.find(f => f.user_id === e.friendUserId);
-                  const tint = FRIEND_TINTS[cIdx];
-                  return (
-                    <div
-                      key={`${e.id}-${e.friendUserId}`}
-                      className="flex gap-3 rounded-2xl bg-card p-4 shadow-card"
-                      style={{ borderLeft: `3px solid ${tint}` }}
-                    >
-                      <div
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg"
-                        style={{ backgroundColor: tint }}
-                      >
-                        {e.emoji}
-                      </div>
-                      <div className="flex flex-1 flex-col gap-1 min-w-0">
-                        <span className="font-semibold text-foreground truncate">{e.title}</span>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
-                          <span className="flex items-center gap-1">
-                            <UserAvatar avatarUrl={friend?.avatar_url} username={friend?.username} size="sm" />
-                            {friend?.username || 'Friend'}
-                          </span>
-                          {e.time && (
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {e.time}{e.end_time ? ` – ${e.end_time}` : ''}
-                            </span>
-                          )}
-                          {e.location && (
-                            <span className="flex items-center gap-1 truncate">
-                              <MapPin className="h-3 w-3" />{e.location}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {/* Always-available add button when there are events */}
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    if (!selectedDate) return;
-                    setSheetOpen(false);
-                    navigate(`/create?date=${calendarDateKey(selectedDate)}`);
-                  }}
-                  className="mt-2 w-full gap-2"
-                >
-                  <Plus className="h-4 w-4" /> Add another event
-                </Button>
-              </div>
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
     </div>
   );
 };
