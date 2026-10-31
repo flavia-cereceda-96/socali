@@ -13,9 +13,11 @@
 
 # App Store readiness
 
-- [ ] Correct safe areas, phone input sizing, and public sharing/auth links.
-- [ ] Add public privacy, terms, and support links; owner review of legal text required.
-- [ ] Add authenticated permanent account deletion and confirmations.
-- [ ] Add reporting, blocking, blocked-content suppression, and admin report review.
-- [ ] Verify safety rules and signed-in flows without deleting the owner's account.
-- [ ] Native device validation and App Store disclosures require the owner's Apple setup.
+- [x] Correct safe areas, phone input sizing, and public sharing/auth links.
+- [x] Add public privacy, terms, and approved support email links.
+- [x] Add authenticated permanent account deletion and two-step confirmations.
+- [x] Add reporting, blocking, blocked-content suppression, and admin report review.
+- [x] Verify safety rules and signed-in report, moderation, block/unblock, and deletion guard flows without deleting the owner's account.
+- [ ] Legal owner identity and legal-text approval: waiting on owner details and review.
+- [ ] Native device validation (including disposable-account deletion, photo permissions, speech support, and auth return handling) and App Store privacy disclosures: requires owner's Apple/native setup.
+- [ ] Operational moderation and pre-publication content filtering strategy: requires owner policy and ongoing review; report/block controls alone do not guarantee App Store approval.

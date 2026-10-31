@@ -26,11 +26,19 @@ describe.skipIf(!enabled)('live safety permissions', () => {
   it('cannot call privileged account cleanup', async () => {
     const userId = JSON.parse(session || '{}').user.id;
     const result = await request('rpc/purge_account_data', 'POST', { _user_id: userId });
-    expect(result.status).toBe(401 + 2);
+    expect(result.status).toBe(403);
   });
   it('cannot forge a reviewed report', async () => {
     const userId = JSON.parse(session || '{}').user.id;
     const result = await request('user_reports', 'POST', { reporter_id: userId, reported_user_id: userId, content_type: 'profile', content_id: userId, reason: 'spam', status: 'removed' });
-    expect(result.status >= 400).toBe(true);
+    expect(result.status).toBe(400);
+  });
+  it('refuses account deletion without explicit confirmation', async () => {
+    const response = await fetch(`${origin}/functions/v1/delete-account`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, apikey: key || '', 'Content-Type': 'application/json' }, body: JSON.stringify({ confirmation: 'NO' }) });
+    expect(response.status).toBe(400);
+  });
+  it('refuses account deletion without a signed-in user', async () => {
+    const response = await fetch(`${origin}/functions/v1/delete-account`, { method: 'POST', headers: { apikey: key || '', 'Content-Type': 'application/json' }, body: JSON.stringify({ confirmation: 'DELETE' }) });
+    expect(response.status).toBe(401);
   });
 });
