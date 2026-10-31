@@ -48,10 +48,10 @@ const LoginPage = () => {
       </div>
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.92 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="relative z-10 mt-4 w-full max-w-sm"
+        initial={{ opacity: 0, x: -24, rotate: -2 }}
+        animate={{ opacity: 1, x: 0, rotate: 0 }}
+        transition={{ duration: 0.7, ease: 'easeOut' }}
+        className="relative z-10 mt-4 w-full max-w-sm origin-bottom"
       >
         <motion.img
           src={loginImg}
