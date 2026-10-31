@@ -11,9 +11,9 @@ import { UserAvatar } from '@/components/UserAvatar';
 import { CoachMark } from '@/components/CoachMark';
 import { useWeekStart, weekStartIndex } from '@/hooks/useWeekStart';
 import { AppHeader } from '@/components/AppHeader';
-import { FortnightCalendar } from '@/components/FortnightCalendar';
+import { WeeksCalendar } from '@/components/WeeksCalendar';
 import { CalendarDayTimeline } from '@/components/CalendarDayTimeline';
-import { buildFortnight, calendarDateKey } from '@/lib/calendarDisplay';
+import { buildFourWeeks, calendarDateKey } from '@/lib/calendarDisplay';
 import { addDays, format } from 'date-fns';
 
 // Exact hex per spec, applied at 70% opacity via inline style
@@ -63,9 +63,9 @@ const CalendarPage = () => {
   const wsIdx = weekStartIndex(weekStart) as 0 | 1;
 
   const [viewMonth, setViewMonth] = useState<Date>(() => new Date(today.getFullYear(), today.getMonth(), 1));
-  const [view, setView] = useState<'fortnight' | 'month'>('fortnight');
+  const [view, setView] = useState<'fourweeks' | 'month'>('fourweeks');
   const [anchor, setAnchor] = useState(today);
-  const fortnightDays = useMemo(() => buildFortnight(anchor, wsIdx), [anchor, wsIdx]);
+  const fourWeekDays = useMemo(() => buildFourWeeks(anchor, wsIdx), [anchor, wsIdx]);
   const { data: userId } = useQuery({ queryKey: ['calendar-user'], queryFn: async () => {
     const { data: { user } } = await supabase.auth.getUser();
     return user?.id;
@@ -82,12 +82,12 @@ const CalendarPage = () => {
 
   const goPrevMonth = () => {
     setDirection(-1);
-    if (view === 'fortnight') { const next = addDays(anchor, -14); setAnchor(next); setSelectedDate(buildFortnight(next, wsIdx)[0]); return; }
+    if (view === 'fourweeks') { const next = addDays(anchor, -28); setAnchor(next); setSelectedDate(buildFourWeeks(next, wsIdx)[0]); return; }
     setViewMonth(m => { const next = new Date(m.getFullYear(), m.getMonth() - 1, 1); setSelectedDate(next); return next; });
   };
   const goNextMonth = () => {
     setDirection(1);
-    if (view === 'fortnight') { const next = addDays(anchor, 14); setAnchor(next); setSelectedDate(buildFortnight(next, wsIdx)[0]); return; }
+    if (view === 'fourweeks') { const next = addDays(anchor, 28); setAnchor(next); setSelectedDate(buildFourWeeks(next, wsIdx)[0]); return; }
     setViewMonth(m => { const next = new Date(m.getFullYear(), m.getMonth() + 1, 1); setSelectedDate(next); return next; });
   };
   const goToday = () => {
@@ -190,7 +190,7 @@ const CalendarPage = () => {
   const dayEvents = selectedDate ? getEventsForDate(selectedDate) : [];
   const dayFriendEvents = selectedDate ? getFriendEventsForDate(selectedDate) : [];
 
-  const monthLabel = view === 'month' ? viewMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : `${format(fortnightDays[0], 'd MMM')} – ${format(fortnightDays[13], 'd MMM yyyy')}`;
+  const monthLabel = view === 'month' ? viewMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : `${format(fourWeekDays[0], 'd MMM')} – ${format(fourWeekDays[27], 'd MMM yyyy')}`;
 
   return (
     <div className="min-h-screen pb-24">
@@ -204,7 +204,7 @@ const CalendarPage = () => {
       <AppHeader title="Calendar" />
       <div className="mx-auto max-w-2xl px-4 pt-2">
         <div className="mb-3 flex gap-1 rounded-full bg-muted p-1" role="group" aria-label="Calendar view">
-          {(['fortnight', 'month'] as const).map(mode => <Button key={mode} variant={view === mode ? 'secondary' : 'ghost'} aria-pressed={view === mode} onClick={() => { setView(mode); if (mode === 'month') setViewMonth(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)); else setAnchor(selectedDate); }} className={cn('flex-1 rounded-full', view === mode && 'bg-secondary-foreground text-primary-foreground hover:bg-secondary-foreground/90')}>{mode === 'fortnight' ? '2 weeks' : 'Month'}</Button>)}
+          {(['fourweeks', 'month'] as const).map(mode => <Button key={mode} variant={view === mode ? 'secondary' : 'ghost'} aria-pressed={view === mode} onClick={() => { setView(mode); if (mode === 'month') setViewMonth(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)); else setAnchor(selectedDate); }} className={cn('flex-1 rounded-full', view === mode && 'bg-secondary-foreground text-primary-foreground hover:bg-secondary-foreground/90')}>{mode === 'fourweeks' ? '4 weeks' : 'Month'}</Button>)}
         </div>
 
         {/* @-mention input */}
@@ -272,7 +272,7 @@ const CalendarPage = () => {
           <Button variant="ghost" size="icon"
             onClick={goPrevMonth}
             className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-secondary transition-colors"
-            aria-label={view === 'month' ? 'Previous month' : 'Previous two weeks'}
+            aria-label={view === 'month' ? 'Previous month' : 'Previous four weeks'}
           >
             <ChevronLeft className="h-5 w-5 text-foreground" />
           </Button>
@@ -280,7 +280,7 @@ const CalendarPage = () => {
           <Button variant="ghost" size="icon"
             onClick={goNextMonth}
             className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-secondary transition-colors"
-            aria-label={view === 'month' ? 'Next month' : 'Next two weeks'}
+            aria-label={view === 'month' ? 'Next month' : 'Next four weeks'}
           >
             <ChevronRight className="h-5 w-5 text-foreground" />
           </Button>
@@ -292,7 +292,7 @@ const CalendarPage = () => {
           </Button>
         </div>
 
-        <FortnightCalendar days={view === 'fortnight' ? fortnightDays : monthDays} events={events} today={today} selectedDate={selectedDate} direction={direction} onOpenDay={openDay} getBusyPlans={getFriendEventsForDate} month={view === 'month' ? viewMonth : undefined} />
+        <WeeksCalendar days={view === 'fourweeks' ? fourWeekDays : monthDays} events={events} today={today} selectedDate={selectedDate} direction={direction} onOpenDay={openDay} getBusyPlans={getFriendEventsForDate} month={view === 'month' ? viewMonth : undefined} />
         <CalendarDayTimeline date={selectedDate} events={dayEvents} busyPlans={dayFriendEvents} userId={userId} friendName={id => friends.find(friend => friend.user_id === id)?.username || 'Friend'} onOpenEvent={id => navigate(`/event/${id}`)} onCreate={() => navigate(`/create?date=${calendarDateKey(selectedDate)}`)} />
       </div>
 

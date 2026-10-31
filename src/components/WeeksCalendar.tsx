@@ -16,7 +16,7 @@ interface Props {
   month?: Date;
 }
 
-export function FortnightCalendar({ days, events, today, selectedDate, direction, onOpenDay, getBusyPlans, month }: Props) {
+export function WeeksCalendar({ days, events, today, selectedDate, direction, onOpenDay, getBusyPlans, month }: Props) {
   const reducedMotion = useReducedMotion();
   return (
     <div data-coach="calendar-grid" className="pb-5">
