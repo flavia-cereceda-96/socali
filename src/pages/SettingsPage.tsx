@@ -11,6 +11,9 @@ import { toast } from 'sonner';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { LanguageToggle } from '@/components/LanguageToggle';
+import { LegalLinks } from '@/components/LegalLinks';
+import { AccountDeletion } from '@/components/AccountDeletion';
+import { BlockedUsers } from '@/components/BlockedUsers';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -264,9 +267,13 @@ const SettingsPage = () => {
           )}
 
           {/* Logout */}
+          <BlockedUsers />
+          {isAdmin && <Button variant="outline" className="w-full" onClick={() => navigate('/moderation')}>Safety reports</Button>}
+          <LegalLinks />
           <Button onClick={handleLogout} variant="outline" className="w-full font-semibold gap-2" size="lg">
             <LogOut className="h-4 w-4" /> {t('settings.logout')}
           </Button>
+          <AccountDeletion />
         </motion.div>
       </div>
     </div>

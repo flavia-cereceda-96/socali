@@ -75,8 +75,13 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ skipped: 'no email' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    if (profile.email_notifications === false) {
+    if (profile.email_notifications !== true) {
       return new Response(JSON.stringify({ skipped: 'opted_out' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    if (record.source_user_id) {
+      const { data: blocked, error: blockError } = await supabase.from('user_blocks').select('id').eq('blocker_id', record.user_id).eq('blocked_user_id', record.source_user_id).maybeSingle();
+      if (blockError || blocked) return new Response(JSON.stringify({ skipped: 'blocked_sender' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     let sourceName = '';

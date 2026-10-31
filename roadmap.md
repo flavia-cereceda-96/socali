@@ -10,3 +10,14 @@
 - [x] Replace crowded cells with a compact selected-date grid and event dots.
 - [x] Show a daily timeline with event details, friend availability, and date-prefilled creation.
 - [x] Verify signed-in calendar selection, navigation, real-event opening, and phone layout.
+
+# App Store readiness
+
+- [x] Correct safe areas, phone input sizing, and public sharing/auth links.
+- [x] Add public privacy, terms, and approved support email links.
+- [x] Add authenticated permanent account deletion and two-step confirmations.
+- [x] Add reporting, blocking, blocked-content suppression, and admin report review.
+- [x] Verify safety rules and signed-in report, moderation, block/unblock, and deletion guard flows without deleting the owner's account.
+- [ ] Legal owner identity and legal-text approval: waiting on owner details and review.
+- [ ] Native device validation (including disposable-account deletion, photo permissions, speech support, and auth return handling) and App Store privacy disclosures: requires owner's Apple/native setup.
+- [ ] Operational moderation and pre-publication content filtering strategy: requires owner policy and ongoing review; report/block controls alone do not guarantee App Store approval.

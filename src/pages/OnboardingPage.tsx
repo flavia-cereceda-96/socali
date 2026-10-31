@@ -14,6 +14,9 @@ import { PasswordStrength } from '@/components/onboarding/PasswordStrength';
 import { useTranslation } from 'react-i18next';
 import { isSupportedLang } from '@/hooks/useLanguagePreference';
 import { UserAvatar } from '@/components/UserAvatar';
+import { LegalLinks } from '@/components/LegalLinks';
+import { authOrigin, publicAppUrl } from '@/lib/appUrl';
+import { shareAppLink } from '@/lib/nativeLinks';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -149,7 +152,7 @@ const OnboardingPage = () => {
         password,
         options: {
           data: { username, usage },
-          emailRedirectTo: window.location.origin,
+          emailRedirectTo: authOrigin(),
         },
       });
       if (error) {
@@ -306,7 +309,7 @@ const OnboardingPage = () => {
   };
 
   const inviteLink = authedUserId
-    ? `${window.location.origin}/welcome?ref=${authedUserId}`
+    ? publicAppUrl(`/welcome?ref=${authedUserId}`)
     : '';
 
   const handleCopyInvite = async () => {
@@ -321,17 +324,8 @@ const OnboardingPage = () => {
   };
 
   const handleShareInvite = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Join me on C A L I',
-          text: 'Let\'s plan things together on C A L I ✨',
-          url: inviteLink,
-        });
-      } catch { /* user cancelled */ }
-    } else {
-      handleCopyInvite();
-    }
+    try { await shareAppLink({ title: 'Join me on C A L I', text: 'Let\'s plan things together on C A L I ✨', url: inviteLink }); }
+    catch { toast.error('Could not share link'); }
   };
 
   const handleContinue = () => {
@@ -735,6 +729,7 @@ const OnboardingPage = () => {
         <Button onClick={handleSubmit} disabled={loading} className="w-full font-semibold" size="lg">
           {loading ? 'Creating...' : 'Get Started 🚀'}
         </Button>
+        <LegalLinks />
 
         <p className="text-center text-sm text-muted-foreground">
           Already have an account?{' '}

@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { ExternalLink } from 'lucide-react';
+import { handleExternalLink } from '@/lib/nativeLinks';
 
 // Fix default marker icons under Vite (default uses webpack URLs)
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -53,6 +54,7 @@ export function LocationMap({ latitude, longitude, address, height = 160 }: Loca
       <a
         href={mapsUrl}
         target="_blank"
+        onClick={handleExternalLink}
         rel="noopener noreferrer"
         className="flex items-center justify-between gap-2 bg-card px-3 py-2 text-xs font-medium text-primary hover:bg-secondary/50 transition-colors"
       >

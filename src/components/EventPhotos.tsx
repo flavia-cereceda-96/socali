@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
+import { SafetyMenu } from '@/components/SafetyMenu';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
@@ -87,7 +88,7 @@ export const EventPhotos = ({ eventId }: EventPhotosProps) => {
   };
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id || null));
+  useEffect(() => { supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id || null)); }, []);
 
   return (
     <div className="space-y-3">
@@ -135,6 +136,7 @@ export const EventPhotos = ({ eventId }: EventPhotosProps) => {
                 alt={`Photo by ${photo.username}`}
                 className="h-full w-full object-cover transition-transform group-hover:scale-105"
               />
+              <div className="absolute bottom-1 right-1 rounded-md bg-card"><SafetyMenu type="event_photo" contentId={photo.id} authorId={photo.user_id} currentUserId={currentUserId} /></div>
               {currentUserId === photo.user_id && (
                 <button
                   onClick={(e) => { e.stopPropagation(); handleDelete(photo.id, photo.storage_path); }}

@@ -1,0 +1,37 @@
+CREATE OR REPLACE FUNCTION public.purge_account_data(_user_id uuid) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE event_ids uuid[]; group_ids uuid[];
+BEGIN
+IF _user_id IS NULL THEN RAISE EXCEPTION 'User required'; END IF;
+SELECT array_agg(id) INTO event_ids FROM public.events WHERE created_by=_user_id;
+SELECT array_agg(id) INTO group_ids FROM public.groups WHERE created_by=_user_id;
+UPDATE public.events SET confirmed_what_option_id=NULL WHERE confirmed_what_option_id IN (SELECT id FROM public.event_what_options WHERE suggested_by=_user_id);
+DELETE FROM public.event_what_votes WHERE user_id=_user_id;
+DELETE FROM public.event_what_options WHERE suggested_by=_user_id OR event_id=ANY(event_ids);
+DELETE FROM public.event_invite_links WHERE created_by=_user_id OR event_id=ANY(event_ids);
+UPDATE public.bucket_list_items SET linked_event_id=NULL WHERE linked_event_id=ANY(event_ids);
+DELETE FROM public.bucket_list_items WHERE added_by=_user_id;
+DELETE FROM public.events WHERE created_by=_user_id;
+DELETE FROM public.group_messages WHERE user_id=_user_id OR group_id=ANY(group_ids);
+DELETE FROM public.bucket_lists WHERE group_id=ANY(group_ids) OR user_a=_user_id OR user_b=_user_id;
+DELETE FROM public.activity_feed WHERE user_id=_user_id OR source_user_id=_user_id OR group_id=ANY(group_ids);
+DELETE FROM public.groups WHERE created_by=_user_id;
+DELETE FROM public.event_comments WHERE user_id=_user_id;
+DELETE FROM public.event_photos WHERE user_id=_user_id;
+DELETE FROM public.event_date_votes WHERE user_id=_user_id;
+DELETE FROM public.feedback_votes WHERE user_id=_user_id;
+DELETE FROM public.comment_votes WHERE user_id=_user_id;
+DELETE FROM public.feedback_comments WHERE user_id=_user_id;
+DELETE FROM public.feedback WHERE user_id=_user_id;
+DELETE FROM public.user_update_reads WHERE user_id=_user_id;
+DELETE FROM public.app_updates WHERE created_by=_user_id;
+DELETE FROM public.user_reports WHERE reporter_id=_user_id OR reported_user_id=_user_id;
+DELETE FROM public.user_blocks WHERE blocker_id=_user_id OR blocked_user_id=_user_id;
+DELETE FROM public.moderation_hidden WHERE hidden_by=_user_id OR (content_type='profile' AND content_id=_user_id);
+DELETE FROM public.user_roles WHERE user_id=_user_id;
+DELETE FROM public.friends WHERE user_id=_user_id OR friend_id=_user_id;
+DELETE FROM public.group_members WHERE user_id=_user_id;
+DELETE FROM public.event_participants WHERE user_id=_user_id;
+DELETE FROM public.profiles WHERE user_id=_user_id;
+END; $$;
+REVOKE ALL ON FUNCTION public.purge_account_data(uuid) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.purge_account_data(uuid) TO service_role;

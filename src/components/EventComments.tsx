@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { SafetyMenu } from '@/components/SafetyMenu';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
@@ -129,7 +130,7 @@ export const EventComments = ({ eventId }: EventCommentsProps) => {
   };
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id || null));
+  useEffect(() => { supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id || null)); }, []);
 
   const timeAgo = (date: string) => {
     const diff = Date.now() - new Date(date).getTime();
@@ -177,6 +178,7 @@ export const EventComments = ({ eventId }: EventCommentsProps) => {
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               )}
+              <SafetyMenu type="event_comment" contentId={c.id} authorId={c.user_id} currentUserId={currentUserId} />
             </motion.div>
           ))}
         </div>

@@ -28,6 +28,8 @@ import NotFound from "./pages/NotFound.tsx";
 import SplashPage, { hasSeenSplash } from "./pages/SplashPage.tsx";
 import { WhatsNewModal } from "./components/WhatsNewModal.tsx";
 import { useSyncLanguageFromProfile } from "./hooks/useLanguagePreference";
+import LegalPage from './pages/LegalPage';
+import ModerationPage from './pages/ModerationPage';
 
 const queryClient = new QueryClient();
 
@@ -83,6 +85,9 @@ const App = () => {
       <BrowserRouter>
         <AuthedShell>
           <Routes>
+            <Route path="/privacy" element={<LegalPage />} />
+            <Route path="/terms" element={<LegalPage />} />
+            <Route path="/moderation" element={authed ? <ModerationPage /> : <Navigate to="/login" replace />} />
             <Route path="/welcome" element={!authed ? <SplashPage /> : <Navigate to="/" replace />} />
             <Route path="/onboarding" element={!authed ? <OnboardingPage /> : <Navigate to="/" replace />} />
             <Route path="/login" element={!authed ? (seenSplash ? <LoginPage /> : <Navigate to="/welcome" replace />) : <Navigate to="/" replace />} />
