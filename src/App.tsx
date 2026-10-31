@@ -41,6 +41,18 @@ function AuthedShell({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Route gates: their bodies run at route-match time, so hasSeenSplash() is
+// read fresh on every navigation (App itself sits above BrowserRouter and
+// does not re-render when the route changes).
+function LoginGate({ authed }: { authed: boolean }) {
+  if (authed) return <Navigate to="/" replace />;
+  return hasSeenSplash() ? <LoginPage /> : <Navigate to="/welcome" replace />;
+}
+
+function HomeGate({ authed }: { authed: boolean }) {
+  return authed ? <Index /> : <Navigate to={hasSeenSplash() ? "/login" : "/welcome"} replace />;
+}
+
 const App = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
