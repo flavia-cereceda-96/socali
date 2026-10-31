@@ -15,6 +15,13 @@
       "when": 1793451936218,
       "tag": "0001_account_deletion_cleanup",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793455402149,
+      "tag": "0002_native_push_delivery",
+      "breakpoints": true
     }
   ]
 }

@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           comment_id: string | null
           created_at: string
+          dedupe_key: string | null
           event_id: string | null
           group_id: string | null
           id: string
@@ -29,6 +30,7 @@ export type Database = {
         Insert: {
           comment_id?: string | null
           created_at?: string
+          dedupe_key?: string | null
           event_id?: string | null
           group_id?: string | null
           id?: string
@@ -40,6 +42,7 @@ export type Database = {
         Update: {
           comment_id?: string | null
           created_at?: string
+          dedupe_key?: string | null
           event_id?: string | null
           group_id?: string | null
           id?: string
@@ -768,7 +771,9 @@ export type Database = {
           email_notifications: boolean | null
           id: string
           invite_to: string | null
+          notification_timezone: string
           preferred_language: string
+          push_notifications: boolean
           usage: string
           user_id: string
           username: string
@@ -782,7 +787,9 @@ export type Database = {
           email_notifications?: boolean | null
           id?: string
           invite_to?: string | null
+          notification_timezone?: string
           preferred_language?: string
+          push_notifications?: boolean
           usage: string
           user_id: string
           username: string
@@ -796,13 +803,56 @@ export type Database = {
           email_notifications?: boolean | null
           id?: string
           invite_to?: string | null
+          notification_timezone?: string
           preferred_language?: string
+          push_notifications?: boolean
           usage?: string
           user_id?: string
           username?: string
           week_starts_on?: string
         }
         Relationships: []
+      }
+      push_outbox: {
+        Row: {
+          activity_id: string
+          attempts: number
+          created_at: string
+          id: string
+          last_error: string | null
+          retry_at: string
+          sent_token_ids: string[]
+          status: string
+        }
+        Insert: {
+          activity_id: string
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          retry_at?: string
+          sent_token_ids?: string[]
+          status?: string
+        }
+        Update: {
+          activity_id?: string
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          retry_at?: string
+          sent_token_ids?: string[]
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_outbox_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: true
+            referencedRelation: "activity_feed"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_blocks: {
         Row: {
@@ -824,6 +874,38 @@ export type Database = {
           id?: string
         }
         Relationships: []
+      }
+      user_push_tokens: {
+        Row: {
+          id: string
+          platform: string
+          token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          platform: string
+          token: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          platform?: string
+          token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_push_tokens_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       user_reports: {
         Row: {
@@ -925,6 +1007,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_push_delivery: {
+        Args: { _id: string }
+        Returns: {
+          activity_id: string
+          attempts: number
+          created_at: string
+          id: string
+          last_error: string | null
+          retry_at: string
+          sent_token_ids: string[]
+          status: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "push_outbox"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       content_visible: {
         Args: { _author: string; _id: string; _type: string }
         Returns: boolean
@@ -937,6 +1038,7 @@ export type Database = {
         Args: { _option_id: string }
         Returns: string
       }
+      generate_due_notifications: { Args: never; Returns: number }
       get_invite_info: {
         Args: { _token: string }
         Returns: {
