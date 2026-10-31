@@ -50,7 +50,7 @@ export function PushNotificationSettings() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user || !prefs) return;
     qc.setQueryData(['push-notifications-pref'], { ...prefs, [key]: value });
-    const { error } = await supabase.from('profiles').update({ [key]: value }).eq('user_id', user.id);
+    const { error } = await supabase.from('profiles').update({ [key]: value } as Partial<Record<Category, boolean>>).eq('user_id', user.id);
     if (error) { toast.error(t('push.error')); qc.invalidateQueries({ queryKey: ['push-notifications-pref'] }); }
   };
   return <div className="rounded-2xl border border-border bg-card px-4 py-3.5">
