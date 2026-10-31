@@ -249,7 +249,7 @@ const CalendarPage = () => {
       <AppHeader title="Calendar" />
       <div className="mx-auto max-w-4xl px-4 pt-2">
         <div className="mb-3 flex gap-1 rounded-full bg-muted p-1" role="group" aria-label="Calendar view">
-          {(['fortnight', 'month'] as const).map(mode => <Button key={mode} variant={view === mode ? 'secondary' : 'ghost'} aria-pressed={view === mode} onClick={() => { setView(mode); if (mode === 'month') setViewMonth(new Date(anchor.getFullYear(), anchor.getMonth(), 1)); else setAnchor(viewMonth); }} className={cn('flex-1 rounded-full', view === mode && 'bg-secondary-foreground text-primary-foreground hover:bg-secondary-foreground/90')}>{mode === 'fortnight' ? '2 weeks' : 'Month'}</Button>)}
+          {(['fortnight', 'month'] as const).map(mode => <Button key={mode} variant={view === mode ? 'secondary' : 'ghost'} aria-pressed={view === mode} onClick={() => { setView(mode); if (mode === 'month') setViewMonth(new Date(anchor.getFullYear(), anchor.getMonth(), 1)); else setAnchor(previous => previous.getMonth() === viewMonth.getMonth() && previous.getFullYear() === viewMonth.getFullYear() ? previous : viewMonth); }} className={cn('flex-1 rounded-full', view === mode && 'bg-secondary-foreground text-primary-foreground hover:bg-secondary-foreground/90')}>{mode === 'fortnight' ? '2 weeks' : 'Month'}</Button>)}
         </div>
 
         {/* @-mention input */}
