@@ -738,6 +738,27 @@ export type Database = {
         }
         Relationships: []
       }
+      moderation_hidden: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string
+          hidden_by: string
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string
+          hidden_by: string
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string
+          hidden_by?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -780,6 +801,72 @@ export type Database = {
           user_id?: string
           username?: string
           week_starts_on?: string
+        }
+        Relationships: []
+      }
+      user_blocks: {
+        Row: {
+          blocked_user_id: string
+          blocker_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          blocked_user_id: string
+          blocker_id?: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          blocked_user_id?: string
+          blocker_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      user_reports: {
+        Row: {
+          content_id: string
+          content_preview: string
+          content_type: string
+          created_at: string
+          details: string
+          id: string
+          reason: string
+          reported_user_id: string
+          reporter_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+        }
+        Insert: {
+          content_id: string
+          content_preview?: string
+          content_type: string
+          created_at?: string
+          details?: string
+          id?: string
+          reason: string
+          reported_user_id: string
+          reporter_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Update: {
+          content_id?: string
+          content_preview?: string
+          content_type?: string
+          created_at?: string
+          details?: string
+          id?: string
+          reason?: string
+          reported_user_id?: string
+          reporter_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
         }
         Relationships: []
       }
@@ -838,6 +925,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      content_visible: {
+        Args: { _author: string; _id: string; _type: string }
+        Returns: boolean
+      }
       event_id_for_date_option: {
         Args: { _option_id: string }
         Returns: string
@@ -935,6 +1026,10 @@ export type Database = {
       join_event_via_invite: {
         Args: { _status?: string; _token: string }
         Returns: string
+      }
+      review_user_report: {
+        Args: { _action: string; _report_id: string }
+        Returns: undefined
       }
     }
     Enums: {
