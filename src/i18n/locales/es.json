@@ -6,7 +6,32 @@
     "denied": "Permite las notificaciones de socali en los ajustes del teléfono y vuelve a intentarlo.",
     "enabled": "Notificaciones push activadas",
     "disabled": "Notificaciones push desactivadas",
-    "error": "No se pudieron actualizar las notificaciones. Inténtalo de nuevo."
+    "error": "No se pudieron actualizar las notificaciones. Inténtalo de nuevo.",
+    "softPromptTitle": "¿Quieres un aviso cuando tus amigos respondan?",
+    "turnOn": "Activar",
+    "notNow": "Ahora no",
+    "categories": {
+      "push_plans": {
+        "title": "Planes",
+        "description": "Invitaciones, encuestas de fechas, confirmaciones, recordatorios"
+      },
+      "push_rsvps": {
+        "title": "Respuestas",
+        "description": "Cuando tus amigos responden a tus planes"
+      },
+      "push_comments": {
+        "title": "Comentarios",
+        "description": "Comentarios y menciones"
+      },
+      "push_group_chat": {
+        "title": "Chat de grupo",
+        "description": "Mensajes nuevos en tus grupos"
+      },
+      "push_friends": {
+        "title": "Amigos y grupos",
+        "description": "Solicitudes de amistad e invitaciones a grupos"
+      }
+    }
   },
   "common": {
     "back": "Atrás",
