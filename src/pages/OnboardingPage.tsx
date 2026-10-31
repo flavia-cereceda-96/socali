@@ -41,7 +41,7 @@ const OnboardingPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [usage, setUsage] = useState<string>('');
+  const [usage, setUsage] = useState<string[]>([]);
   const [bio, setBio] = useState('');
   const [suggestingBio, setSuggestingBio] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -102,14 +102,14 @@ const OnboardingPage = () => {
   };
 
   const handleSuggestVibe = async () => {
-    if (!usage) {
+    if (!usage.length) {
       toast.error('Pick what you\'ll use C A L I for first ✨');
       return;
     }
     setSuggestingBio(true);
     try {
       const { data, error } = await supabase.functions.invoke('suggest-vibe', {
-        body: { usage },
+        body: { usage: usage.join(', ') },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -137,7 +137,7 @@ const OnboardingPage = () => {
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = 'Invalid email';
     if (!password) errs.password = 'Required';
     else if (password.length < 8) errs.password = 'At least 8 characters';
-    if (!usage) errs.usage = 'Pick one';
+    if (!usage.length) errs.usage = 'Pick at least one';
     if (!bio.trim()) errs.bio = 'Required';
     if (!avatarFile) errs.avatar = 'Required';
     setErrors(errs);
@@ -690,8 +690,14 @@ const OnboardingPage = () => {
                   emoji={opt.emoji}
                   label={opt.label}
                   description={opt.description}
-                  selected={usage === opt.value}
-                  onClick={() => setUsage(opt.value)}
+                  selected={usage.includes(opt.value)}
+                  onClick={() =>
+                    setUsage(prev =>
+                      prev.includes(opt.value)
+                        ? prev.filter(v => v !== opt.value)
+                        : [...prev, opt.value],
+                    )
+                  }
                 />
               ))}
             </div>
