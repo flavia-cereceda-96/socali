@@ -16,6 +16,7 @@ import { isSupportedLang } from '@/hooks/useLanguagePreference';
 import { UserAvatar } from '@/components/UserAvatar';
 import { LegalLinks } from '@/components/LegalLinks';
 import { authOrigin, publicAppUrl } from '@/lib/appUrl';
+import { shareAppLink } from '@/lib/nativeLinks';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -323,17 +324,8 @@ const OnboardingPage = () => {
   };
 
   const handleShareInvite = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Join me on C A L I',
-          text: 'Let\'s plan things together on C A L I ✨',
-          url: inviteLink,
-        });
-      } catch { /* user cancelled */ }
-    } else {
-      handleCopyInvite();
-    }
+    try { await shareAppLink({ title: 'Join me on C A L I', text: 'Let\'s plan things together on C A L I ✨', url: inviteLink }); }
+    catch { toast.error('Could not share link'); }
   };
 
   const handleContinue = () => {

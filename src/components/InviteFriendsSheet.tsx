@@ -2,6 +2,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Button } from '@/components/ui/button';
 import { Copy, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { shareAppLink } from '@/lib/nativeLinks';
 
 interface InviteFriendsSheetProps {
   open: boolean;
@@ -22,19 +23,8 @@ export function InviteFriendsSheet({ open, onOpenChange }: InviteFriendsSheetPro
   };
 
   const handleShare = async () => {
-    if (typeof navigator !== 'undefined' && (navigator as any).share) {
-      try {
-        await (navigator as any).share({
-          title: 'Join me on C A L I',
-          text: INVITE_MESSAGE,
-          url: INVITE_URL,
-        });
-      } catch {
-        // User cancelled or error — silent
-      }
-    } else {
-      handleCopy();
-    }
+    try { await shareAppLink({ title: 'Join me on C A L I', text: INVITE_MESSAGE, url: INVITE_URL }); }
+    catch { toast.error('Could not share link'); }
   };
 
   return (
