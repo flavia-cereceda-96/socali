@@ -42,7 +42,7 @@ export function FortnightCalendar({ days, events, today, userId, direction, onOp
           const weekLabel = isCurrentWindow ? (week === 0 ? 'This week' : 'Next week') : `${format(weekDays[0], 'd MMM')} – ${format(weekDays[6], 'd MMM')}`;
           const spanning = events.filter(event => event.end_date && event.end_date > event.date && eventWeekSpan(event.date, event.end_date, weekDays));
           return (
-            <section key={week} className="mb-5">
+            <section key={week} className="mb-3 sm:mb-5">
               <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{weekLabel}</h3>
               <div className="grid grid-cols-7 gap-px border-t border-border bg-border">
                 {weekDays.map(day => (
@@ -66,8 +66,8 @@ export function FortnightCalendar({ days, events, today, userId, direction, onOp
                   const plans = events.filter(event => event.date === calendarDateKey(day) && (!event.end_date || event.end_date === event.date)).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
                   const busy = getBusyPlans(day);
                   return (
-                    <div key={calendarDateKey(day)} className="flex min-h-[170px] min-w-0 flex-col gap-1.5 bg-card p-1">
-                      {plans.map(event => <Button key={event.id} variant="secondary" className={chipClass(event)} onClick={() => onOpenEvent(event.id)} title={event.title}><span className="block w-full min-w-0"><span className="block break-words font-semibold">{event.emoji} {event.title}</span><span className="mt-1 block text-[10px] font-normal">{event.time?.slice(0, 5) || 'No set time'}{replyNeeded(event) && <span className="ml-1 font-semibold">· Reply</span>}</span></span></Button>)}
+                    <div key={calendarDateKey(day)} className="flex min-h-[112px] min-w-0 flex-col gap-1 bg-card p-0.5 sm:min-h-[170px] sm:gap-1.5 sm:p-1">
+                      {plans.map(event => <Button key={event.id} variant="secondary" className={chipClass(event)} onClick={() => onOpenEvent(event.id)} title={event.title}><span className="block w-full min-w-0"><span className="line-clamp-3 break-words font-semibold sm:line-clamp-none">{event.emoji} {event.title}</span><span className="mt-1 block text-[10px] font-normal">{event.time?.slice(0, 5) || 'No set time'}{replyNeeded(event) && <span className="block font-semibold sm:ml-1 sm:inline">Reply</span>}</span></span></Button>)}
                       {busy.map(plan => <Button key={`${plan.id}-${plan.friendUserId}`} variant="ghost" onClick={() => onOpenDay(day)} className="h-auto justify-start whitespace-normal rounded-md bg-muted px-1.5 py-1 text-left text-[10px] text-muted-foreground"><span className="min-w-0 break-words">{friendName(plan.friendUserId)} · {plan.time?.slice(0, 5) || 'Busy'}</span></Button>)}
                       <Button variant="ghost" size="sm" aria-label={`View plans for ${format(day, 'd MMMM')}`} onClick={() => onOpenDay(day)} className="mt-auto h-7 px-0 text-[10px] text-muted-foreground sm:text-xs">{plans.length || spanning.some(event => eventWeekSpan(event.date, event.end_date || event.date, [day])) ? 'View' : '＋'}</Button>
                     </div>
