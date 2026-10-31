@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { LegalLinks } from '@/components/LegalLinks';
-import heroImg from '@/assets/friends-planning-flat.jpg';
+import loginImg from '@/assets/friends-login-flat.jpg';
 
 const LoginPage = () => {
   const navigate = useNavigate();
