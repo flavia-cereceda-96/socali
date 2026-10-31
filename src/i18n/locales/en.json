@@ -1,4 +1,13 @@
 {
+  "push": {
+    "title": "Push notifications",
+    "description": "Invitations, replies, messages and plan reminders on your phone.",
+    "nativeOnly": "Available in the iPhone and Android app.",
+    "denied": "Allow notifications for socali in your phone’s Settings, then try again.",
+    "enabled": "Push notifications enabled",
+    "disabled": "Push notifications disabled",
+    "error": "Could not update push notifications. Please try again."
+  },
   "common": {
     "back": "Back",
     "save": "Save",

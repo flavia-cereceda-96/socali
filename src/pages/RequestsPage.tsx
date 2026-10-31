@@ -15,8 +15,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRespondGroupInvite } from '@/hooks/useGroups';
 import { GroupAvatar } from '@/components/GroupAvatar';
 import { Button } from '@/components/ui/button';
+import { buildNotification, notificationPath } from '../../supabase/functions/_shared/notificationContent';
+import { useTranslation } from 'react-i18next';
 
 const RequestsPage = () => {
+  const { i18n } = useTranslation();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { data: events = [], isLoading: eventsLoading } = useEvents();
@@ -98,6 +101,7 @@ const RequestsPage = () => {
       case 'mention':
         return <><span className="font-semibold">{name}</span> mentioned you in <span className="font-semibold">{eventTitle}</span></>;
       case 'rsvp_accepted':
+      case 'rsvp_confirmed':
         return <><span className="font-semibold">{name}</span> is going to <span className="font-semibold">{eventTitle}</span> 🎉</>;
       case 'rsvp_declined':
         return <><span className="font-semibold">{name}</span> can't make it to <span className="font-semibold">{eventTitle}</span></>;
@@ -112,7 +116,7 @@ const RequestsPage = () => {
         return <><span className="font-semibold">{name}</span> sent a message in <span className="font-semibold">{gname}</span></>;
       }
       default:
-        return <><span className="font-semibold">{name}</span> activity on <span className="font-semibold">{eventTitle}</span></>;
+        return <>{buildNotification(item.type, name, eventTitle, item.group?.name, i18n.language).body}</>;
     }
   };
 
@@ -316,8 +320,7 @@ const RequestsPage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.03 }}
                   onClick={() => {
-                    if (item.event_id) navigate(`/event/${item.event_id}`);
-                    else if (item.group_id) navigate(`/people/groups/${item.group_id}`);
+                    navigate(notificationPath(item));
                   }}
                   className={cn(
                     'flex items-start gap-3 rounded-2xl bg-card p-3 shadow-card cursor-pointer transition-colors hover:bg-secondary/50',

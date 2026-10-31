@@ -14,6 +14,8 @@ import { LanguageToggle } from '@/components/LanguageToggle';
 import { LegalLinks } from '@/components/LegalLinks';
 import { AccountDeletion } from '@/components/AccountDeletion';
 import { BlockedUsers } from '@/components/BlockedUsers';
+import { PushNotificationSettings } from '@/components/PushNotificationSettings';
+import { removeNativePush } from '@/lib/nativePush';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -123,6 +125,7 @@ const SettingsPage = () => {
   };
 
   const handleLogout = async () => {
+    try { await removeNativePush(); } catch { toast.error(t('push.error')); return; }
     await supabase.auth.signOut();
     navigate('/login');
   };
@@ -210,6 +213,7 @@ const SettingsPage = () => {
               <Mail className="h-4 w-4 text-primary" />
               <h2 className="text-sm font-semibold text-foreground">Notifications</h2>
             </div>
+            <PushNotificationSettings />
             <div className="flex items-start justify-between gap-4 rounded-2xl border border-border bg-card px-4 py-3.5">
               <div className="flex-1">
                 <p className="text-sm font-semibold text-foreground">Email notifications</p>

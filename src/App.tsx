@@ -30,6 +30,7 @@ import { WhatsNewModal } from "./components/WhatsNewModal.tsx";
 import { useSyncLanguageFromProfile } from "./hooks/useLanguagePreference";
 import LegalPage from './pages/LegalPage';
 import ModerationPage from './pages/ModerationPage';
+import { NativePushBridge } from './components/NativePushBridge';
 
 const queryClient = new QueryClient();
 
@@ -83,6 +84,7 @@ const App = () => {
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <NativePushBridge userId={session?.user.id} />
         <AuthedShell>
           <Routes>
             <Route path="/privacy" element={<LegalPage />} />
