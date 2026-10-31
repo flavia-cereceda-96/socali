@@ -4,9 +4,9 @@ export function calendarDateKey(date: Date): string {
   return format(date, 'yyyy-MM-dd');
 }
 
-export function buildFortnight(anchor: Date, weekStartsOn: 0 | 1): Date[] {
+export function buildFourWeeks(anchor: Date, weekStartsOn: 0 | 1): Date[] {
   const start = startOfWeek(anchor, { weekStartsOn });
-  return Array.from({ length: 14 }, (_, index) => addDays(start, index));
+  return Array.from({ length: 28 }, (_, index) => addDays(start, index));
 }
 
 export function eventWeekSpan(start: string, end: string, days: Date[]) {
