@@ -1,7 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { z } from 'npm:zod@3';
-import { buildNotification, notificationPath, pushAllowed } from '../_shared/notificationContent.ts';
+import { buildNotification, notificationPath, pushAllowed, pushGrouping } from '../_shared/notificationContent.ts';
 const schema = z.object({ dispatchId: z.string().uuid() }).strict();
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 Deno.serve(async req => {
@@ -25,11 +25,11 @@ Deno.serve(async req => {
     claimedId = claim.id; sent = claim.sent_token_ids ?? [];
     const { data: item, error: itemError } = await admin.from('activity_feed').select('*').eq('id', claim.activity_id).single();
     if (itemError || !item) throw new Error('Activity unavailable');
-    const { data: profile, error: profileError } = await admin.from('profiles').select('push_notifications,preferred_language').eq('user_id', item.user_id).single();
+    const { data: profile, error: profileError } = await admin.from('profiles').select('push_notifications,push_plans,push_rsvps,push_comments,push_group_chat,push_friends,preferred_language').eq('user_id', item.user_id).single();
     if (profileError) throw profileError;
     const { data: blocks, error: blockError } = item.source_user_id ? await admin.from('user_blocks').select('id').eq('blocker_id', item.user_id).eq('blocked_user_id', item.source_user_id) : { data: [], error: null };
     if (blockError) throw blockError;
-    if (!pushAllowed(profile?.push_notifications, !!blocks?.length)) {
+    if (!pushAllowed(profile, item.type, !!blocks?.length)) {
       await admin.from('push_outbox').update({ status: 'skipped', last_error: null }).eq('id', claim.id);
       return json({ skipped: 'preference_or_block' });
     }
@@ -39,14 +39,15 @@ Deno.serve(async req => {
     const event = item.event_id ? (await admin.from('events').select('title').eq('id', item.event_id).maybeSingle()).data?.title : undefined;
     const group = item.group_id ? (await admin.from('groups').select('name').eq('id', item.group_id).maybeSingle()).data?.name : undefined;
     const notification = buildNotification(item.type, actor, event, group, profile?.preferred_language);
+    const grouping = pushGrouping(item);
     for (const device of tokens ?? []) {
       if (sent.includes(device.id)) continue;
       const response = await fetch('https://connector-gateway.lovable.dev/firebase_messaging/v1/projects/_/messages:send', {
         method: 'POST', headers: { Authorization: `Bearer ${gatewayKey}`, 'X-Connection-Api-Key': connectionKey, 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: { token: device.token, notification,
           data: { path: notificationPath(item), activityId: item.id, recipientId: item.user_id },
-          apns: { headers: { 'apns-push-type': 'alert', 'apns-priority': '10', 'apns-collapse-id': item.id }, payload: { aps: { sound: 'default' } } },
-          android: { notification: { tag: item.id }, ttl: '86400s' },
+          apns: { headers: { 'apns-push-type': 'alert', 'apns-priority': '10', 'apns-collapse-id': grouping.collapseId }, payload: { aps: { sound: 'default', 'thread-id': grouping.threadId } } },
+          android: { notification: { tag: grouping.androidTag }, ttl: '86400s' },
         } }),
       });
       if (!response.ok) {
