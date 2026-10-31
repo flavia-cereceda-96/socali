@@ -21,4 +21,13 @@ describe.skipIf(!token || !session || !origin || !key)('live push protections', 
     const response = await fetch(`${origin}/functions/v1/register-push`, { method: 'POST', headers: { apikey: key ?? '', 'Content-Type': 'application/json' }, body: JSON.stringify({ token: 'validation-only-not-a-device-token', platform: 'ios' }) });
     expect(response.status).toBe(401);
   });
+  it('does not allow direct client token inserts', async () => {
+    const response = await fetch(`${origin}/rest/v1/user_push_tokens`, { method: 'POST', headers, body: JSON.stringify({ user_id: JSON.parse(session ?? '{}').user.id, token: 'validation-only-not-a-device-token', platform: 'ios' }) });
+    expect(response.status).toBe(403);
+  });
+  it('rejects invalid timezones without updating the profile', async () => {
+    const userId = JSON.parse(session ?? '{}').user.id;
+    const response = await fetch(`${origin}/rest/v1/profiles?user_id=eq.${userId}`, { method: 'PATCH', headers, body: JSON.stringify({ notification_timezone: 'Invalid/NotAZone' }) });
+    expect(response.status).toBe(400);
+  });
 });
