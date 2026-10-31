@@ -29,3 +29,7 @@
 - [ ] Legal owner identity and legal-text approval: waiting on owner details and review.
 - [ ] Native device validation (including disposable-account deletion, photo permissions, speech support, and auth return handling) and App Store privacy disclosures: requires owner's Apple/native setup.
 - [ ] Operational moderation and pre-publication content filtering strategy: requires owner policy and ongoing review; report/block controls alone do not guarantee App Store approval.
+# Landing & login redesign
+
+- [x] Landing: flat illustration, English-first copy, benefit boxes and language toggle removed.
+- [x] Login: matching flat illustration with distinct animation and composition.

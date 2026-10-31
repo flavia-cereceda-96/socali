@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { LegalLinks } from '@/components/LegalLinks';
-import heroImg from '@/assets/friends-planning-flat.jpg';
+import loginImg from '@/assets/friends-login-flat.jpg';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -48,18 +48,18 @@ const LoginPage = () => {
       </div>
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.92 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="relative z-10 mt-4 w-full max-w-sm"
+        initial={{ opacity: 0, x: -24, rotate: -2 }}
+        animate={{ opacity: 1, x: 0, rotate: 0 }}
+        transition={{ duration: 0.7, ease: 'easeOut' }}
+        className="relative z-10 mt-4 w-full max-w-sm origin-bottom"
       >
         <motion.img
-          src={heroImg}
-          alt="Friends gathered around a calendar planning a picnic, coffee and a concert"
+          src={loginImg}
+          alt="Two friends sharing a calendar invitation over coffee"
           width={1024}
-          height={896}
-          animate={{ y: [0, -8, 0] }}
-          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+          height={640}
+          animate={{ rotate: [-1.5, 1.5, -1.5] }}
+          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
           className="w-full mix-blend-multiply"
         />
       </motion.div>
