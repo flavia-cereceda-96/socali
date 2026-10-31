@@ -29,49 +29,64 @@ Match mentioned people ONLY against this friends list (id: username), fuzzy on n
 ${friendList || "(no friends)"}
 Put names you couldn't match in unmatched_names.`;
 
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const schema = {
+      type: "object",
+      properties: {
+        title: { type: ["string", "null"] },
+        emoji: { type: ["string", "null"] },
+        date: { type: ["string", "null"], description: "YYYY-MM-DD" },
+        start_time: { type: ["string", "null"], description: "HH:MM" },
+        end_time: { type: ["string", "null"], description: "HH:MM" },
+        no_time: { type: "boolean" },
+        friend_ids: { type: "array", items: { type: "string" } },
+        unmatched_names: { type: "array", items: { type: "string" } },
+        location: { type: ["string", "null"] },
+      },
+      required: ["title", "emoji", "date", "start_time", "end_time", "no_time", "friend_ids", "unmatched_names", "location"],
+      additionalProperties: false,
+    };
+
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
       method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      headers: { "Lovable-API-Key": key, "Content-Type": "application/json", "X-Lovable-AIG-SDK": "fetch" },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: text },
-        ],
-        tools: [{
-          type: "function",
-          function: {
-            name: "set_event",
-            description: "Return extracted event fields",
-            parameters: {
-              type: "object",
-              properties: {
-                title: { type: ["string", "null"] },
-                emoji: { type: ["string", "null"] },
-                date: { type: ["string", "null"], description: "YYYY-MM-DD" },
-                start_time: { type: ["string", "null"], description: "HH:MM" },
-                end_time: { type: ["string", "null"], description: "HH:MM" },
-                no_time: { type: "boolean" },
-                friend_ids: { type: "array", items: { type: "string" } },
-                unmatched_names: { type: "array", items: { type: "string" } },
-                location: { type: ["string", "null"] },
-              },
-              required: ["title", "emoji", "date", "start_time", "end_time", "no_time", "friend_ids", "unmatched_names", "location"],
-              additionalProperties: false,
-            },
-          },
-        }],
-        tool_choice: { type: "function", function: { name: "set_event" } },
+        model: "openai/gpt-6-astra",
+        stream: true,
+        store: false,
+        reasoning: { effort: "low" },
+        instructions: system,
+        input: [{ role: "user", content: text }],
+        text: { format: { type: "json_schema", name: "event", strict: true, schema } },
       }),
     });
 
     if (res.status === 429) return json({ error: "Too many requests, try again in a moment" }, 429);
     if (res.status === 402) return json({ error: "AI credits exhausted" }, 402);
-    if (!res.ok) return json({ error: "AI error", details: await res.text() }, 500);
+    if (!res.ok || !res.body) return json({ error: "AI error", details: await res.text() }, 500);
 
-    const data = await res.json();
-    const args = data.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
-    const parsed = args ? JSON.parse(args) : {};
+    // Consume SSE stream and accumulate output text
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = "", out = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let i;
+      while ((i = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, i).trim();
+        buf = buf.slice(i + 1);
+        if (!line.startsWith("data:")) continue;
+        const payload = line.slice(5).trim();
+        if (!payload || payload === "[DONE]") continue;
+        try {
+          const ev = JSON.parse(payload);
+          if (ev.type === "response.output_text.delta") out += ev.delta ?? "";
+          if (ev.type === "error" || ev.type === "response.failed") return json({ error: "AI error" }, 500);
+        } catch { /* ignore partial */ }
+      }
+    }
+    const parsed = JSON.parse(out || "{}");
     const validIds = new Set((friends as { id: string }[]).map((f) => f.id));
     parsed.friend_ids = (parsed.friend_ids || []).filter((id: string) => validIds.has(id));
     return json(parsed);
