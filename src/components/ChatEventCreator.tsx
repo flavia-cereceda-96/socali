@@ -163,7 +163,6 @@ export function ChatEventCreator({ friends, initial, submitting, onCreate, onMor
       if (data.unmatched_names?.length) {
         setMessages(m => [...m, { role: 'bot', text: `I couldn’t find ${data.unmatched_names.join(', ')} in your friends — pick them below if they’re there.` }]);
       }
-      if (matched.length || stage === 'friends') setFriendsAsked(stage === 'friends' ? true : friendsAsked);
     } catch (e: any) {
       if (stage === 'title' || !draft.title) setDraft(d => ({ ...d, title: d.title || text.slice(0, 60) }));
       setMessages(m => [...m, { role: 'bot', text: 'Hmm, I couldn’t read all of that — let’s go step by step.' }]);
