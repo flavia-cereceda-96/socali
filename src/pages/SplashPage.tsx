@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { LegalLinks } from '@/components/LegalLinks';
+import { Users, MessageCircle, CalendarCheck } from 'lucide-react';
+import heroImg from '@/assets/friends-planning.jpg';
 
 const SPLASH_KEY = 'synccircle_seen_splash';
 
@@ -31,48 +33,81 @@ const SplashPage = () => {
     navigate(`/login${refSuffix}`);
   };
 
+  const benefits = [
+    { icon: Users, text: t('splash.benefit1') },
+    { icon: MessageCircle, text: t('splash.benefit2') },
+    { icon: CalendarCheck, text: t('splash.benefit3') },
+  ];
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 py-10">
+    <div className="relative flex min-h-screen flex-col items-center overflow-hidden bg-background px-6 pb-8 pt-6">
+      {/* soft background blobs */}
+      <div aria-hidden className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -right-24 top-1/3 h-72 w-72 rounded-full bg-secondary/40 blur-3xl" />
+
+      <div className="relative z-10 flex w-full max-w-md items-center justify-between">
+        <span className="text-lg font-bold tracking-[0.3em] text-foreground">C A L I</span>
+        <LanguageToggle variant="inline" />
+      </div>
+
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="flex flex-col items-center text-center"
+        initial={{ opacity: 0, scale: 0.92 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        className="relative z-10 mt-6 w-full max-w-md"
       >
-        <div className="mb-5 text-6xl">🗓️</div>
-        <h1 className="text-4xl font-bold tracking-tight text-foreground">C A L I</h1>
-        <p className="mt-3 text-base text-muted-foreground">
-          {t('splash.tagline')}
-        </p>
+        <motion.img
+          src={heroImg}
+          alt={t('splash.illustrationAlt')}
+          width={1024}
+          height={896}
+          animate={{ y: [0, -8, 0] }}
+          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+          className="w-full rounded-3xl shadow-lg"
+        />
       </motion.div>
 
-      {/* Language picker — first thing the user sees */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15, duration: 0.5 }}
-        className="mt-10 w-full max-w-xs"
+        transition={{ delay: 0.2, duration: 0.5 }}
+        className="relative z-10 mt-7 w-full max-w-md text-center"
       >
-        <p className="mb-2 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          {t('language.title')}
-        </p>
-        <div className="flex justify-center">
-          <LanguageToggle variant="inline" />
-        </div>
+        <h1 className="text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-4xl">
+          {t('splash.headline')}
+        </h1>
+        <p className="mt-3 text-base text-muted-foreground">{t('splash.subhead')}</p>
       </motion.div>
+
+      <ul className="relative z-10 mt-6 flex w-full max-w-md flex-col gap-2">
+        {benefits.map(({ icon: Icon, text }, i) => (
+          <motion.li
+            key={text}
+            initial={{ opacity: 0, x: -12 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.35 + i * 0.1, duration: 0.4 }}
+            className="flex items-center gap-3 rounded-2xl bg-card px-4 py-3 text-sm font-medium text-foreground shadow-sm"
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-primary">
+              <Icon className="h-4 w-4" />
+            </span>
+            {text}
+          </motion.li>
+        ))}
+      </ul>
 
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25, duration: 0.5 }}
-        className="mt-10 flex w-full max-w-xs flex-col items-center gap-3"
+        transition={{ delay: 0.7, duration: 0.5 }}
+        className="relative z-10 mt-7 flex w-full max-w-md flex-col items-center gap-2"
       >
         <Button onClick={goOnboarding} size="lg" className="w-full font-semibold">
           {t('splash.getStarted')}
         </Button>
         <button
           onClick={goLogin}
-          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
+          className="py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
           {t('splash.logIn')}
         </button>

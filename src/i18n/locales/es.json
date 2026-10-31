@@ -62,8 +62,14 @@
   },
   "splash": {
     "tagline": "Organiza planes con las personas que quieres",
+    "headline": "Tu calendario social, compartido con amigos",
+    "subhead": "Mira quién está libre, crea planes en segundos y no te pierdas ningún plan.",
+    "benefit1": "Mira cuándo están libres tus amigos",
+    "benefit2": "Organiza una salida en un mensaje",
+    "benefit3": "Todos confirman en un solo lugar",
     "getStarted": "Empezar",
-    "logIn": "Iniciar sesión"
+    "logIn": "Ya tengo una cuenta",
+    "illustrationAlt": "Amigos alrededor de un calendario planeando un picnic, un café y un concierto"
   },
   "nav": {
     "home": "Inicio",

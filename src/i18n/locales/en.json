@@ -62,8 +62,14 @@
   },
   "splash": {
     "tagline": "Plan things with the people you love",
+    "headline": "Your social calendar, shared with friends",
+    "subhead": "See who's free, make plans in seconds, and never miss a hangout again.",
+    "benefit1": "See when friends are free",
+    "benefit2": "Plan an outing in one message",
+    "benefit3": "Everyone RSVPs in one place",
     "getStarted": "Get Started",
-    "logIn": "Log In"
+    "logIn": "I already have an account",
+    "illustrationAlt": "Friends gathered around a calendar planning a picnic, coffee and a concert"
   },
   "nav": {
     "home": "Home",
