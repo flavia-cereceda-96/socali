@@ -36,6 +36,13 @@
       "when": 1793455665437,
       "tag": "0004_push_recipient_validation_and_morning_reminders",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793459982274,
+      "tag": "0005_push_categories",
+      "breakpoints": true
     }
   ]
 }
