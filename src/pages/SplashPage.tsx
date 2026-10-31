@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { LegalLinks } from '@/components/LegalLinks';
 import { Users, MessageCircle, CalendarCheck } from 'lucide-react';
-import heroImg from '@/assets/friends-planning.jpg';
+import heroImg from '@/assets/friends-planning-flat.jpg';
 
 const SPLASH_KEY = 'synccircle_seen_splash';
 
@@ -63,7 +63,7 @@ const SplashPage = () => {
           height={896}
           animate={{ y: [0, -8, 0] }}
           transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-          className="w-full rounded-3xl shadow-lg"
+          className="w-full mix-blend-multiply"
         />
       </motion.div>
 
