@@ -41,6 +41,18 @@ function AuthedShell({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Route gates: their bodies run at route-match time, so hasSeenSplash() is
+// read fresh on every navigation (App itself sits above BrowserRouter and
+// does not re-render when the route changes).
+function LoginGate({ authed }: { authed: boolean }) {
+  if (authed) return <Navigate to="/" replace />;
+  return hasSeenSplash() ? <LoginPage /> : <Navigate to="/welcome" replace />;
+}
+
+function HomeGate({ authed }: { authed: boolean }) {
+  return authed ? <Index /> : <Navigate to={hasSeenSplash() ? "/login" : "/welcome"} replace />;
+}
+
 const App = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -78,7 +90,6 @@ const App = () => {
   }
 
   const authed = !!session;
-  const seenSplash = hasSeenSplash();
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -94,10 +105,10 @@ const App = () => {
             <Route path="/moderation" element={authed ? <ModerationPage /> : <Navigate to="/login" replace />} />
             <Route path="/welcome" element={!authed ? <SplashPage /> : <Navigate to="/" replace />} />
             <Route path="/onboarding" element={!authed ? <OnboardingPage /> : <Navigate to="/" replace />} />
-            <Route path="/login" element={!authed ? (seenSplash ? <LoginPage /> : <Navigate to="/welcome" replace />) : <Navigate to="/" replace />} />
+            <Route path="/login" element={<LoginGate authed={authed} />} />
             <Route path="/forgot-password" element={!authed ? <ForgotPasswordPage /> : <Navigate to="/" replace />} />
             <Route path="/reset-password" element={!authed ? <ResetPasswordPage /> : <Navigate to="/" replace />} />
-            <Route path="/" element={authed ? <Index /> : <Navigate to={seenSplash ? "/login" : "/welcome"} replace />} />
+            <Route path="/" element={<HomeGate authed={authed} />} />
             <Route path="/calendar" element={authed ? <CalendarPage /> : <Navigate to="/login" replace />} />
             <Route path="/people" element={authed ? <PeoplePage /> : <Navigate to="/login" replace />} />
             <Route path="/people/groups/new" element={authed ? <CreateGroupPage /> : <Navigate to="/login" replace />} />
