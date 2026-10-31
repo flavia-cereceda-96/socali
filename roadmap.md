@@ -13,6 +13,13 @@
 
 # App Store readiness
 
+# Native push notifications
+
+- [ ] Connect Firebase and mirror activity alerts into preference-aware native push delivery.
+- [ ] Add native FCM registration, safe tap navigation, Settings preferences, and Capacitor configuration.
+- [ ] Add friend alerts and idempotent scheduled day-of/poll-closing reminders.
+- [ ] Verify permissions, preferences, dispatch guards, and signed-in Settings; document Apple/Firebase device setup blockers.
+
 - [x] Correct safe areas, phone input sizing, and public sharing/auth links.
 - [x] Add public privacy, terms, and approved support email links.
 - [x] Add authenticated permanent account deletion and two-step confirmations.
