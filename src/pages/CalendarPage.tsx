@@ -12,6 +12,9 @@ import { CoachMark } from '@/components/CoachMark';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useWeekStart, weekStartIndex, weekDayLabels } from '@/hooks/useWeekStart';
 import { AppHeader } from '@/components/AppHeader';
+import { FortnightCalendar } from '@/components/FortnightCalendar';
+import { buildFortnight, calendarDateKey } from '@/lib/calendarDisplay';
+import { addDays, format } from 'date-fns';
 
 // Exact hex per spec, applied at 70% opacity via inline style
 const FRIEND_TINTS = ['#DBEAFE', '#EDE9FE', '#DCFCE7'];
@@ -65,6 +68,13 @@ const CalendarPage = () => {
   const DAYS = useMemo(() => weekDayLabels(weekStart), [weekStart]);
 
   const [viewMonth, setViewMonth] = useState<Date>(() => new Date(today.getFullYear(), today.getMonth(), 1));
+  const [view, setView] = useState<'fortnight' | 'month'>('fortnight');
+  const [anchor, setAnchor] = useState(today);
+  const fortnightDays = useMemo(() => buildFortnight(anchor, wsIdx), [anchor, wsIdx]);
+  const { data: userId } = useQuery({ queryKey: ['calendar-user'], queryFn: async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.id;
+  }});
   const [direction, setDirection] = useState<1 | -1>(1);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -78,13 +88,16 @@ const CalendarPage = () => {
 
   const goPrevMonth = () => {
     setDirection(-1);
+    if (view === 'fortnight') { setAnchor(day => addDays(day, -14)); return; }
     setViewMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1));
   };
   const goNextMonth = () => {
     setDirection(1);
+    if (view === 'fortnight') { setAnchor(day => addDays(day, 14)); return; }
     setViewMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1));
   };
   const goToday = () => {
+    setAnchor(today);
     const cur = new Date(today.getFullYear(), today.getMonth(), 1);
     setDirection(cur > viewMonth ? 1 : -1);
     setViewMonth(cur);
@@ -198,10 +211,10 @@ const CalendarPage = () => {
     >
       <div className="flex flex-col items-center justify-center rounded-xl bg-primary/10 px-3 py-2 min-w-[52px]">
         <span className="text-xs font-semibold uppercase text-primary">
-          {new Date(event.date).toLocaleDateString('en-US', { weekday: 'short' })}
+          {new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
         </span>
         <span className="text-lg font-bold text-primary">
-          {new Date(event.date).getDate()}
+          {new Date(event.date + 'T00:00:00').getDate()}
         </span>
       </div>
       <div className="flex flex-1 flex-col gap-1.5 min-w-0">
@@ -222,7 +235,7 @@ const CalendarPage = () => {
     </motion.div>
   );
 
-  const monthLabel = viewMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const monthLabel = view === 'month' ? viewMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : `${format(fortnightDays[0], 'd MMM')} – ${format(fortnightDays[13], 'd MMM yyyy')}`;
 
   return (
     <div className="min-h-screen pb-24">
@@ -234,7 +247,10 @@ const CalendarPage = () => {
       />
 
       <AppHeader title="Calendar" />
-      <div className="mx-auto max-w-md px-4 pt-2">
+      <div className="mx-auto max-w-4xl px-4 pt-2">
+        <div className="mb-3 flex gap-1 rounded-full bg-muted p-1" role="group" aria-label="Calendar view">
+          {(['fortnight', 'month'] as const).map(mode => <Button key={mode} variant={view === mode ? 'secondary' : 'ghost'} aria-pressed={view === mode} onClick={() => { setView(mode); if (mode === 'month') setViewMonth(new Date(anchor.getFullYear(), anchor.getMonth(), 1)); else setAnchor(viewMonth); }} className={cn('flex-1 rounded-full', view === mode && 'bg-secondary-foreground text-primary-foreground hover:bg-secondary-foreground/90')}>{mode === 'fortnight' ? '2 weeks' : 'Month'}</Button>)}
+        </div>
 
         {/* @-mention input */}
         <div className="relative mb-2">
@@ -298,29 +314,30 @@ const CalendarPage = () => {
 
         {/* Sticky month header */}
         <div className="sticky top-0 z-20 -mx-4 bg-background px-4 py-3 flex items-center gap-2">
-          <button
+          <Button variant="ghost" size="icon"
             onClick={goPrevMonth}
             className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-secondary transition-colors"
-            aria-label="Previous month"
+            aria-label={view === 'month' ? 'Previous month' : 'Previous two weeks'}
           >
             <ChevronLeft className="h-5 w-5 text-foreground" />
-          </button>
-          <h2 className="flex-1 text-center text-[18px] font-bold text-foreground">{monthLabel}</h2>
-          <button
+          </Button>
+          <h2 className="min-w-0 flex-1 text-center text-sm font-bold text-foreground sm:text-lg">{monthLabel}</h2>
+          <Button variant="ghost" size="icon"
             onClick={goNextMonth}
             className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-secondary transition-colors"
-            aria-label="Next month"
+            aria-label={view === 'month' ? 'Next month' : 'Next two weeks'}
           >
             <ChevronRight className="h-5 w-5 text-foreground" />
-          </button>
-          <button
+          </Button>
+          <Button variant="secondary" size="sm"
             onClick={goToday}
             className="ml-1 rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-foreground hover:bg-secondary/80 transition-colors"
           >
             Today
-          </button>
+          </Button>
         </div>
 
+        {view === 'fortnight' ? <FortnightCalendar days={fortnightDays} events={events} today={today} userId={userId} direction={direction} onOpenDay={openDay} onOpenEvent={id => navigate(`/event/${id}`)} getBusyPlans={getFriendEventsForDate} friendName={id => friends.find(friend => friend.user_id === id)?.username || 'Friend'} /> : <>
         {/* Sticky day-of-week labels */}
         <div className="sticky top-[57px] z-10 -mx-4 grid grid-cols-7 bg-background px-4 pb-1 text-center text-[12px] font-semibold uppercase tracking-wider text-muted-foreground">
           {DAYS.map(d => <div key={d}>{d}</div>)}
@@ -404,6 +421,7 @@ const CalendarPage = () => {
             </motion.div>
           </AnimatePresence>
         </div>
+        </>}
       </div>
 
       {/* Day detail bottom sheet */}
@@ -430,7 +448,7 @@ const CalendarPage = () => {
                   onClick={() => {
                     if (!selectedDate) return;
                     setSheetOpen(false);
-                    navigate(`/create?date=${selectedDate.toISOString().split('T')[0]}`);
+                    navigate(`/create?date=${calendarDateKey(selectedDate)}`);
                   }}
                   className="gap-2"
                 >
@@ -486,7 +504,7 @@ const CalendarPage = () => {
                   onClick={() => {
                     if (!selectedDate) return;
                     setSheetOpen(false);
-                    navigate(`/create?date=${selectedDate.toISOString().split('T')[0]}`);
+                    navigate(`/create?date=${calendarDateKey(selectedDate)}`);
                   }}
                   className="mt-2 w-full gap-2"
                 >
