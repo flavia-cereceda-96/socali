@@ -269,21 +269,23 @@ export function ChatEventCreator({ friends, initial, submitting, onCreate, onMor
         </div>
 
         {stage !== 'confirm' && stage !== 'friends' && (
-          <div className="sticky bottom-20 mt-4 flex items-center gap-2 rounded-full border border-border bg-card p-1.5 shadow-sm">
-            {speechSupported && (
-              <button onClick={toggleMic} aria-label={listening ? 'Stop voice input' : 'Speak'}
-                className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors',
-                  listening ? 'animate-pulse bg-destructive text-destructive-foreground' : 'bg-secondary text-foreground')}>
-                {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-              </button>
-            )}
+          <div className="sticky bottom-20 mt-4 flex items-stretch gap-2 rounded-3xl border border-border bg-card p-1.5 shadow-sm">
             <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()}
               placeholder={listening ? 'Listening…' : stage === 'start' ? 'Describe your plan…' : 'Type your answer…'}
-              className="flex-1 bg-transparent px-2 text-sm text-foreground outline-none placeholder:text-muted-foreground" />
-            <button onClick={() => send()} disabled={!input.trim() || thinking} aria-label="Send"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-40">
-              <Send className="h-4 w-4" />
-            </button>
+              className="min-w-0 flex-1 self-center bg-transparent px-2 text-sm text-foreground outline-none placeholder:text-muted-foreground" />
+            <div className="flex shrink-0 flex-col items-center gap-1 py-0.5">
+              {speechSupported && (
+                <button onClick={toggleMic} aria-label={listening ? 'Stop voice input' : 'Speak'}
+                  className={cn('flex h-8 w-8 items-center justify-center rounded-full transition-colors',
+                    listening ? 'animate-pulse bg-destructive text-destructive-foreground' : 'bg-secondary text-foreground')}>
+                  {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                </button>
+              )}
+              <button onClick={() => send()} disabled={!input.trim() || thinking} aria-label="Send"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-40">
+                <Send className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         )}
       </div>
