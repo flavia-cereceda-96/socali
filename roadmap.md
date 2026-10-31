@@ -11,14 +11,15 @@
 - [x] Show a daily timeline with event details, friend availability, and date-prefilled creation.
 - [x] Verify signed-in calendar selection, navigation, real-event opening, and phone layout.
 
-# App Store readiness
-
 # Native push notifications
 
-- [ ] Connect Firebase and mirror activity alerts into preference-aware native push delivery.
-- [ ] Add native FCM registration, safe tap navigation, Settings preferences, and Capacitor configuration.
-- [ ] Add friend alerts and idempotent scheduled day-of/poll-closing reminders.
-- [ ] Verify permissions, preferences, dispatch guards, and signed-in Settings; document Apple/Firebase device setup blockers.
+- [x] Connect Firebase and mirror activity alerts into preference-aware native push delivery.
+- [x] Add native FCM registration, safe tap navigation, Settings preferences, and Capacitor configuration.
+- [x] Add friend alerts and idempotent scheduled day-of/poll-closing reminders.
+- [x] Verify permissions, preferences, dispatch guards, and signed-in Settings; document Apple/Firebase device setup blockers.
+- [ ] Native transport and device flows: requires GoogleService-Info.plist, Apple signing/APNs key setup, and a real iPhone.
+
+# App Store readiness
 
 - [x] Correct safe areas, phone input sizing, and public sharing/auth links.
 - [x] Add public privacy, terms, and approved support email links.

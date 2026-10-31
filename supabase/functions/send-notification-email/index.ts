@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { buildNotification, notificationPath } from '../_shared/notificationContent.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,9 +23,10 @@ function buildContent(type: string, sourceName: string, eventTitle?: string, com
     case 'mention':
       return { subject: `Socali - You were mentioned`, title: `${actor} mentioned you`, body: commentContent ?? `${actor} mentioned you in a comment.` };
     case 'rsvp_accepted':
+    case 'rsvp_confirmed':
     case 'rsvp_declined':
     case 'rsvp_maybe': {
-      const verb = type === 'rsvp_accepted' ? 'is going to' : type === 'rsvp_declined' ? "can't make it to" : 'might come to';
+      const verb = type === 'rsvp_accepted' || type === 'rsvp_confirmed' ? 'is going to' : type === 'rsvp_declined' ? "can't make it to" : 'might come to';
       return { subject: `Socali - An invitee just updated their RSVP`, title: `${actor} ${verb} ${eventTitle ?? 'your event'}`, body: `${actor} updated their RSVP for "${eventTitle ?? 'your event'}".` };
     }
     case 'friend_request':
@@ -50,7 +52,8 @@ function buildContent(type: string, sourceName: string, eventTitle?: string, com
         body: `${actor} would like you to confirm your RSVP for "${eventTitle ?? 'their event'}". Please open Socali to respond.`,
       };
     default:
-      return { subject: 'Socali - New notification', title: 'New notification', body: 'You have a new notification on Socali.' };
+      const content = buildNotification(type, actor, eventTitle, groupName);
+      return { subject: `Socali - ${content.body}`, title: content.body, body: content.body };
   }
 }
 
@@ -106,11 +109,7 @@ Deno.serve(async (req) => {
     }
 
     const { subject, title, body } = buildContent(record.type, sourceName, eventTitle, commentContent, groupName);
-    const link = record.event_id
-      ? `${APP_URL}/event/${record.event_id}`
-      : record.group_id
-      ? `${APP_URL}/activity`
-      : `${APP_URL}/activity`;
+    const link = `${APP_URL}${notificationPath(record)}`;
 
     const html = `<!doctype html><html><body style="font-family:system-ui,-apple-system,sans-serif;background:#FAFAFE;padding:24px;color:#1A1230;">
       <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:16px;padding:32px;border:1px solid rgba(160,130,255,0.2);">

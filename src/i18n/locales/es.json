@@ -1,4 +1,13 @@
 {
+  "push": {
+    "title": "Notificaciones push",
+    "description": "Invitaciones, respuestas, mensajes y recordatorios en tu teléfono.",
+    "nativeOnly": "Disponibles en la app para iPhone y Android.",
+    "denied": "Permite las notificaciones de socali en los ajustes del teléfono y vuelve a intentarlo.",
+    "enabled": "Notificaciones push activadas",
+    "disabled": "Notificaciones push desactivadas",
+    "error": "No se pudieron actualizar las notificaciones. Inténtalo de nuevo."
+  },
   "common": {
     "back": "Atrás",
     "save": "Guardar",

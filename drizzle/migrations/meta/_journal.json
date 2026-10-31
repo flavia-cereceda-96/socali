@@ -15,6 +15,27 @@
       "when": 1793451936218,
       "tag": "0001_account_deletion_cleanup",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793455402149,
+      "tag": "0002_native_push_delivery",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793455644180,
+      "tag": "0003_push_private_grants_and_timezone_validation",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793455665437,
+      "tag": "0004_push_recipient_validation_and_morning_reminders",
+      "breakpoints": true
     }
   ]
 }
