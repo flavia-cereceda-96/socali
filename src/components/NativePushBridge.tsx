@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import type { PluginListenerHandle } from '@capacitor/core';
-import { supabase } from '@/integrations/supabase/client';
 import { nativePushAvailable, syncPushToken, removeNativePush } from '@/lib/nativePush';
 import { safePushPath } from '../../supabase/functions/_shared/notificationContent';
 
@@ -11,6 +10,7 @@ export function NativePushBridge({ userId }: { userId?: string }) {
   const qc = useQueryClient();
   const currentUser = useRef(userId);
   const pending = useRef<{ path: string; recipientId: string }>();
+  const previousUser = useRef(userId);
   currentUser.current = userId;
   useEffect(() => {
     if (!nativePushAvailable()) return;
@@ -46,7 +46,8 @@ export function NativePushBridge({ userId }: { userId?: string }) {
     if (userId) {
       if (pending.current?.recipientId === userId) { navigate(pending.current.path); pending.current = undefined; }
       void syncPushToken().catch(() => undefined);
-    } else { void removeNativePush().catch(() => undefined); }
+    } else if (previousUser.current) { void removeNativePush().catch(() => undefined); }
+    previousUser.current = userId;
   }, [userId, navigate]);
   return null;
 }

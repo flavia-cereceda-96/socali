@@ -13,6 +13,8 @@ export async function syncPushToken(token?: string) {
   const permission = await FirebaseMessaging.checkPermissions();
   if (permission.receive !== 'granted') return;
   const value = token ?? (await FirebaseMessaging.getToken()).token;
+  const { data: { user: latestUser } } = await supabase.auth.getUser();
+  if (latestUser?.id !== user.id) return;
   const { error: registerError } = await supabase.functions.invoke('register-push', { body: { token: value, platform: Capacitor.getPlatform() } });
   if (registerError) throw registerError;
   currentToken = value;
@@ -20,6 +22,9 @@ export async function syncPushToken(token?: string) {
 export async function removeNativePush() {
   if (!nativePushAvailable()) return;
   const { FirebaseMessaging } = await import('@capacitor-firebase/messaging');
+  if (!currentToken && (await FirebaseMessaging.checkPermissions()).receive === 'granted') {
+    currentToken = (await FirebaseMessaging.getToken()).token;
+  }
   if (currentToken) {
     const { error } = await supabase.functions.invoke('register-push', { body: { token: currentToken, platform: Capacitor.getPlatform(), remove: true } });
     if (error) throw error;
