@@ -20,10 +20,6 @@ import { addDays, format } from 'date-fns';
 const FRIEND_TINTS = ['#DBEAFE', '#EDE9FE', '#DCFCE7'];
 const MAX_FRIENDS = 3;
 
-function isSameDay(a: Date, b: Date) {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-}
-
 function isDateInRange(date: Date, startStr: string, endStr?: string | null) {
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
   const s = new Date(startStr + 'T00:00:00').getTime();
@@ -145,11 +141,6 @@ const CalendarPage = () => {
 
   const getFriendEventsForDate = (date: Date) =>
     friendEvents.filter(e => isDateInRange(date, e.date, e.end_date));
-
-  const getFriendColorIndex = (friendId: string) => {
-    const idx = selectedFriends.indexOf(friendId);
-    return idx >= 0 ? idx % FRIEND_TINTS.length : 0;
-  };
 
   // Friends shown in dropdown when user types `@` or focuses with `@`
   const filteredFriends = useMemo(() => {

@@ -7,6 +7,6 @@
 
 # Split calendar redesign
 
-- [ ] Replace crowded cells with a compact selected-date grid and event dots.
-- [ ] Show a daily timeline with event details, friend availability, and date-prefilled creation.
-- [ ] Verify signed-in calendar selection, navigation, and phone layout.
+- [x] Replace crowded cells with a compact selected-date grid and event dots.
+- [x] Show a daily timeline with event details, friend availability, and date-prefilled creation.
+- [x] Verify signed-in calendar selection, navigation, real-event opening, and phone layout.
