@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import calendarInviteImg from '@/assets/calendar-invite-flat.jpg';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -549,11 +550,17 @@ const OnboardingPage = () => {
         <div className="text-center">
           <motion.div
             initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            className="mb-3 text-5xl"
+            animate={{ scale: 1, y: [0, -6, 0] }}
+            transition={{ scale: { type: 'spring', stiffness: 300, damping: 20 }, y: { duration: 4.5, repeat: Infinity, ease: 'easeInOut' } }}
+            className="mb-3 mx-auto w-40"
           >
-            🗓️
+            <img
+              src={calendarInviteImg}
+              alt="Two hands passing a calendar invitation"
+              width={640}
+              height={640}
+              className="w-full mix-blend-multiply"
+            />
           </motion.div>
           <h1 className="text-2xl font-bold text-foreground">Create Account</h1>
           <p className="mt-1 text-sm text-muted-foreground">Set up your account to get started</p>
