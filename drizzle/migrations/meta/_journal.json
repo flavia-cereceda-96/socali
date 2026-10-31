@@ -22,6 +22,13 @@
       "when": 1793455402149,
       "tag": "0002_native_push_delivery",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793455644180,
+      "tag": "0003_push_private_grants_and_timezone_validation",
+      "breakpoints": true
     }
   ]
 }
