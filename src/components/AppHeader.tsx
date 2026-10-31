@@ -2,6 +2,7 @@ import { Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUnreadActivityCount } from '@/hooks/useActivity';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 interface AppHeaderProps {
   title?: string;
@@ -15,23 +16,23 @@ export function AppHeader({ title, className }: AppHeaderProps) {
   return (
     <header
       className={cn(
-        'sticky top-0 z-40 flex items-center justify-between bg-background/80 backdrop-blur-xl px-4 pt-3 pb-2',
+        'sticky top-0 z-40 flex items-center justify-between bg-background/80 backdrop-blur-xl px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-2',
         className
       )}
     >
       <h1 className="text-lg font-bold text-foreground truncate">{title ?? 'C A L I'}</h1>
-      <button
+      <Button variant="ghost" size="icon"
         aria-label="Notifications"
         onClick={() => navigate('/requests')}
         className="relative flex h-9 w-9 items-center justify-center rounded-full text-foreground hover:bg-muted transition-colors"
       >
         <Bell className="h-[22px] w-[22px]" strokeWidth={2} />
         {unread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#FF3040] px-1 text-[10px] font-bold leading-none text-white">
+          <span className="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-destructive-foreground">
             {unread > 99 ? '99+' : unread}
           </span>
         )}
-      </button>
+      </Button>
     </header>
   );
 }

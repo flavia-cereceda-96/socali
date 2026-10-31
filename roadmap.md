@@ -10,3 +10,12 @@
 - [x] Replace crowded cells with a compact selected-date grid and event dots.
 - [x] Show a daily timeline with event details, friend availability, and date-prefilled creation.
 - [x] Verify signed-in calendar selection, navigation, real-event opening, and phone layout.
+
+# App Store readiness
+
+- [ ] Correct safe areas, phone input sizing, and public sharing/auth links.
+- [ ] Add public privacy, terms, and support links; owner review of legal text required.
+- [ ] Add authenticated permanent account deletion and confirmations.
+- [ ] Add reporting, blocking, blocked-content suppression, and admin report review.
+- [ ] Verify safety rules and signed-in flows without deleting the owner's account.
+- [ ] Native device validation and App Store disclosures require the owner's Apple setup.
