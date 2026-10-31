@@ -54,12 +54,12 @@ const LoginPage = () => {
         className="relative z-10 mt-4 w-full max-w-sm"
       >
         <motion.img
-          src={heroImg}
-          alt="Friends gathered around a calendar planning a picnic, coffee and a concert"
+          src={loginImg}
+          alt="Two friends sharing a calendar invitation over coffee"
           width={1024}
-          height={896}
-          animate={{ y: [0, -8, 0] }}
-          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+          height={640}
+          animate={{ rotate: [-1.5, 1.5, -1.5] }}
+          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
           className="w-full mix-blend-multiply"
         />
       </motion.div>
