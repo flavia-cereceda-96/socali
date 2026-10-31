@@ -105,6 +105,9 @@
   #root {
     padding-top: env(safe-area-inset-top);
   }
+  #root:has(header.sticky) {
+    padding-top: 0;
+  }
   @media (max-width: 767px) {
     input:not([type='checkbox']):not([type='radio']), textarea, select {
       font-size: 16px !important;

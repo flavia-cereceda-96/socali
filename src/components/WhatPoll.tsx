@@ -8,6 +8,8 @@ import { Check, X, ThumbsUp, ThumbsDown, Plus, ExternalLink, Trash2, Sparkles } 
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { handleExternalLink } from '@/lib/nativeLinks';
+import { SafetyMenu } from '@/components/SafetyMenu';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -203,6 +205,7 @@ export function WhatPoll({
                   )}
                 </div>
                 <div className="flex flex-col items-end gap-1">
+                  <SafetyMenu type="what_option" contentId={opt.id} authorId={opt.suggested_by} currentUserId={userId} />
                   {canManage && !isConfirmed && (
                     <Button
                       size="sm" variant="outline" className="h-7 gap-1 text-xs"

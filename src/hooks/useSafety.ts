@@ -15,7 +15,7 @@ export function useSafetyActions() {
   const block = async (userId: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Sign in required');
-    const { error } = await supabase.from('user_blocks').upsert({ blocker_id: user.id, blocked_user_id: userId }, { onConflict: 'blocker_id,blocked_user_id' });
+    const { error } = await supabase.from('user_blocks').upsert({ blocker_id: user.id, blocked_user_id: userId }, { onConflict: 'blocker_id,blocked_user_id', ignoreDuplicates: true });
     if (error) throw error;
     await refresh();
   };

@@ -369,6 +369,7 @@ const EventDetailPage = () => {
           >
             {event.title}
           </motion.h1>
+          <SafetyMenu type="event" contentId={event.id} authorId={event.created_by} currentUserId={userId} />
           {canManage && !editing && (
             <button
               onClick={() => setEditing(true)}
