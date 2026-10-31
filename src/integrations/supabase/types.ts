@@ -1027,6 +1027,7 @@ export type Database = {
         Args: { _status?: string; _token: string }
         Returns: string
       }
+      purge_account_data: { Args: { _user_id: string }; Returns: undefined }
       review_user_report: {
         Args: { _action: string; _report_id: string }
         Returns: undefined

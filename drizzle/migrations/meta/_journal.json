@@ -8,6 +8,13 @@
       "when": 1793451915205,
       "tag": "0000_user_safety_controls",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793451936218,
+      "tag": "0001_account_deletion_cleanup",
+      "breakpoints": true
     }
   ]
 }
