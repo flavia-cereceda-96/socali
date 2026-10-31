@@ -195,7 +195,7 @@ export function ChatEventCreator({ friends, initial, submitting, onCreate, onMor
             <button key={f.user_id} onClick={() => toggleFriend(f)}
               className={cn('flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs font-medium transition-colors',
                 on ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-foreground')}>
-              <UserAvatar name={f.username} avatarUrl={f.avatar_url} size="sm" />
+              <UserAvatar username={f.username} avatarUrl={f.avatar_url} size="sm" />
               {f.username}
               {on && <Check className="h-3 w-3" />}
             </button>
@@ -335,7 +335,7 @@ function ConfirmCard({ draft, setDraft, picker, submitting, onCreate, onMoreDeta
         <div className="flex flex-wrap gap-2">
           {draft.friends.map(f => (
             <span key={f.user_id} className="flex items-center gap-1.5 rounded-full bg-card py-1 pl-1 pr-2 text-xs font-medium text-foreground">
-              <UserAvatar name={f.username} avatarUrl={f.avatar_url} size="sm" />
+              <UserAvatar username={f.username} avatarUrl={f.avatar_url} size="sm" />
               {f.username}
               <button aria-label={`Remove ${f.username}`} onClick={() => setDraft(d => ({ ...d, friends: d.friends.filter(x => x.user_id !== f.user_id) }))}>
                 <X className="h-3 w-3 text-muted-foreground" />
