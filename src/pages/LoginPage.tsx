@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { LegalLinks } from '@/components/LegalLinks';
+import heroImg from '@/assets/friends-planning-flat.jpg';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -37,50 +38,80 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
+    <div className="relative flex min-h-screen flex-col items-center overflow-hidden bg-background px-6 pb-8 pt-6">
+      {/* soft background blobs */}
+      <div aria-hidden className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -right-24 top-1/3 h-72 w-72 rounded-full bg-secondary/40 blur-3xl" />
+
+      <div className="relative z-10 flex w-full max-w-md items-center justify-center">
+        <span className="text-lg font-bold tracking-[0.3em] text-foreground">C A L I</span>
+      </div>
+
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-sm space-y-8"
+        initial={{ opacity: 0, scale: 0.92 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        className="relative z-10 mt-4 w-full max-w-sm"
       >
-        <div className="text-center">
-          <div className="mb-3 text-5xl">🗓️</div>
-          <h1 className="text-2xl font-bold text-foreground">Welcome Back</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Log in to your account</p>
+        <motion.img
+          src={heroImg}
+          alt="Friends gathered around a calendar planning a picnic, coffee and a concert"
+          width={1024}
+          height={896}
+          animate={{ y: [0, -8, 0] }}
+          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+          className="w-full mix-blend-multiply"
+        />
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.5 }}
+        className="relative z-10 mt-2 w-full max-w-sm text-center"
+      >
+        <h1 className="text-3xl font-bold leading-tight tracking-tight text-foreground">
+          Welcome Back
+        </h1>
+        <p className="mt-1 text-base text-muted-foreground">Log in to your account</p>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35, duration: 0.5 }}
+        className="relative z-10 mt-6 w-full max-w-sm space-y-4"
+      >
+        <div className="space-y-1.5">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            autoComplete="email"
+          />
         </div>
 
-        <div className="space-y-5">
-          <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              autoComplete="email"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="••••••••"
-              autoComplete="current-password"
-              onKeyDown={e => e.key === 'Enter' && handleLogin()}
-            />
-          </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            placeholder="••••••••"
+            autoComplete="current-password"
+            onKeyDown={e => e.key === 'Enter' && handleLogin()}
+          />
         </div>
 
         <Button onClick={handleLogin} disabled={loading} className="w-full font-semibold" size="lg">
           {loading ? 'Logging in...' : 'Log In'}
         </Button>
 
-        <div className="flex items-center justify-between text-sm">
+        <div className="flex items-center justify-center text-sm">
           <Link to="/forgot-password" className="text-primary font-medium hover:underline">
             Forgot password?
           </Link>
@@ -92,8 +123,8 @@ const LoginPage = () => {
             Sign up
           </Link>
         </p>
-        <LegalLinks />
       </motion.div>
+      <LegalLinks />
     </div>
   );
 };
