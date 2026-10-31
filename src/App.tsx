@@ -31,6 +31,7 @@ import { useSyncLanguageFromProfile } from "./hooks/useLanguagePreference";
 import LegalPage from './pages/LegalPage';
 import ModerationPage from './pages/ModerationPage';
 import { NativePushBridge } from './components/NativePushBridge';
+import { PushSoftPrompt } from './components/PushSoftPrompt';
 
 const queryClient = new QueryClient();
 
@@ -85,6 +86,7 @@ const App = () => {
       <Sonner />
       <BrowserRouter>
         <NativePushBridge userId={session?.user.id} />
+        {session && <PushSoftPrompt />}
         <AuthedShell>
           <Routes>
             <Route path="/privacy" element={<LegalPage />} />

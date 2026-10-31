@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { maybeShowPushPrompt } from '@/lib/pushPrompt';
 import { useNavigate } from 'react-router-dom';
 import { useEvents, DbEvent, DbEventWithCreator } from '@/hooks/useEvents';
 import { useActivityFeed, ActivityItem } from '@/hooks/useActivity';
@@ -69,6 +70,7 @@ const RequestsPage = () => {
     else {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['unread-activity-count'] });
+      void maybeShowPushPrompt();
     }
     setDecliningId(null);
     setDeclineNote('');

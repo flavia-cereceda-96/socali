@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { maybeShowPushPrompt } from '@/lib/pushPrompt';
 import { useFriends, DbProfile } from '@/hooks/useEvents';
 import { useGroups, useGroup, DbGroup } from '@/hooks/useGroups';
 import { UserAvatar } from '@/components/UserAvatar';
@@ -318,6 +319,7 @@ const CreateEventPage = () => {
         description: `${emoji} ${title}${peopleSummary ? ` with ${peopleSummary}` : ''}`,
       });
       navigate('/');
+      void maybeShowPushPrompt();
     } catch (err: any) {
       toast.error(err.message || 'Something went wrong');
     } finally {

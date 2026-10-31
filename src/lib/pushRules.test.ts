@@ -1,9 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { notificationPath, safePushPath, pushAllowed, buildNotification } from '../../supabase/functions/_shared/notificationContent';
+import { notificationPath, safePushPath, pushAllowed, buildNotification, pushGrouping } from '../../supabase/functions/_shared/notificationContent';
 describe('native push rules', () => {
   const id = '11111111-2222-4333-8444-555555555555';
-  it('requires explicit push opt-in', () => { expect(pushAllowed(null, false)).toBe(false); expect(pushAllowed(false, false)).toBe(false); expect(pushAllowed(true, false)).toBe(true); });
-  it('suppresses blocked senders', () => expect(pushAllowed(true, true)).toBe(false));
+  const all = { push_notifications: true, push_plans: true, push_rsvps: true, push_comments: true, push_group_chat: true, push_friends: true };
+  it('requires explicit push opt-in', () => { expect(pushAllowed(null, 'invitation', false)).toBe(false); expect(pushAllowed({ ...all, push_notifications: false }, 'invitation', false)).toBe(false); expect(pushAllowed(all, 'invitation', false)).toBe(true); });
+  it('suppresses blocked senders', () => expect(pushAllowed(all, 'invitation', true)).toBe(false));
+  it('plans category covers invites, nudges, reminders and poll closing', () => { for (const t of ['invitation', 'date_poll_invite', 'date_confirmed', 'what_confirmed', 'rsvp_nudge', 'event_reminder', 'poll_closing']) { expect(pushAllowed({ ...all, push_plans: false }, t, false)).toBe(false); expect(pushAllowed(all, t, false)).toBe(true); } });
+  it('rsvps category covers rsvp replies', () => { expect(pushAllowed({ ...all, push_rsvps: false }, 'rsvp_declined', false)).toBe(false); expect(pushAllowed({ ...all, push_rsvps: false }, 'rsvp_nudge', false)).toBe(true); });
+  it('comments category covers comments and mentions', () => { expect(pushAllowed({ ...all, push_comments: false }, 'mention', false)).toBe(false); expect(pushAllowed({ ...all, push_comments: false }, 'comment', false)).toBe(false); });
+  it('group chat category gates group messages', () => expect(pushAllowed({ ...all, push_group_chat: false }, 'group_message', false)).toBe(false));
+  it('friends category covers friend and group invites', () => { for (const t of ['friend_request', 'friend_accepted', 'group_invite']) expect(pushAllowed({ ...all, push_friends: false }, t, false)).toBe(false); });
+  it('group messages collapse per group', () => expect(pushGrouping({ id: 'a', type: 'group_message', group_id: id })).toEqual({ collapseId: `group:${id}`, androidTag: `group:${id}`, threadId: `group:${id}` }));
+  it('other notifications stay unique but thread by event', () => expect(pushGrouping({ id: 'a', type: 'comment', event_id: id })).toEqual({ collapseId: 'a', androidTag: 'a', threadId: `event:${id}` }));
+  it('falls back to the general thread', () => expect(pushGrouping({ id: 'a', type: 'friend_request' }).threadId).toBe('general'));
   it('opens the relevant event', () => expect(notificationPath({ type: 'date_confirmed', event_id: id })).toBe(`/event/${id}`));
   it('opens group invitations where they can be accepted', () => expect(notificationPath({ type: 'group_invite', group_id: id })).toBe('/requests'));
   it('opens group messages in the group', () => expect(notificationPath({ type: 'group_message', group_id: id })).toBe(`/people/groups/${id}`));

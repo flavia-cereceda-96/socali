@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { maybeShowPushPrompt } from '@/lib/pushPrompt';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEvents, DbEventWithCreator, useFriends, DbProfile } from '@/hooks/useEvents';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -139,6 +140,7 @@ const EventDetailPage = () => {
         if (error) { toast.error(error.message); return; }
       }
       toast.success('RSVP updated');
+      void maybeShowPushPrompt();
       queryClient.invalidateQueries({ queryKey: ['events'] });
       setRsvpSheetOpen(false);
     } finally {

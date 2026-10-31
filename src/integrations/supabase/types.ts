@@ -773,7 +773,12 @@ export type Database = {
           invite_to: string | null
           notification_timezone: string
           preferred_language: string
+          push_comments: boolean
+          push_friends: boolean
+          push_group_chat: boolean
           push_notifications: boolean
+          push_plans: boolean
+          push_rsvps: boolean
           usage: string
           user_id: string
           username: string
@@ -789,7 +794,12 @@ export type Database = {
           invite_to?: string | null
           notification_timezone?: string
           preferred_language?: string
+          push_comments?: boolean
+          push_friends?: boolean
+          push_group_chat?: boolean
           push_notifications?: boolean
+          push_plans?: boolean
+          push_rsvps?: boolean
           usage: string
           user_id: string
           username: string
@@ -805,7 +815,12 @@ export type Database = {
           invite_to?: string | null
           notification_timezone?: string
           preferred_language?: string
+          push_comments?: boolean
+          push_friends?: boolean
+          push_group_chat?: boolean
           push_notifications?: boolean
+          push_plans?: boolean
+          push_rsvps?: boolean
           usage?: string
           user_id?: string
           username?: string

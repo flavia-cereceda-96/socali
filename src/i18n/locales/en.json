@@ -6,7 +6,32 @@
     "denied": "Allow notifications for socali in your phone’s Settings, then try again.",
     "enabled": "Push notifications enabled",
     "disabled": "Push notifications disabled",
-    "error": "Could not update push notifications. Please try again."
+    "error": "Could not update push notifications. Please try again.",
+    "softPromptTitle": "Want a heads-up when friends respond?",
+    "turnOn": "Turn on",
+    "notNow": "Not now",
+    "categories": {
+      "push_plans": {
+        "title": "Plans",
+        "description": "Invites, date polls, confirmations, nudges and reminders"
+      },
+      "push_rsvps": {
+        "title": "Replies",
+        "description": "When friends RSVP to your plans"
+      },
+      "push_comments": {
+        "title": "Comments",
+        "description": "Comments and mentions"
+      },
+      "push_group_chat": {
+        "title": "Group chat",
+        "description": "New messages in your groups"
+      },
+      "push_friends": {
+        "title": "Friends & groups",
+        "description": "Friend requests and group invites"
+      }
+    }
   },
   "common": {
     "back": "Back",
