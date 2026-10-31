@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { UserAvatar } from '@/components/UserAvatar';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { SafetyMenu } from '@/components/SafetyMenu';
 
 type Category = 'bug' | 'feature' | 'improvement' | 'other';
 type Status = 'created' | 'accepted' | 'rejected';
@@ -320,6 +321,7 @@ const FeedbackBoardPage = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start gap-2 flex-wrap">
                       <h3 className="font-semibold text-foreground leading-tight flex-1 min-w-0">{f.title}</h3>
+                      <SafetyMenu type="feedback" contentId={f.id} authorId={f.user_id} currentUserId={userId} />
                       <Badge
                         className="text-[10px] font-medium border-0"
                         style={STATUS_INLINE[f.status]}
@@ -514,6 +516,7 @@ function CommentsThread({
               <p className="text-sm text-foreground whitespace-pre-wrap">{c.content}</p>
             </div>
             {renderUpvote(c.id, c.ups, c.myUpvoted)}
+            <SafetyMenu type="feedback_comment" contentId={c.id} authorId={c.user_id} currentUserId={userId} />
           </div>
         );
       })}
@@ -556,6 +559,7 @@ function CommentsThread({
                   <p className="text-sm text-foreground whitespace-pre-wrap">{c.content}</p>
                 </div>
                 {renderUpvote(c.id, c.ups, c.myUpvoted)}
+                <SafetyMenu type="feedback_comment" contentId={c.id} authorId={c.user_id} currentUserId={userId} />
               </div>
             );
           })}

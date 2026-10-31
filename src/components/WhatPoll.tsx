@@ -190,7 +190,7 @@ export function WhatPoll({
                       href={opt.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={handleExternalLink}
                       className="mt-0.5 inline-flex items-center gap-1 text-xs text-primary hover:underline"
                     >
                       <ExternalLink className="h-3 w-3" /> Open link

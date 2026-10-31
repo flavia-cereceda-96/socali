@@ -14,6 +14,8 @@ import { PasswordStrength } from '@/components/onboarding/PasswordStrength';
 import { useTranslation } from 'react-i18next';
 import { isSupportedLang } from '@/hooks/useLanguagePreference';
 import { UserAvatar } from '@/components/UserAvatar';
+import { LegalLinks } from '@/components/LegalLinks';
+import { authOrigin, publicAppUrl } from '@/lib/appUrl';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -149,7 +151,7 @@ const OnboardingPage = () => {
         password,
         options: {
           data: { username, usage },
-          emailRedirectTo: window.location.origin,
+          emailRedirectTo: authOrigin(),
         },
       });
       if (error) {
@@ -306,7 +308,7 @@ const OnboardingPage = () => {
   };
 
   const inviteLink = authedUserId
-    ? `${window.location.origin}/welcome?ref=${authedUserId}`
+    ? publicAppUrl(`/welcome?ref=${authedUserId}`)
     : '';
 
   const handleCopyInvite = async () => {
@@ -735,6 +737,7 @@ const OnboardingPage = () => {
         <Button onClick={handleSubmit} disabled={loading} className="w-full font-semibold" size="lg">
           {loading ? 'Creating...' : 'Get Started 🚀'}
         </Button>
+        <LegalLinks />
 
         <p className="text-center text-sm text-muted-foreground">
           Already have an account?{' '}

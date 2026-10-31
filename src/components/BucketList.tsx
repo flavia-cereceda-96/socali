@@ -14,6 +14,7 @@ import {
   type BucketListItem,
 } from '@/hooks/useBucketList';
 import { cn } from '@/lib/utils';
+import { SafetyMenu } from '@/components/SafetyMenu';
 
 interface Props {
   bucketListId: string | undefined;
@@ -197,6 +198,7 @@ export function BucketList({ bucketListId, currentUserId, inviteFriendId, invite
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   )}
+                  <SafetyMenu type="bucket_item" contentId={item.id} authorId={item.added_by} currentUserId={currentUserId} />
                 </div>
                 {!isDone && (
                   <div className="flex gap-2">

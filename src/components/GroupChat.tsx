@@ -5,6 +5,7 @@ import { useGroupMessages, useSendGroupMessage } from '@/hooks/useGroupChat';
 import { UserAvatar } from '@/components/UserAvatar';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { SafetyMenu } from '@/components/SafetyMenu';
 
 interface Props {
   groupId: string;
@@ -98,6 +99,7 @@ export const GroupChat = ({ groupId }: Props) => {
                   {formatTime(m.created_at)}
                 </span>
               </div>
+              <SafetyMenu type="group_message" contentId={m.id} authorId={m.user_id} currentUserId={currentUserId} />
             </motion.div>
           );
         })}

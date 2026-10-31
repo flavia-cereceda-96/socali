@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
 import { LanguageToggle } from '@/components/LanguageToggle';
+import { LegalLinks } from '@/components/LegalLinks';
 
 const SPLASH_KEY = 'synccircle_seen_splash';
 
@@ -76,6 +77,7 @@ const SplashPage = () => {
           {t('splash.logIn')}
         </button>
       </motion.div>
+      <LegalLinks />
     </div>
   );
 };

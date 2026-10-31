@@ -10,11 +10,16 @@ import { UserAvatar } from '@/components/UserAvatar';
 import { GroupAvatar } from '@/components/GroupAvatar';
 import { BucketList } from '@/components/BucketList';
 import { useFriendBucketListId } from '@/hooks/useBucketList';
+import { SafetyMenu } from '@/components/SafetyMenu';
+import { useBlocks, useSafetyActions } from '@/hooks/useSafety';
+import { toast } from 'sonner';
 
 const PersonPage = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const [meId, setMeId] = useState<string | null>(null);
+  const { data: blocks = [] } = useBlocks();
+  const { unblock } = useSafetyActions();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setMeId(data.user?.id || null));
@@ -114,9 +119,11 @@ const PersonPage = () => {
   }
 
   if (!profile) {
+    const blocked = blocks.find(b => b.blocked_user_id === userId);
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-        <p className="text-muted-foreground">Person not found</p>
+        <p className="text-muted-foreground">{blocked ? 'This person is blocked' : 'Person not found'}</p>
+        {blocked && <Button variant="outline" onClick={async () => { try { await unblock(blocked.id); } catch { toast.error('Could not unblock'); } }}>Unblock</Button>}
         <Button variant="ghost" onClick={() => navigate(-1)}>Go back</Button>
       </div>
     );
@@ -148,6 +155,7 @@ const PersonPage = () => {
         >
           <UserAvatar avatarUrl={profile.avatar_url} username={profile.username} size="xl" />
           <h1 className="mt-3 text-2xl font-bold text-foreground">{profile.username}</h1>
+          <SafetyMenu type="profile" contentId={profile.user_id} authorId={profile.user_id} currentUserId={meId} />
           {profile.bio && (
             <p className="mt-2 text-sm text-foreground/80 max-w-xs leading-relaxed">{profile.bio}</p>
           )}
@@ -251,7 +259,7 @@ const PersonPage = () => {
           ) : (
             <div className="-mx-4 px-4 overflow-x-auto scrollbar-hide">
               <div className="flex gap-4 pb-1">
-                {groupData!.shared.map((g: any) => (
+                {groupData?.shared.map((g: any) => (
                   <button
                     key={g.id}
                     onClick={() => navigate(`/people/groups/${g.id}`)}
@@ -270,7 +278,7 @@ const PersonPage = () => {
               <h3 className="mb-2 text-xs font-medium text-muted-foreground">Their other groups</h3>
               <div className="-mx-4 px-4 overflow-x-auto scrollbar-hide">
                 <div className="flex gap-4 pb-1 opacity-80">
-                  {groupData!.theirOther.map((g: any) => (
+                  {groupData?.theirOther.map((g: any) => (
                     <div key={g.id} className="flex flex-col items-center gap-1.5 w-16 flex-shrink-0">
                       <GroupAvatar avatarUrl={g.avatar_url} emoji={g.emoji} name={g.name} size="lg" />
                       <span className="text-xs text-foreground truncate max-w-full">{g.name}</span>

@@ -20,6 +20,9 @@ import { LocationMap } from '@/components/LocationMap';
 import { RsvpSheet, RsvpValue } from '@/components/RsvpSheet';
 import { DatePoll } from '@/components/DatePoll';
 import { WhatPoll } from '@/components/WhatPoll';
+import { publicAppUrl } from '@/lib/appUrl';
+import { shareAppLink, handleExternalLink } from '@/lib/nativeLinks';
+import { SafetyMenu } from '@/components/SafetyMenu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -144,7 +147,7 @@ const EventDetailPage = () => {
   };
 
   const handleShareInviteLink = async () => {
-    if (!event) return;
+    if (!event || !userId) return;
     try {
       // Look up existing link
       const { data: existing } = await supabase
@@ -157,7 +160,7 @@ const EventDetailPage = () => {
       if (!token) {
         const { data: created, error } = await supabase
           .from('event_invite_links')
-          .insert({ event_id: event.id, created_by: userId! })
+          .insert({ event_id: event.id, created_by: userId })
           .select('token')
           .single();
         if (error) {
@@ -167,24 +170,14 @@ const EventDetailPage = () => {
         token = created.token as string;
       }
 
-      const url = `${window.location.origin}/invite/event/${token}`;
+      const url = publicAppUrl(`/invite/event/${token}`);
       const shareData = {
         title: event.title,
         text: `Join me for ${event.title}`,
         url,
       };
 
-      if (navigator.share && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-        try {
-          await navigator.share(shareData);
-          return;
-        } catch {
-          // fall through to clipboard
-        }
-      }
-
-      await navigator.clipboard.writeText(url);
-      toast.success('Link copied!');
+      await shareAppLink(shareData);
     } catch (err: any) {
       toast.error(err.message || 'Could not create invite link');
     }
@@ -571,6 +564,7 @@ const EventDetailPage = () => {
                 <a
                   href={(event as any).link_url}
                   target="_blank"
+                  onClick={handleExternalLink}
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 text-sm font-medium text-primary underline-offset-4 hover:underline break-all"
                 >

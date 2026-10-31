@@ -102,7 +102,7 @@ export function InlineWhatPoll({ eventId, userId, participantProfiles, totalElig
                     href={opt.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={handleExternalLink}
                     className="text-primary"
                     aria-label="Open link"
                   >

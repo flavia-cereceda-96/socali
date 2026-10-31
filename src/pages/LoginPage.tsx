@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { LegalLinks } from '@/components/LegalLinks';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -91,6 +92,7 @@ const LoginPage = () => {
             Sign up
           </Link>
         </p>
+        <LegalLinks />
       </motion.div>
     </div>
   );

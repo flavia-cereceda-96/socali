@@ -40,6 +40,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
+import { SafetyMenu } from '@/components/SafetyMenu';
 
 const GroupDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -219,6 +220,7 @@ const GroupDetailPage = () => {
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="flex-1 text-xl font-bold text-foreground truncate">{group.name}</h1>
+          <SafetyMenu type="group" contentId={group.id} authorId={group.created_by} currentUserId={currentUserId} />
           {isAdmin && (
             <button
               onClick={openEdit}
