@@ -293,7 +293,7 @@ const Index = () => {
           transition={{ delay: 0.05 + gi * 0.04 }}
           className="flex gap-3 rounded-2xl bg-card p-4 shadow-card"
         >
-          <div className="flex flex-col items-center self-start rounded-xl px-3 py-2 min-w-[52px]" style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}>
+          <div className="flex flex-col items-center justify-center self-stretch rounded-xl px-3 py-2 min-w-[52px]" style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}>
             <span className="text-xs font-semibold uppercase">{d.toLocaleDateString('en-US', { weekday: 'short' })}</span>
             <span className="text-lg font-bold">{d.getDate()}</span>
             <span className="mt-1 text-[10px] font-semibold opacity-80">{g.length} plans</span>
