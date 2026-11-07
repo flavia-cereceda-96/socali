@@ -63,7 +63,7 @@ const CalendarPage = () => {
   const wsIdx = weekStartIndex(weekStart) as 0 | 1;
 
   const [viewMonth, setViewMonth] = useState<Date>(() => new Date(today.getFullYear(), today.getMonth(), 1));
-  const [view, setView] = useState<'fourweeks' | 'month'>('fourweeks');
+  const [view, setView] = useState<'fourweeks' | 'month'>('month');
   const [anchor, setAnchor] = useState(today);
   const fourWeekDays = useMemo(() => buildFourWeeks(anchor, wsIdx), [anchor, wsIdx]);
   const { data: userId } = useQuery({ queryKey: ['calendar-user'], queryFn: async () => {
@@ -203,9 +203,6 @@ const CalendarPage = () => {
 
       <AppHeader title="Calendar" />
       <div className="mx-auto max-w-2xl px-4 pt-2">
-        <div className="mb-3 flex gap-1 rounded-full bg-muted p-1" role="group" aria-label="Calendar view">
-          {(['fourweeks', 'month'] as const).map(mode => <Button key={mode} variant={view === mode ? 'secondary' : 'ghost'} aria-pressed={view === mode} onClick={() => { setView(mode); if (mode === 'month') setViewMonth(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)); else setAnchor(selectedDate); }} className={cn('flex-1 rounded-full', view === mode && 'bg-secondary-foreground text-primary-foreground hover:bg-secondary-foreground/90')}>{mode === 'fourweeks' ? '4 weeks' : 'Month'}</Button>)}
-        </div>
 
         {/* @-mention input */}
         <div className="relative mb-2">
