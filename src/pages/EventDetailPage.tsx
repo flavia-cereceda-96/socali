@@ -451,13 +451,16 @@ const EventDetailPage = () => {
                 maxLength={60}
               />
             </div>
-            <div className="flex gap-2">
-              <Button onClick={handleSave} disabled={saving} className="flex-1 gap-1">
+            <div className="h-20" aria-hidden />
+            <div className="fixed inset-x-0 bottom-0 z-[60] border-t border-border bg-background/95 backdrop-blur px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+             <div className="mx-auto flex max-w-md gap-2">
+              <Button onClick={handleSave} disabled={saving} size="lg" className="flex-1 gap-1">
                 <Check className="h-4 w-4" /> {saving ? 'Saving...' : 'Save'}
               </Button>
               <Button variant="ghost" onClick={() => setEditing(false)} className="gap-1">
                 <X className="h-4 w-4" /> Cancel
               </Button>
+             </div>
             </div>
             {isCreator && event.participants.length > 0 && (
               <div className="space-y-2 rounded-xl border border-border bg-secondary/30 p-3">
