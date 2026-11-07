@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { nativePushAvailable, removeNativePush } from '@/lib/nativePush';
 import { enableNativePush } from '@/lib/pushPrompt';
 
-const CATEGORIES = ['push_plans', 'push_rsvps', 'push_comments', 'push_group_chat', 'push_friends'] as const;
+const CATEGORIES = ['push_plans', 'push_rsvps', 'push_comments', 'push_friends'] as const;
 type Category = typeof CATEGORIES[number];
 type Prefs = { push_notifications: boolean } & Record<Category, boolean>;
 
