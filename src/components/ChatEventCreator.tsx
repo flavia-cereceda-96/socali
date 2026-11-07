@@ -84,11 +84,11 @@ export function ChatEventCreator({ friends, initial, submitting, onCreate, onMor
   // Post a bot prompt whenever the stage changes
   const lastStage = useRef<Stage>('start');
   useEffect(() => {
-    if (stage === lastStage.current || stage === 'start') return;
+    if (thinking || stage === lastStage.current || stage === 'start') return;
     lastStage.current = stage;
     setMessages(m => [...m, { role: 'bot', text: prompts[stage] }]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stage]);
+  }, [stage, thinking]);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, stage, thinking]);
 
