@@ -123,11 +123,6 @@ export function ChatEventCreator({ friends, initial, submitting, onCreate, onMor
     say(text);
     setStarted(true);
 
-    // Title stage with a plain short answer: take it literally
-    if (stage === 'title' && text.split(' ').length <= 6) {
-      setDraft(d => ({ ...d, title: text }));
-      return;
-    }
 
     setThinking(true);
     try {
@@ -163,7 +158,7 @@ export function ChatEventCreator({ friends, initial, submitting, onCreate, onMor
         setMessages(m => [...m, { role: 'bot', text: `I couldn’t find ${data.unmatched_names.join(', ')} in your friends — pick them below if they’re there.` }]);
       }
     } catch (e: any) {
-      if (stage === 'title' || !draft.title) setDraft(d => ({ ...d, title: d.title || text.slice(0, 60) }));
+      if (!draft.title) setDraft(d => ({ ...d, title: d.title || text.slice(0, 60) }));
       setMessages(m => [...m, { role: 'bot', text: 'Hmm, I couldn’t read all of that — let’s go step by step.' }]);
     } finally {
       setThinking(false);
