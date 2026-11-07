@@ -57,7 +57,17 @@ Deno.serve(async req => {
           await admin.from('user_push_tokens').delete().eq('id', device.id);
           sent.push(device.id); continue;
         }
-        await admin.from('push_outbox').update({ status: 'failed', sent_token_ids: sent, attempts: response.status === 429 || response.status >= 500 ? claim.attempts : 6, retry_at: new Date(Date.now() + 3600000).toISOString(), last_error: `Firebase HTTP ${response.status}` }).eq('id', claim.id);
+        let fcmCode = 'UNKNOWN'; let fcmMessage = details.slice(0, 300);
+        try {
+          const parsed = JSON.parse(details);
+          const err = parsed?.error ?? {};
+          const fcmDetail = Array.isArray(err.details) ? err.details.find((d: { errorCode?: string }) => d?.errorCode) : undefined;
+          fcmCode = fcmDetail?.errorCode ?? err.status ?? parsed?.type ?? 'UNKNOWN';
+          fcmMessage = String(err.message ?? parsed?.message ?? fcmMessage);
+        } catch { /* non-JSON body */ }
+        const safeError = `${response.status} ${fcmCode}: ${fcmMessage.split(device.token).join('[token]')}`.slice(0, 500);
+        console.error(`FCM send failed for outbox ${claim.id}: ${safeError}`);
+        await admin.from('push_outbox').update({ status: 'failed', sent_token_ids: sent, attempts: response.status === 429 || response.status >= 500 ? claim.attempts : 6, retry_at: new Date(Date.now() + 3600000).toISOString(), last_error: safeError }).eq('id', claim.id);
         return json({ error: 'Firebase delivery failed', status: response.status }, response.status);
       }
       sent.push(device.id);
