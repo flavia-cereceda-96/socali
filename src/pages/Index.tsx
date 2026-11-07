@@ -125,7 +125,8 @@ const Index = () => {
 
   const hasNoEvents = events.length === 0;
 
-  const renderEventCard = (event: DbEventWithCreator, i: number) => {
+  const renderEventCard = (event: DbEventWithCreator, i: number, list?: DbEventWithCreator[]) => {
+    const sameDayAsPrev = !!(list && i > 0 && event.date && list[i - 1].date === event.date && (list[i - 1] as any).date_confirmed !== false && (event as any).date_confirmed !== false);
     const timeDisplay = getTimeDisplay(event);
     const myP = event.participants.find(p => p.user_id === userId);
     const replyNeeded = myP?.status === 'pending' || myP?.status === 'suggested';
@@ -167,6 +168,8 @@ const Index = () => {
             <span className="text-[10px] font-semibold uppercase tracking-wide">Date</span>
             <span className="text-sm font-bold">TBD</span>
           </div>
+        ) : sameDayAsPrev ? (
+          <div className="min-w-[52px]" aria-hidden />
         ) : (
           <div
             className="flex flex-col items-center justify-center rounded-xl px-3 py-2 min-w-[52px]"
@@ -425,7 +428,7 @@ const Index = () => {
             {renderFriendsRow(todayEvents)}
             <div className="flex flex-col gap-3 mb-8">
               {todayEvents.length > 0 ? (
-                todayEvents.map((e, i) => renderEventCard(e, i))
+                todayEvents.map((e, i, arr) => renderEventCard(e, i, arr))
               ) : (
                 <p className="text-sm text-muted-foreground">Nothing on today — enjoy the free time! 🌿</p>
               )}
@@ -443,7 +446,7 @@ const Index = () => {
             {renderFriendsRow(weekEvents)}
             <div className="flex flex-col gap-3 mb-8">
               {weekEvents.length > 0 ? (
-                weekEvents.map((e, i) => renderEventCard(e, i))
+                weekEvents.map((e, i, arr) => renderEventCard(e, i, arr))
               ) : (
                 <p className="text-sm text-muted-foreground">Nothing planned this week yet ✨</p>
               )}
@@ -476,7 +479,7 @@ const Index = () => {
             </div>
             <div className="flex flex-col gap-3 mb-8">
               {monthEvents.length > 0 ? (
-                monthEvents.map((e, i) => renderEventCard(e, i))
+                monthEvents.map((e, i, arr) => renderEventCard(e, i, arr))
               ) : (
                 <p className="text-sm text-muted-foreground">Nothing planned yet — a good time to make plans!</p>
               )}
