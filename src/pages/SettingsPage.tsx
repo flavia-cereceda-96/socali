@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { LegalLinks } from '@/components/LegalLinks';
 import { AccountDeletion } from '@/components/AccountDeletion';
+import { ChangeEmail } from '@/components/ChangeEmail';
 import { BlockedUsers } from '@/components/BlockedUsers';
 import { PushNotificationSettings } from '@/components/PushNotificationSettings';
 import { removeNativePush } from '@/lib/nativePush';
@@ -271,6 +272,7 @@ const SettingsPage = () => {
           )}
 
           {/* Logout */}
+          <ChangeEmail />
           <BlockedUsers />
           {isAdmin && <Button variant="outline" className="w-full" onClick={() => navigate('/moderation')}>Safety reports</Button>}
           <LegalLinks />
