@@ -125,8 +125,7 @@ const Index = () => {
 
   const hasNoEvents = events.length === 0;
 
-  const renderEventCard = (event: DbEventWithCreator, i: number, list?: DbEventWithCreator[]) => {
-    const sameDayAsPrev = !!(list && i > 0 && event.date && list[i - 1].date === event.date && (list[i - 1] as any).date_confirmed !== false && (event as any).date_confirmed !== false);
+  const renderEventCard = (event: DbEventWithCreator, i: number, grouped = false) => {
     const timeDisplay = getTimeDisplay(event);
     const myP = event.participants.find(p => p.user_id === userId);
     const replyNeeded = myP?.status === 'pending' || myP?.status === 'suggested';
@@ -161,15 +160,15 @@ const Index = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05 + i * 0.04 }}
         onClick={() => navigate(`/event/${event.id}`)}
-        className="flex gap-3 rounded-2xl bg-card p-4 shadow-card cursor-pointer transition-shadow hover:shadow-elevated active:scale-[0.99]"
+        className={grouped
+          ? "flex gap-3 py-3 first:pt-0 last:pb-0 cursor-pointer active:opacity-70"
+          : "flex gap-3 rounded-2xl bg-card p-4 shadow-card cursor-pointer transition-shadow hover:shadow-elevated active:scale-[0.99]"}
       >
-        {isTbd ? (
+        {grouped ? null : isTbd ? (
           <div className="flex flex-col items-center justify-center rounded-xl px-3 py-2 min-w-[52px] bg-muted text-muted-foreground">
             <span className="text-[10px] font-semibold uppercase tracking-wide">Date</span>
             <span className="text-sm font-bold">TBD</span>
           </div>
-        ) : sameDayAsPrev ? (
-          <div className="min-w-[52px]" aria-hidden />
         ) : (
           <div
             className="flex flex-col items-center justify-center rounded-xl px-3 py-2 min-w-[52px]"
@@ -275,6 +274,36 @@ const Index = () => {
         </div>
       </motion.div>
     );
+  };
+
+  const renderDayGroups = (list: DbEventWithCreator[]) => {
+    const groups: DbEventWithCreator[][] = [];
+    list.forEach(e => {
+      const last = groups[groups.length - 1];
+      if (last && last[0].date === e.date) last.push(e); else groups.push([e]);
+    });
+    return groups.map((g, gi) => {
+      if (g.length === 1) return renderEventCard(g[0], gi);
+      const d = new Date(g[0].date + 'T00:00:00');
+      return (
+        <motion.div
+          key={g[0].date}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 + gi * 0.04 }}
+          className="flex gap-3 rounded-2xl bg-card p-4 shadow-card"
+        >
+          <div className="flex flex-col items-center self-start rounded-xl px-3 py-2 min-w-[52px]" style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}>
+            <span className="text-xs font-semibold uppercase">{d.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+            <span className="text-lg font-bold">{d.getDate()}</span>
+            <span className="mt-1 text-[10px] font-semibold opacity-80">{g.length} plans</span>
+          </div>
+          <div className="flex flex-1 flex-col min-w-0 divide-y divide-border/60">
+            {g.map((e, i) => renderEventCard(e, i, true))}
+          </div>
+        </motion.div>
+      );
+    });
   };
 
   const sectionHeaderCls = "mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground";
@@ -428,7 +457,7 @@ const Index = () => {
             {renderFriendsRow(todayEvents)}
             <div className="flex flex-col gap-3 mb-8">
               {todayEvents.length > 0 ? (
-                todayEvents.map((e, i, arr) => renderEventCard(e, i, arr))
+                renderDayGroups(todayEvents)
               ) : (
                 <p className="text-sm text-muted-foreground">Nothing on today — enjoy the free time! 🌿</p>
               )}
@@ -446,7 +475,7 @@ const Index = () => {
             {renderFriendsRow(weekEvents)}
             <div className="flex flex-col gap-3 mb-8">
               {weekEvents.length > 0 ? (
-                weekEvents.map((e, i, arr) => renderEventCard(e, i, arr))
+                renderDayGroups(weekEvents)
               ) : (
                 <p className="text-sm text-muted-foreground">Nothing planned this week yet ✨</p>
               )}
@@ -479,7 +508,7 @@ const Index = () => {
             </div>
             <div className="flex flex-col gap-3 mb-8">
               {monthEvents.length > 0 ? (
-                monthEvents.map((e, i, arr) => renderEventCard(e, i, arr))
+                renderDayGroups(monthEvents)
               ) : (
                 <p className="text-sm text-muted-foreground">Nothing planned yet — a good time to make plans!</p>
               )}
