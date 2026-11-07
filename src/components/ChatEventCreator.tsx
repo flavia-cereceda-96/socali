@@ -65,7 +65,6 @@ export function ChatEventCreator({ friends, initial, submitting, onCreate, onMor
   const endRef = useRef<HTMLDivElement>(null);
 
   const stage: Stage = !started ? 'start'
-    : !draft.title.trim() ? 'title'
     : !draft.date ? 'date'
     : !draft.startTime && !draft.noTime ? 'time'
     : !friendsAsked ? 'friends'
@@ -146,7 +145,7 @@ export function ChatEventCreator({ friends, initial, submitting, onCreate, onMor
       const matched = friends.filter(f => (data.friend_ids || []).includes(f.user_id));
       setDraft(d => ({
         ...d,
-        title: data.title || d.title,
+        title: data.title || d.title || text.slice(0, 60),
         emoji: data.emoji || d.emoji,
         date: data.date || d.date,
         startTime: data.start_time || d.startTime,
@@ -231,7 +230,7 @@ export function ChatEventCreator({ friends, initial, submitting, onCreate, onMor
           </AnimatePresence>
 
           {thinking && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Reading your plan…</div>
+            <CookingBuffer />
           )}
 
           {/* Stage quick actions */}
@@ -289,6 +288,41 @@ export function ChatEventCreator({ friends, initial, submitting, onCreate, onMor
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+const COOKING_PHRASES = [
+  'Cooking up the plan…', 'Securing the vibe…', 'Locking it in before anyone flakes…',
+  'Consulting the vibe council…', 'Manifesting a full RSVP list…', 'Calculating optimal hang energy…',
+  'Alerting the main characters…', 'Making it legally binding (not really)…', 'Doing the group chat’s job…',
+  'Finding a time that slaps…', 'Spinning up the hype machine…', 'Ironing out the deets…',
+  'Bribing the calendar gods…', 'Loading main character energy…', 'Running it by the besties…',
+  'Sprinkling a little rizz on it…', 'No cap, almost there…', 'Making this plan certified fresh…',
+  'Untangling everyone’s schedules…', 'Vibe check in progress…', 'Turning “we should hang” into real life…',
+  'Gatekeeping nothing, sharing everything…', 'Assembling the squad…', 'Prepping the outfit discourse…',
+  'This one’s gonna hit different…', 'Warming up the dance floor…', 'Brewing something iconic…',
+  'Lowkey planning, highkey excited…', 'Putting the fun in functional…', 'Slay-ifying your schedule…',
+];
+
+function CookingBuffer() {
+  const [i, setI] = useState(() => Math.floor(Math.random() * COOKING_PHRASES.length));
+  useEffect(() => {
+    const t = setInterval(() => setI(prev => {
+      let n = prev;
+      while (n === prev) n = Math.floor(Math.random() * COOKING_PHRASES.length);
+      return n;
+    }), 1600);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div className="flex items-center gap-2 rounded-2xl rounded-bl-sm bg-secondary px-3.5 py-2 text-sm text-foreground w-fit">
+      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+      <AnimatePresence mode="wait">
+        <motion.span key={i} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2 }}>
+          {COOKING_PHRASES[i]}
+        </motion.span>
+      </AnimatePresence>
     </div>
   );
 }
