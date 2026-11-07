@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Mic, MicOff, Send, X, Plus, Check, CalendarDays, Clock, Users, Pencil, Loader2 } from 'lucide-react';
+import { ArrowLeft, Mic, MicOff, Send, X, Plus, Check, CalendarDays, Clock, Users, Pencil, Loader2, Copy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { DbProfile } from '@/hooks/useEvents';
@@ -20,7 +20,9 @@ export type ChatDraft = {
   friends: DbProfile[];
 };
 
-type Msg = { role: 'bot' | 'user'; text: string };
+type Msg = { role: 'bot' | 'user'; text: string; invite?: boolean };
+
+const INVITE_MESSAGE = `Hey! I'm using C A L I to plan things — join me here: https://socali.lovable.app`;
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const toISO = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -155,7 +157,7 @@ export function ChatEventCreator({ friends, initial, submitting, onCreate, onMor
       if (matched.length) bits.push(`with ${matched.map(m => m.username).join(', ')}`);
       if (bits.length) setMessages(m => [...m, { role: 'bot', text: `Got it: ${bits.join(' · ')}` }]);
       if (data.unmatched_names?.length) {
-        setMessages(m => [...m, { role: 'bot', text: `I couldn’t find ${data.unmatched_names.join(', ')} in your friends — pick them below if they’re there.` }]);
+        setMessages(m => [...m, { role: 'bot', text: `I couldn’t find ${data.unmatched_names.join(', ')} in your friends — pick them below if they’re there, or invite them to Cali.`, invite: true }]);
       }
     } catch (e: any) {
       if (!draft.title) setDraft(d => ({ ...d, title: d.title || text.slice(0, 60) }));
@@ -219,6 +221,18 @@ export function ChatEventCreator({ friends, initial, submitting, onCreate, onMor
                 <div className={cn('max-w-[85%] rounded-2xl px-3.5 py-2 text-sm',
                   m.role === 'user' ? 'rounded-br-sm bg-primary text-primary-foreground' : 'rounded-bl-sm bg-secondary text-foreground')}>
                   {m.text}
+                  {m.invite && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try { await navigator.clipboard.writeText(INVITE_MESSAGE); toast.success('Invite link copied! ✓'); }
+                        catch { toast.error("Couldn't copy — try again"); }
+                      }}
+                      className="mt-2 flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
+                    >
+                      <Copy className="h-3.5 w-3.5" /> Copy invite link
+                    </button>
+                  )}
                 </div>
               </motion.div>
             ))}
