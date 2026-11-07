@@ -213,19 +213,6 @@ const Index = () => {
           </div>
           <div className="flex items-center justify-between gap-2 mt-0.5">
             {(() => {
-              const hint = groupHints[event.id];
-              if (hint) {
-                return (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-accent/60 border border-primary/20 pl-1 pr-2 py-0.5 text-[11px] font-semibold text-foreground">
-                    {hint.avatar_url ? (
-                      <img src={hint.avatar_url} alt={hint.name} className="h-4 w-4 rounded-full object-cover" />
-                    ) : (
-                      <span className="text-sm leading-none">{hint.emoji}</span>
-                    )}
-                    {hint.name}
-                  </span>
-                );
-              }
               if (event.participants.length === 0) return <span />;
               return (
                 <div className="flex items-center gap-1">
@@ -240,7 +227,7 @@ const Index = () => {
                         avatarUrl={p.profile?.avatar_url}
                         username={p.profile?.username}
                         size="sm"
-                        className="h-6 w-6 text-[10px] ring-2 ring-card"
+                        className={`h-6 w-6 text-[10px] ring-2 ring-card transition ${p.status === 'confirmed' ? '' : 'grayscale opacity-60'}`}
                       />
                     </button>
                   ))}
