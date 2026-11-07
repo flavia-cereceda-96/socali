@@ -16,7 +16,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { UserAvatar } from '@/components/UserAvatar';
 import { GroupAvatar } from '@/components/GroupAvatar';
 import { FriendChipPicker } from '@/components/FriendChipPicker';
-import { GroupChat } from '@/components/GroupChat';
 import { BucketList } from '@/components/BucketList';
 import { useGroupBucketListId } from '@/hooks/useBucketList';
 import { Button } from '@/components/ui/button';
@@ -400,13 +399,6 @@ const GroupDetailPage = () => {
             currentUserId={currentUserId}
             inviteGroupId={group.id}
           />
-
-          <div>
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Group chat
-            </h2>
-            <GroupChat groupId={group.id} />
-          </div>
 
           <Button
             onClick={() => navigate(`/create?groupId=${group.id}`)}
