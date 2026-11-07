@@ -62,6 +62,10 @@ const App = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setLoading(false);
+      if (event === 'USER_UPDATED' && session?.user.email) {
+        const { id, email } = session.user;
+        setTimeout(() => { supabase.from('profiles').update({ email }).eq('user_id', id).then(() => {}); }, 0);
+      }
       if (event === 'SIGNED_IN' && session) {
         const token = await consumePendingInvite();
         if (token) {
