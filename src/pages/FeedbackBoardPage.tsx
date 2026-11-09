@@ -171,7 +171,7 @@ const FeedbackBoardPage = () => {
       if (userIds.length === 0) return [];
       const { data, error } = await supabase
         .from('profiles')
-        .select('user_id, username, avatar_url')
+        .select('user_id, username, display_name, avatar_url')
         .in('user_id', userIds);
       if (error) throw error;
       return data as Profile[];

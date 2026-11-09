@@ -109,7 +109,7 @@ export function useEvents() {
       if (allUserIds.length > 0) {
         const { data } = await supabase
           .from('profiles')
-          .select('user_id, username, email, avatar_url')
+          .select('user_id, username, display_name, email, avatar_url')
           .in('user_id', allUserIds);
         profiles = data || [];
       }
@@ -190,7 +190,7 @@ export function useFriendRequests() {
       const senderIds = requests.map(r => r.user_id);
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('user_id, username, email')
+        .select('user_id, username, display_name, email')
         .in('user_id', senderIds);
 
       const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));

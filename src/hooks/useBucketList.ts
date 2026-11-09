@@ -155,7 +155,7 @@ export function useMyBucketLists() {
 
       const [profilesRes, groupsRes] = await Promise.all([
         userIds.length
-          ? supabase.from('profiles').select('user_id, username, avatar_url').in('user_id', userIds)
+          ? supabase.from('profiles').select('user_id, username, display_name, avatar_url').in('user_id', userIds)
           : Promise.resolve({ data: [] as any[] }),
         groupIds.length
           ? supabase.from('groups').select('id, name, emoji, avatar_url').in('id', groupIds)

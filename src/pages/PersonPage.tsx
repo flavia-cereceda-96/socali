@@ -31,7 +31,7 @@ const PersonPage = () => {
       if (!userId) return null;
       const { data } = await supabase
         .from('profiles')
-        .select('user_id, username, avatar_url, bio, invite_to')
+        .select('user_id, username, display_name, avatar_url, bio, invite_to')
         .eq('user_id', userId)
         .maybeSingle();
       return data as any;

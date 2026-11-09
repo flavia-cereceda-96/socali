@@ -54,7 +54,7 @@ const PeoplePage = () => {
       const ids = rows.map(r => r.friend_id);
       const { data: profs } = await supabase
         .from('profiles')
-        .select('user_id, username, avatar_url')
+        .select('user_id, username, display_name, avatar_url')
         .in('user_id', ids);
       const profMap = new Map((profs || []).map(p => [p.user_id, p]));
       return rows.map(r => ({

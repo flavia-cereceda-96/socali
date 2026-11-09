@@ -39,7 +39,7 @@ export function useActivityFeed() {
       if (sourceIds.length > 0) {
         const { data } = await supabase
           .from('profiles')
-          .select('user_id, username, avatar_url')
+          .select('user_id, username, display_name, avatar_url')
           .in('user_id', sourceIds);
         profiles = data || [];
       }

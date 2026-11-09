@@ -31,7 +31,7 @@ export const EventPhotos = ({ eventId }: EventPhotosProps) => {
       const userIds = [...new Set(data.map(p => p.user_id))];
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('user_id, username')
+        .select('user_id, username, display_name')
         .in('user_id', userIds);
 
       const profileMap = new Map((profiles || []).map(p => [p.user_id, p.username]));

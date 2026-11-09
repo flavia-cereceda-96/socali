@@ -32,7 +32,7 @@ export const EventComments = ({ eventId }: EventCommentsProps) => {
       const userIds = [...new Set(data.map(c => c.user_id))];
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('user_id, username, avatar_url')
+        .select('user_id, username, display_name, avatar_url')
         .in('user_id', userIds);
 
       const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
@@ -97,7 +97,7 @@ export const EventComments = ({ eventId }: EventCommentsProps) => {
       if (mentions.length > 0) {
         const { data: mentionedProfiles } = await supabase
           .from('profiles')
-          .select('user_id, username')
+          .select('user_id, username, display_name')
           .in('username', mentions);
 
         if (mentionedProfiles && mentionedProfiles.length > 0) {
