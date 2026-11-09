@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import CalMascot from '@/components/CalMascot';
 import calendarInviteImg from '@/assets/calendar-invite-flat.jpg';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -340,62 +341,94 @@ const OnboardingPage = () => {
   // Friends Step
   if (step === 'friends') {
     return (
-      <div className="min-h-screen px-4 py-8 pb-32">
+      <div className="min-h-screen bg-background px-4 pb-32 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mx-auto w-full max-w-sm space-y-6"
         >
-          <div className="text-center">
-            <div className="mb-3 text-5xl">👯</div>
-            <h1 className="text-2xl font-bold text-foreground">Add your people</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Add 2-3 friends you make plans with often. The more people you add, the better C A L I works for you.
-            </p>
+          {/* Progress */}
+          <div className="flex items-center gap-3">
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary" role="progressbar" aria-valuenow={85} aria-valuemin={0} aria-valuemax={100}>
+              <div className="h-full w-[85%] rounded-full bg-foreground" />
+            </div>
+            <button onClick={() => setSkipDialogOpen(true)} className="text-sm font-semibold text-muted-foreground hover:text-foreground">
+              Skip for now
+            </button>
+          </div>
+
+          {/* Header */}
+          <div className="flex items-center gap-3">
+            <CalMascot mood="excited" size={72} />
+            <div>
+              <h1 className="text-2xl font-bold leading-tight text-foreground">Who do you make plans with?</h1>
+              <p className="mt-1 text-sm text-muted-foreground">Add 2–3 friends. Cali gets better with your people in it.</p>
+            </div>
+          </div>
+
+          {/* Added row */}
+          <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-1">
+            {addedFriends.map(f => (
+              <div key={f.user_id} className="relative flex w-[64px] shrink-0 flex-col items-center gap-1">
+                <UserAvatar avatarUrl={f.avatar_url} username={f.username ?? undefined} userId={f.user_id} className="h-[58px] w-[58px] ring-2 ring-accent ring-offset-2 ring-offset-background" />
+                <span className="max-w-full truncate text-xs font-medium text-foreground">@{f.username}</span>
+                <button
+                  onClick={() => handleRemoveFriend(f.user_id)}
+                  className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-foreground text-background"
+                  aria-label={`Remove @${f.username}`}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+            <button onClick={handleShareInvite} className="flex w-[64px] shrink-0 flex-col items-center gap-1" aria-label="Invite a friend">
+              <span className="flex h-[58px] w-[58px] items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/50 text-muted-foreground">
+                <UserPlus className="h-5 w-5" />
+              </span>
+              <span className="text-xs font-medium text-muted-foreground">Invite</span>
+            </button>
           </div>
 
           {/* Search */}
           <div className="space-y-2">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={friendSearch}
                 onChange={e => setFriendSearch(e.target.value)}
-                placeholder="Search by name or @username"
-                className="pl-9"
+                placeholder="Name or @username"
+                className="h-12 rounded-2xl border-0 bg-muted pl-10"
               />
             </div>
 
             {searching && (
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <p className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Loader2 className="h-3 w-3 animate-spin" /> Searching...
               </p>
             )}
 
             {friendResults.length > 0 && (
-              <div className="rounded-2xl border border-border bg-card divide-y divide-border overflow-hidden">
+              <div className="divide-y divide-border overflow-hidden rounded-3xl border border-border bg-card">
                 {friendResults.map(p => {
                   const added = isAdded(p.user_id);
                   return (
                     <div key={p.user_id} className="flex items-center gap-3 p-3">
-                      <UserAvatar avatarUrl={p.avatar_url} username={p.username} size="md" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{p.username || 'User'}</p>
-                        <p className="text-xs text-muted-foreground truncate">@{p.username}</p>
+                      <UserAvatar avatarUrl={p.avatar_url} username={p.username ?? undefined} userId={p.user_id} size="md" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold">{p.username || 'User'}</p>
+                        <p className="truncate text-xs text-muted-foreground">@{p.username}</p>
                       </div>
-                      <Button
-                        size="sm"
-                        variant={added ? 'secondary' : 'default'}
+                      <button
                         disabled={added || addingId === p.user_id}
                         onClick={() => handleAddFriend(p)}
-                        className="shrink-0"
+                        className={added
+                          ? 'flex shrink-0 items-center gap-1 rounded-full bg-secondary px-4 py-1.5 text-sm font-semibold text-secondary-foreground'
+                          : 'flex shrink-0 items-center gap-1 rounded-full bg-foreground px-4 py-1.5 text-sm font-semibold text-background disabled:opacity-60'}
                       >
                         {addingId === p.user_id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : added ? (
-                          <><Check className="h-3.5 w-3.5 mr-1" /> Added</>
-                        ) : (
-                          <><UserPlus className="h-3.5 w-3.5 mr-1" /> Add</>
-                        )}
-                      </Button>
+                          <><Check className="h-3.5 w-3.5" /> Added</>
+                        ) : 'Add'}
+                      </button>
                     </div>
                   );
                 })}
@@ -403,69 +436,31 @@ const OnboardingPage = () => {
             )}
 
             {friendSearch.trim().length >= 2 && !searching && friendResults.length === 0 && (
-              <p className="text-xs text-muted-foreground text-center py-2">No matches — try the invite link below ↓</p>
+              <p className="py-2 text-center text-xs text-muted-foreground">No matches — send them your link below ↓</p>
             )}
           </div>
 
-          {/* Added list */}
-          {addedFriends.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Added ({addedFriends.length})
-              </p>
-              <div className="flex flex-col gap-2">
-                {addedFriends.map(f => (
-                  <div key={f.user_id} className="flex items-center gap-2 rounded-xl bg-secondary/40 p-2">
-                    <UserAvatar avatarUrl={f.avatar_url} username={f.username} size="sm" />
-                    <span className="text-sm font-medium flex-1 truncate">@{f.username}</span>
-                    <button
-                      onClick={() => handleRemoveFriend(f.user_id)}
-                      className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                      aria-label="Remove"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Invite via link */}
-          <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+          <div className="space-y-3 rounded-3xl bg-accent p-4 text-accent-foreground">
             <div>
-              <h3 className="text-sm font-semibold">Not on C A L I yet?</h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                Share this link with friends to invite them. When they join, you'll be connected automatically.
+              <h3 className="text-base font-bold">Not on Cali yet? Send your link</h3>
+              <p className="mt-1 text-xs text-accent-foreground/75">
+                When they join, you'll be connected automatically.
               </p>
-            </div>
-            <div className="flex items-center gap-2 rounded-lg bg-secondary/50 px-3 py-2">
-              <p className="text-xs text-foreground/80 truncate flex-1">{inviteLink}</p>
             </div>
             <div className="flex gap-2">
-              <Button onClick={handleCopyInvite} variant="outline" size="sm" className="flex-1">
-                <Copy className="h-3.5 w-3.5 mr-1.5" />
-                {linkCopied ? 'Copied!' : 'Copy invite link'}
-              </Button>
-              {typeof navigator !== 'undefined' && 'share' in navigator && (
-                <Button onClick={handleShareInvite} variant="outline" size="sm">
-                  <Share2 className="h-3.5 w-3.5" />
-                </Button>
-              )}
+              <button onClick={handleShareInvite} className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-foreground px-4 py-2.5 text-sm font-semibold text-background">
+                <Share2 className="h-4 w-4" /> Share link
+              </button>
+              <button onClick={handleCopyInvite} aria-label="Copy invite link" className="flex items-center gap-1.5 rounded-full border border-foreground/25 px-4 py-2.5 text-sm font-semibold">
+                <Copy className="h-4 w-4" /> {linkCopied ? 'Copied!' : 'Copy'}
+              </button>
             </div>
           </div>
 
-          <div className="space-y-2 pt-2">
-            <Button onClick={handleContinue} className="w-full font-semibold" size="lg">
-              Continue
-            </Button>
-            <button
-              onClick={() => setSkipDialogOpen(true)}
-              className="w-full text-center text-sm text-muted-foreground hover:text-foreground"
-            >
-              Skip for now
-            </button>
-          </div>
+          <button onClick={handleContinue} className="h-14 w-full rounded-full bg-foreground text-base font-semibold text-background">
+            Continue
+          </button>
         </motion.div>
 
         <AlertDialog open={skipDialogOpen} onOpenChange={setSkipDialogOpen}>
