@@ -15,6 +15,7 @@ interface AvatarGroupProps {
   showSummary?: boolean;
   title?: string;
   className?: string;
+  summaryClassName?: string;
 }
 
 const MAX = 3;
@@ -58,6 +59,7 @@ export function AvatarGroup({
   showSummary = false,
   title = "Who's coming",
   className,
+  summaryClassName,
 }: AvatarGroupProps) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -97,7 +99,7 @@ export function AvatarGroup({
             </span>
           )}
         </span>
-        {summary && <span className="truncate text-xs text-muted-foreground">{summary}</span>}
+        {summary && <span className={cn('truncate text-xs text-muted-foreground', summaryClassName)}>{summary}</span>}
       </button>
 
       <Drawer open={open} onOpenChange={setOpen}>

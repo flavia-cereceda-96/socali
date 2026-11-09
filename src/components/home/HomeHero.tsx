@@ -53,13 +53,14 @@ export function HomeHero({
             </span>
             <h2 className="mt-3 text-[26px] font-bold leading-tight">{event.title}</h2>
             {people.length > 0 && (
-              <div className="mt-3 [&_span.text-muted-foreground]:text-primary-foreground/85">
+              <div className="mt-3">
                 <AvatarGroup
                   size="lg"
                   people={people}
                   viewerIsOrganiser={event.created_by === userId}
                   friendRank={friendRank}
                   showSummary
+                  summaryClassName="text-sm text-primary-foreground/85"
                   title={event.title}
                 />
               </div>
