@@ -2,7 +2,6 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { CalendarHeart } from 'lucide-react';
-import CalMascot from '@/components/CalMascot';
 
 interface HomeEmptyStateProps {
   usage?: string | null;
@@ -52,9 +51,6 @@ export function HomeEmptyState({ usage }: HomeEmptyStateProps) {
       transition={{ delay: 0.1 }}
       className="rounded-3xl bg-card p-7 shadow-card text-center"
     >
-      <div className="mb-4 flex justify-center">
-        <CalMascot mood="sleepy" size={96} />
-      </div>
       <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
         <CalendarHeart className="h-8 w-8 text-primary" />
       </div>

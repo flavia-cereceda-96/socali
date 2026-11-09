@@ -6,7 +6,6 @@ import { AvatarGroup } from '@/components/AvatarGroup';
 import { motion } from 'framer-motion';
 import { MapPin, Clock } from 'lucide-react';
 import { HomeEmptyState } from '@/components/HomeEmptyState';
-import CalMascot from '@/components/CalMascot';
 import { CoachMark } from '@/components/CoachMark';
 import { HomeHeader } from '@/components/home/HomeHeader';
 import { HomeHero } from '@/components/home/HomeHero';
@@ -413,9 +412,6 @@ const Index = () => {
                 renderDayGroups(todayEvents)
               ) : (
                 <>
-                  <div className="flex justify-center pt-4 pb-1">
-                    <CalMascot mood="sleepy" size={96} />
-                  </div>
                   <p className="text-sm text-muted-foreground">Nothing on today — enjoy the free time! 🌿</p>
                 </>
               )}
