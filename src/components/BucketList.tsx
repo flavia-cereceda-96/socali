@@ -206,7 +206,7 @@ export function BucketList({ bucketListId, currentUserId, inviteFriendId, invite
                       <button
                         onClick={() => planThis(item)}
                         className="inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
-                        style={{ backgroundColor: '#EBE5FF', color: '#6B45F5' }}
+                        style={{ backgroundColor: 'hsl(var(--muted))', color: 'hsl(var(--primary))' }}
                       >
                         <CalendarPlus className="h-3.5 w-3.5" /> Plan this!
                       </button>

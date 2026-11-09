@@ -71,7 +71,7 @@ export function BottomNav() {
           onClick={() => navigate('/create')}
           aria-label="Create event"
           className="relative flex flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1 text-[11px] transition-colors"
-          style={{ color: '#6B45F5' }}
+          style={{ color: 'hsl(var(--primary))' }}
         >
           <Plus className="h-[26px] w-[26px]" strokeWidth={2.25} />
           <span className="font-medium">Create</span>

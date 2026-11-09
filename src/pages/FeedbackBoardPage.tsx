@@ -75,7 +75,7 @@ const STATUS_STYLES: Record<Status, string> = {
 
 const STATUS_INLINE: Record<Status, { backgroundColor: string; color: string }> = {
   created: { backgroundColor: '#E5E7EB', color: '#374151' },
-  accepted: { backgroundColor: '#CFFCE3', color: '#1A9E55' },
+  accepted: { backgroundColor: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' },
   rejected: { backgroundColor: '#FFE4E1', color: '#C0392B' },
 };
 
@@ -545,11 +545,11 @@ function CommentsThread({
               <div
                 key={c.id}
                 className="rounded-xl p-3 flex gap-2"
-                style={{ backgroundColor: '#EBE5FF' }}
+                style={{ backgroundColor: 'hsl(var(--muted))' }}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <Badge className="text-[10px] font-semibold border-0" style={{ backgroundColor: '#6B45F5', color: '#ffffff' }}>
+                    <Badge className="text-[10px] font-semibold border-0" style={{ backgroundColor: 'hsl(var(--primary))', color: '#ffffff' }}>
                       Developer response
                     </Badge>
                     <span className="text-xs text-foreground/70">
@@ -565,9 +565,9 @@ function CommentsThread({
           })}
 
           {isAdmin && (
-            <div className="rounded-xl p-3 space-y-2" style={{ backgroundColor: '#EBE5FF' }}>
+            <div className="rounded-xl p-3 space-y-2" style={{ backgroundColor: 'hsl(var(--muted))' }}>
               <div className="flex items-center gap-2">
-                <Badge className="text-[10px] font-semibold border-0" style={{ backgroundColor: '#6B45F5', color: '#ffffff' }}>
+                <Badge className="text-[10px] font-semibold border-0" style={{ backgroundColor: 'hsl(var(--primary))', color: '#ffffff' }}>
                   Developer response
                 </Badge>
                 <span className="text-xs text-foreground/70">Visible to everyone</span>
