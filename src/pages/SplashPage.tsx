@@ -1,7 +1,9 @@
+import type { ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { LegalLinks } from '@/components/LegalLinks';
 import CalMascot from '@/components/CalMascot';
+import { cn } from '@/lib/utils';
 
 const SPLASH_KEY = 'synccircle_seen_splash';
 
@@ -11,6 +13,65 @@ export function markSplashSeen() {
 
 export function hasSeenSplash() {
   try { return localStorage.getItem(SPLASH_KEY) === 'true'; } catch { return true; }
+}
+
+/** A decorative plan sticker: tilted card that eases in, unless motion is reduced. */
+function Sticker({
+  delay,
+  rotate,
+  className,
+  children,
+}: {
+  delay: number;
+  rotate: number;
+  className?: string;
+  children: ReactNode;
+}) {
+  const reduceMotion = useReducedMotion();
+
+  if (reduceMotion) {
+    return (
+      <div className={className} style={{ transform: `rotate(${rotate}deg)` }}>
+        {children}
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 28, rotate }}
+      animate={{ opacity: 1, y: 0, rotate }}
+      transition={{ delay, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+const FACES = [
+  { initials: 'M', bg: 'bg-lilac' },
+  { initials: 'S', bg: 'bg-secondary' },
+  { initials: 'J', bg: 'bg-peach' },
+];
+
+function FacePile() {
+  return (
+    <span className="flex">
+      {FACES.map((face, i) => (
+        <span
+          key={face.initials}
+          className={cn(
+            'grid h-6 w-6 place-items-center rounded-full text-[10px] font-bold text-foreground ring-2 ring-card',
+            face.bg,
+            i > 0 && '-ml-1.5',
+          )}
+        >
+          {face.initials}
+        </span>
+      ))}
+    </span>
+  );
 }
 
 const SplashPage = () => {
@@ -29,94 +90,79 @@ const SplashPage = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-secondary px-6 pb-8 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
-      <div className="mx-auto w-full max-w-md">
-        <span className="text-lg font-bold tracking-[0.3em] text-foreground">C A L I</span>
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-secondary px-6 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-[calc(env(safe-area-inset-top)+1.25rem)]">
+      <div className="mx-auto flex w-full max-w-[420px] flex-1 flex-col">
+        <span className="text-base font-bold tracking-[0.3em] text-foreground">C A L I</span>
+
+        {/* Illustrative plan stickers — not live data */}
+        <div aria-hidden className="relative mx-auto mt-6 h-[410px] w-full max-w-[360px]">
+          <Sticker
+            delay={0.05}
+            rotate={-6}
+            className="absolute left-0 top-2 w-[228px] rounded-[20px] bg-card p-4 shadow-sticker"
+          >
+            <p className="text-[11px] font-bold tracking-[0.14em] text-primary">SAT</p>
+            <p className="mt-1 text-[19px] font-bold leading-tight text-foreground">Brunch at Bloom</p>
+            <div className="mt-2.5 flex items-center gap-2">
+              <FacePile />
+              <span className="text-xs font-semibold text-muted-foreground">3 going</span>
+            </div>
+          </Sticker>
+
+          <Sticker
+            delay={0.16}
+            rotate={5}
+            className="absolute right-0 top-[132px] w-[196px] rounded-[20px] bg-accent p-4 text-accent-foreground shadow-sticker"
+          >
+            <p className="text-[11px] font-bold tracking-[0.14em] opacity-70">FRI</p>
+            <p className="mt-1 text-[19px] font-bold leading-tight">Gig night</p>
+            <p className="mt-2 text-xs font-bold">2 spots left</p>
+          </Sticker>
+
+          <Sticker
+            delay={0.27}
+            rotate={-3}
+            className="absolute bottom-[96px] left-1 w-[236px] rounded-[20px] bg-primary p-4 text-primary-foreground shadow-sticker"
+          >
+            <p className="text-[11px] font-bold tracking-[0.14em] text-mint-strong">SUN</p>
+            <p className="mt-1 text-[19px] font-bold leading-tight">Sunset hike</p>
+            <p className="mt-2 text-xs font-semibold opacity-90">Date poll · 4 votes</p>
+          </Sticker>
+
+          <Sticker
+            delay={0.4}
+            rotate={8}
+            className="absolute bottom-0 right-1 grid h-32 w-32 place-items-center rounded-full bg-card shadow-sticker"
+          >
+            <CalMascot mood="happy" size={108} />
+          </Sticker>
+        </div>
+
+        <div className="mt-2">
+          <h1 className="text-[32px] font-bold leading-[1.12] tracking-tight text-foreground">
+            Your social calendar, shared with friends
+          </h1>
+          <p className="mt-3 text-base text-on-mint">
+            See who's free, make plans in seconds, never miss a hangout.
+          </p>
+        </div>
+
+        <div className="mt-8 flex flex-col gap-1 pt-6">
+          <button
+            onClick={goOnboarding}
+            className="h-14 w-full rounded-2xl bg-foreground text-base font-semibold text-background transition-opacity hover:opacity-90"
+          >
+            Get started
+          </button>
+          <button
+            onClick={goLogin}
+            className="h-12 w-full text-sm font-semibold text-foreground transition-opacity hover:opacity-70"
+          >
+            I already have an account
+          </button>
+          <LegalLinks className="text-[13px]" />
+        </div>
       </div>
-
-      {/* Illustrative sticker collage — not live data */}
-      <div aria-hidden className="relative mx-auto mt-8 h-[300px] w-full max-w-[340px]">
-        <motion.div
-          initial={{ opacity: 0, y: 20, rotate: -6 }}
-          animate={{ opacity: 1, y: 0, rotate: -6 }}
-          transition={{ delay: 0.05, duration: 0.5 }}
-          className="absolute left-0 top-4 w-[210px] rounded-3xl border border-border bg-card p-4 shadow-elevated"
-        >
-          <p className="text-[11px] font-bold tracking-wide text-muted-foreground">SAT</p>
-          <p className="text-lg font-bold text-foreground">Brunch at Bloom</p>
-          <div className="mt-2 flex items-center gap-2">
-            <span className="flex">
-              {['--lilac', '--peach', '--accent'].map((c, i) => (
-                <span key={c} className="h-6 w-6 rounded-full ring-2 ring-card" style={{ backgroundColor: `hsl(var(${c}))`, marginLeft: i ? -6 : 0 }} />
-              ))}
-            </span>
-            <span className="text-xs font-medium text-muted-foreground">3 going</span>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20, rotate: 5 }}
-          animate={{ opacity: 1, y: 0, rotate: 5 }}
-          transition={{ delay: 0.15, duration: 0.5 }}
-          className="absolute right-0 top-[92px] w-[190px] rounded-3xl bg-accent p-4 text-accent-foreground shadow-elevated"
-        >
-          <p className="text-[11px] font-bold tracking-wide opacity-70">FRI</p>
-          <p className="text-lg font-bold">Gig night</p>
-          <p className="mt-1 text-xs font-semibold">2 spots left</p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20, rotate: -3 }}
-          animate={{ opacity: 1, y: 0, rotate: -3 }}
-          transition={{ delay: 0.25, duration: 0.5 }}
-          className="absolute bottom-0 left-6 w-[220px] rounded-3xl bg-primary p-4 text-primary-foreground shadow-elevated"
-        >
-          <p className="text-[11px] font-bold tracking-wide opacity-80">SUN</p>
-          <p className="text-lg font-bold">Sunset hike</p>
-          <p className="mt-1 text-xs font-medium opacity-90">Date poll · 4 votes</p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.6 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.4, type: 'spring', stiffness: 260, damping: 16 }}
-          className="absolute -top-2 right-4 flex h-[92px] w-[92px] items-center justify-center rounded-full bg-card shadow-elevated"
-        >
-          <CalMascot mood="happy" size={76} animate />
-        </motion.div>
-      </div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-        className="mx-auto mt-10 w-full max-w-md"
-      >
-        <h1 className="text-[34px] font-bold leading-[1.1] tracking-tight text-foreground">
-          Your social calendar, shared with friends
-        </h1>
-        <p className="mt-3 text-base text-muted-foreground">
-          See who's free, make plans in seconds, and never miss a hangout again.
-        </p>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5, duration: 0.5 }}
-        className="mx-auto mt-8 flex w-full max-w-md flex-col items-center gap-2"
-      >
-        <button onClick={goOnboarding} className="h-14 w-full rounded-full bg-foreground text-base font-semibold text-background">
-          Get started
-        </button>
-        <button
-          onClick={goLogin}
-          className="py-2 text-sm font-semibold text-foreground/70 transition-colors hover:text-foreground"
-        >
-          I already have an account
-        </button>
-      </motion.div>
-      <LegalLinks />
     </div>
   );
 };
