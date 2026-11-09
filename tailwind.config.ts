@@ -21,6 +21,7 @@ export default {
         lilac: "hsl(var(--lilac))",
         peach: "hsl(var(--peach))",
         "mint-strong": "hsl(var(--mint-strong))",
+        "on-mint": "hsl(var(--on-mint))",
         "accent-soft": {
           DEFAULT: "hsl(var(--accent-soft))",
           foreground: "hsl(var(--accent-soft-foreground))",
@@ -78,6 +79,9 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+      },
+      boxShadow: {
+        sticker: "var(--shadow-sticker)",
       },
       borderRadius: {
         lg: "var(--radius)",
