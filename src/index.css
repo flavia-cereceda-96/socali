@@ -36,6 +36,8 @@
     /* Sticker colours */
     --lilac: 252 100% 81%;
     --peach: 12 100% 90%;
+    --peach-soft: 12 100% 95%;
+    --peach-foreground: 12 63% 37%;
 
     --destructive: 0 72% 56%;
     --destructive-foreground: 0 0% 100%;
