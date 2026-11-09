@@ -397,26 +397,6 @@ const Index = () => {
               </>
             )}
 
-            {/* Today */}
-            <motion.h2
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.1 }}
-              className={sectionHeaderCls}
-            >
-              Today
-            </motion.h2>
-            {renderFriendsRow(todayEvents)}
-            <div className="flex flex-col gap-3 mb-8">
-              {todayEvents.length > 0 ? (
-                renderDayGroups(todayEvents)
-              ) : (
-                <>
-                  <p className="text-sm text-muted-foreground">Nothing on today — enjoy the free time! 🌿</p>
-                </>
-              )}
-            </div>
-
             <YourPeople events={events} userId={userId} />
           </>
         )}
