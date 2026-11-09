@@ -2,6 +2,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { LegalLinks } from '@/components/LegalLinks';
+import CalMascot from '@/components/CalMascot';
 import heroImg from '@/assets/friends-planning-flat.jpg';
 
 const SPLASH_KEY = 'synccircle_seen_splash';
@@ -35,7 +36,8 @@ const SplashPage = () => {
       <div aria-hidden className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
       <div aria-hidden className="pointer-events-none absolute -right-24 top-1/3 h-72 w-72 rounded-full bg-secondary/40 blur-3xl" />
 
-      <div className="relative z-10 flex w-full max-w-md items-center justify-center">
+      <div className="relative z-10 flex w-full max-w-md items-center justify-center gap-2.5">
+        <CalMascot mood="happy" size={36} />
         <span className="text-lg font-bold tracking-[0.3em] text-foreground">C A L I</span>
       </div>
 

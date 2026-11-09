@@ -6,6 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/UserAvatar';
 import { toast } from 'sonner';
+import { mascotSuccessToast } from '@/components/MascotToast';
+import CalMascot from '@/components/CalMascot';
 
 interface InviteInfo {
   event_id: string;
@@ -78,7 +80,7 @@ const InviteEventPage = () => {
       toast.error(error.message || 'Could not respond');
       return;
     }
-    if (status === 'confirmed') toast.success("You're in! 🎉");
+    if (status === 'confirmed') mascotSuccessToast("You're in! 🎉");
     else toast.success('Declined');
     navigate(`/event/${data}`, { replace: true });
   };
@@ -122,6 +124,9 @@ const InviteEventPage = () => {
           className="space-y-5"
         >
           <div className="text-center">
+            <div className="mb-2 flex justify-center">
+              <CalMascot mood="excited" size={80} animate />
+            </div>
             <p className="text-sm font-medium text-muted-foreground">You're invited!</p>
             <h1 className="mt-1 text-2xl font-bold text-foreground">
               {info.emoji} {info.title}

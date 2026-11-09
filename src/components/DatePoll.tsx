@@ -6,6 +6,7 @@ import { UserAvatar } from '@/components/UserAvatar';
 import { Check, X, CalendarCheck, Lock, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { mascotSuccessToast } from '@/components/MascotToast';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import {
@@ -141,7 +142,7 @@ export function DatePoll({ eventId, userId, canManage, pollDeadline, participant
           }))
         );
       }
-      toast.success('Date confirmed! 🎉');
+      mascotSuccessToast('Date confirmed! 🎉');
       queryClient.invalidateQueries({ queryKey: ['events'] });
       setConfirming(null);
       onConfirmed?.();
