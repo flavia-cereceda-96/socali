@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useEvents, DbEventWithCreator } from '@/hooks/useEvents';
 import { useEventGroupHints } from '@/hooks/useGroups';
 import { UserAvatar } from '@/components/UserAvatar';
+import { AvatarGroup } from '@/components/AvatarGroup';
 import { motion } from 'framer-motion';
 import { MapPin, Clock } from 'lucide-react';
 import { HomeEmptyState } from '@/components/HomeEmptyState';
@@ -126,6 +127,14 @@ const Index = () => {
 
   const hasNoEvents = events.length === 0;
 
+  // Viewer's top friends = people they share the most plans with
+  const friendRank: Record<string, number> = {};
+  events.forEach(e => {
+    const ids = [e.created_by, ...e.participants.map(p => p.user_id)];
+    if (!ids.includes(userId as string)) return;
+    ids.forEach(id => { if (id && id !== userId) friendRank[id] = (friendRank[id] ?? 0) + 1; });
+  });
+
   const renderEventCard = (event: DbEventWithCreator, i: number, grouped = false) => {
     const timeDisplay = getTimeDisplay(event);
     const myP = event.participants.find(p => p.user_id === userId);
@@ -214,28 +223,19 @@ const Index = () => {
           </div>
           <div className="flex items-center justify-between gap-2 mt-0.5">
             {(() => {
-              if (event.participants.length === 0) return <span />;
               return (
-                <div className="flex items-center gap-1">
-                  {event.participants.slice(0, 5).map(p => (
-                    <button
-                      key={p.id}
-                      onClick={(e) => { e.stopPropagation(); navigate(`/person/${p.user_id}`); }}
-                      className="-ml-1 first:ml-0"
-                      aria-label={`View @${p.profile?.username || 'user'}`}
-                    >
-                      <UserAvatar
-                        avatarUrl={p.profile?.avatar_url}
-                        username={p.profile?.username}
-                        size="sm"
-                        className={`h-6 w-6 text-[10px] ring-2 ring-card transition ${p.status === 'confirmed' ? '' : 'grayscale opacity-60'}`}
-                      />
-                    </button>
-                  ))}
-                  {event.participants.length > 5 && (
-                    <span className="ml-1 text-[10px] text-muted-foreground">+{event.participants.length - 5}</span>
-                  )}
-                </div>
+                <AvatarGroup
+                  size="sm"
+                  viewerIsOrganiser={event.created_by === userId}
+                  friendRank={friendRank}
+                  title={event.title}
+                  people={event.participants.map(p => ({
+                    id: p.user_id,
+                    name: p.profile?.username || 'user',
+                    avatarUrl: p.profile?.avatar_url,
+                    status: p.status,
+                  }))}
+                />
               );
             })()}
             <div className="flex items-center gap-1.5">

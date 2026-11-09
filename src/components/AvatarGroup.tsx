@@ -27,7 +27,7 @@ function Face({ person, size }: { person: Attendee; size: 'lg' | 'sm' }) {
     <span
       className={cn(
         'relative inline-flex shrink-0 rounded-full ring-2 ring-card',
-        invited && 'opacity-55 border border-dashed border-muted-foreground',
+        invited && 'border border-dashed border-muted-foreground',
       )}
       style={{
         width: px,
