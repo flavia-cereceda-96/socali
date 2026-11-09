@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { personName } from '@/lib/personName';
 import { supabase } from '@/integrations/supabase/client';
 
 export type BucketListItem = {
@@ -155,7 +156,7 @@ export function useMyBucketLists() {
 
       const [profilesRes, groupsRes] = await Promise.all([
         userIds.length
-          ? supabase.from('profiles').select('user_id, username, avatar_url').in('user_id', userIds)
+          ? supabase.from('profiles').select('user_id, username, display_name, avatar_url').in('user_id', userIds)
           : Promise.resolve({ data: [] as any[] }),
         groupIds.length
           ? supabase.from('groups').select('id, name, emoji, avatar_url').in('id', groupIds)
@@ -182,7 +183,7 @@ export function useMyBucketLists() {
       return summaries.map(s => {
         if (s.type === 'friend' && s.other_user_id) {
           const p: any = profMap.get(s.other_user_id);
-          return { ...s, name: p?.username || 'Friend', avatar_url: p?.avatar_url || null, preview_items: itemsByList.get(s.id) || [] };
+          return { ...s, name: personName(p, 'Friend'), avatar_url: p?.avatar_url || null, preview_items: itemsByList.get(s.id) || [] };
         }
         const g: any = s.group_id ? grpMap.get(s.group_id) : null;
         return { ...s, name: g?.name || 'Group', avatar_url: g?.avatar_url || null, emoji: g?.emoji || '👯', preview_items: itemsByList.get(s.id) || [] };

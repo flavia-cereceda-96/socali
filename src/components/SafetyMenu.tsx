@@ -13,9 +13,14 @@ import { useTranslation } from 'react-i18next';
 
 export type ContentType = 'profile' | 'event_comment' | 'group_message' | 'event_photo' | 'event' | 'group' | 'feedback' | 'feedback_comment' | 'bucket_item' | 'what_option';
 
-export function SafetyMenu({ type, contentId, authorId, currentUserId }: { type: ContentType; contentId: string; authorId: string; currentUserId: string | null }) {
-  const [reportOpen, setReportOpen] = useState(false);
-  const [blockOpen, setBlockOpen] = useState(false);
+export function SafetyMenu({ type, contentId, authorId, currentUserId, hideTrigger, open, onOpenChange }: { type: ContentType; contentId: string; authorId: string; currentUserId: string | null; hideTrigger?: boolean; open?: 'report' | 'block' | null; onOpenChange?: (v: 'report' | 'block' | null) => void }) {
+  const [reportOpenState, setReportOpenState] = useState(false);
+  const [blockOpenState, setBlockOpenState] = useState(false);
+  const controlled = onOpenChange !== undefined;
+  const reportOpen = controlled ? open === 'report' : reportOpenState;
+  const blockOpen = controlled ? open === 'block' : blockOpenState;
+  const setReportOpen = (v: boolean) => controlled ? onOpenChange!(v ? 'report' : null) : setReportOpenState(v);
+  const setBlockOpen = (v: boolean) => controlled ? onOpenChange!(v ? 'block' : null) : setBlockOpenState(v);
   const [reason, setReason] = useState('harassment');
   const [details, setDetails] = useState('');
   const [busy, setBusy] = useState(false);
@@ -41,9 +46,9 @@ export function SafetyMenu({ type, contentId, authorId, currentUserId }: { type:
     finally { setBusy(false); }
   };
   return <div onClick={e => e.stopPropagation()} className="shrink-0">
-    <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" aria-label={es ? 'Reportar o bloquear' : 'Report or block'}><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+    {!hideTrigger && <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" aria-label={es ? 'Reportar o bloquear' : 'Report or block'}><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
       <DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => setReportOpen(true)}><Flag className="mr-2 h-4 w-4" />{es ? 'Reportar contenido' : 'Report content'}</DropdownMenuItem><DropdownMenuItem onSelect={() => setBlockOpen(true)}><ShieldBan className="mr-2 h-4 w-4" />{es ? 'Bloquear usuario' : 'Block user'}</DropdownMenuItem></DropdownMenuContent>
-    </DropdownMenu>
+    </DropdownMenu>}
     <Dialog open={reportOpen} onOpenChange={setReportOpen}><DialogContent className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>{es ? 'Reportar contenido' : 'Report content'}</DialogTitle><DialogDescription>{es ? 'El equipo revisará tu reporte. No se comparte tu identidad con el autor.' : 'Your report goes to the review team. Your identity is not shared with the author.'}</DialogDescription></DialogHeader>
       <Select value={reason} onValueChange={setReason}><SelectTrigger aria-label={es ? 'Motivo' : 'Reason'}><SelectValue /></SelectTrigger><SelectContent>{[['harassment', es ? 'Acoso' : 'Harassment'], ['inappropriate', es ? 'Contenido inapropiado' : 'Inappropriate content'], ['spam', 'Spam'], ['other', es ? 'Otro' : 'Other']].map(([value,label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select>
       <Textarea aria-label={es ? 'Detalles' : 'Details'} placeholder={es ? 'Detalles opcionales' : 'Optional details'} maxLength={1000} value={details} onChange={e => setDetails(e.target.value)} />

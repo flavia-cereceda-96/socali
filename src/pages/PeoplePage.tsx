@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { personName } from '@/lib/personName';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFriends, useFriendRequests } from '@/hooks/useEvents';
 import { useGroups } from '@/hooks/useGroups';
@@ -54,7 +55,7 @@ const PeoplePage = () => {
       const ids = rows.map(r => r.friend_id);
       const { data: profs } = await supabase
         .from('profiles')
-        .select('user_id, username, avatar_url')
+        .select('user_id, username, display_name, avatar_url')
         .in('user_id', ids);
       const profMap = new Map((profs || []).map(p => [p.user_id, p]));
       return rows.map(r => ({
@@ -256,7 +257,7 @@ const PeoplePage = () => {
                     👤
                   </div>
                   <div className="flex-1 min-w-0">
-                    <ClickableName userId={req.user_id} name={req.profile?.username || 'Unknown'} className="font-semibold" />
+                    <ClickableName userId={req.user_id} name={personName(req.profile, 'Unknown')} className="font-semibold" />
                     <p className="text-xs text-muted-foreground">{req.profile?.email}</p>
                   </div>
                   <div className="flex gap-1.5">
@@ -322,7 +323,7 @@ const PeoplePage = () => {
                     👤
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground">{profile.username}</p>
+                    <p className="font-semibold text-foreground">{personName(profile)}</p>
                     <p className="text-xs text-muted-foreground">{profile.email}</p>
                     {profile.bio && (
                       <p className="text-xs truncate" style={{ color: 'hsl(var(--secondary-foreground))' }}>{profile.bio}</p>
@@ -367,7 +368,7 @@ const PeoplePage = () => {
                   />
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-foreground truncate">
-                      @{req.profile?.username || 'unknown'}
+                      {personName(req.profile, 'unknown')}
                     </p>
                     <p className="text-xs italic text-muted-foreground">Pending...</p>
                   </div>
@@ -410,9 +411,9 @@ const PeoplePage = () => {
                   onClick={() => navigate(`/person/${friend.user_id}`)}
                   className="flex items-center gap-4 rounded-2xl bg-card p-4 shadow-card cursor-pointer hover:bg-accent/50 transition-[background-color] duration-100 ease-out"
                 >
-                  <UserAvatar avatarUrl={friend.avatar_url} username={friend.username} size="lg" />
+                  <UserAvatar avatarUrl={friend.avatar_url} username={personName(friend)} size="lg" />
                   <div className="flex-1 min-w-0">
-                    <ClickableName userId={friend.user_id} name={friend.username} className="font-semibold" />
+                    <ClickableName userId={friend.user_id} name={personName(friend)} className="font-semibold" />
                     <p className="text-xs text-muted-foreground">{friend.email}</p>
                     {friend.bio && (
                       <p className="text-xs truncate" style={{ color: 'hsl(var(--secondary-foreground))' }}>{friend.bio}</p>

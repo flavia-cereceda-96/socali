@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { personName } from '@/lib/personName';
 import CalMascot from '@/components/CalMascot';
 import calendarInviteImg from '@/assets/calendar-invite-flat.jpg';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
@@ -40,6 +41,7 @@ const OnboardingPage = () => {
   const [username, setUsername] = useState('');
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle');
   const [email, setEmail] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [usage, setUsage] = useState<string[]>([]);
@@ -153,7 +155,7 @@ const OnboardingPage = () => {
         email,
         password,
         options: {
-          data: { username, usage },
+          data: { username, usage, display_name: displayName.trim().slice(0, 40) || undefined },
           emailRedirectTo: authOrigin(),
         },
       });
@@ -411,7 +413,7 @@ const OnboardingPage = () => {
                     <div key={p.user_id} className="flex items-center gap-3 p-3">
                       <UserAvatar avatarUrl={p.avatar_url} username={p.username ?? undefined} userId={p.user_id} size="md" />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold">{p.username || 'User'}</p>
+                        <p className="truncate text-sm font-semibold">{personName(p, 'User')}</p>
                         <p className="truncate text-xs text-muted-foreground">@{p.username}</p>
                       </div>
                       <button
@@ -625,6 +627,19 @@ const OnboardingPage = () => {
             {errors.username && usernameStatus !== 'taken' && usernameStatus !== 'available' && (
               <p className="text-xs text-destructive">{errors.username}</p>
             )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="displayName">What should friends call you?</Label>
+            <Input
+              id="displayName"
+              value={displayName}
+              onChange={e => setDisplayName(e.target.value.slice(0, 40))}
+              placeholder="e.g. Mica"
+              maxLength={40}
+              autoComplete="nickname"
+            />
+            <p className="text-xs text-muted-foreground">Optional. Shown instead of your @username.</p>
           </div>
 
           {/* Email */}

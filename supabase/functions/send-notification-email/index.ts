@@ -89,8 +89,8 @@ Deno.serve(async (req) => {
 
     let sourceName = '';
     if (record.source_user_id) {
-      const { data: src } = await supabase.from('profiles').select('username').eq('user_id', record.source_user_id).maybeSingle();
-      sourceName = src?.username ?? '';
+      const { data: src } = await supabase.from('profiles').select('username, display_name').eq('user_id', record.source_user_id).maybeSingle();
+      sourceName = src?.display_name?.trim() || src?.username || '';
     }
     let eventTitle: string | undefined;
     if (record.event_id) {

@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { personName } from '@/lib/personName';
 import { useFriends, type DbEventWithCreator } from '@/hooks/useEvents';
 import { useWeekStart, weekStartIndex } from '@/hooks/useWeekStart';
 import { calendarDateKey } from '@/lib/calendarDisplay';
@@ -49,7 +50,7 @@ export function YourPeople({ events, userId }: { events: DbEventWithCreator[]; u
       <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-1">
         {shown.map(([id, t]) => {
           const f: any = friendMap.get(id);
-          const name = (f?.display_name || f?.username || 'Friend').split(' ')[0];
+          const name = (f?.display_name || personName(f, 'Friend')).split(' ')[0];
           const dayKeys = keys.filter(k => t.days.has(k));
           const label = dayKeys.map(k => new Date(k + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()).join(' · ');
           const hasToday = dayKeys.includes(todayKey);

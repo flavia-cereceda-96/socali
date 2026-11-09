@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { personName } from '@/lib/personName';
 import CalMascot from '@/components/CalMascot';
 import { AvatarGroup, Attendee } from '@/components/AvatarGroup';
 import type { DbEventWithCreator } from '@/hooks/useEvents';
@@ -30,14 +31,14 @@ export function HomeHero({
         ...(event.created_by !== userId
           ? [{
               id: event.created_by,
-              name: event.creator_profile?.username || 'organiser',
+              name: personName(event.creator_profile, 'organiser'),
               avatarUrl: event.creator_profile?.avatar_url,
               status: (event as any).creator_rsvp || 'confirmed',
             }]
           : []),
         ...event.participants
           .filter(p => p.user_id !== userId)
-          .map(p => ({ id: p.user_id, name: p.profile?.username || 'user', avatarUrl: p.profile?.avatar_url, status: p.status })),
+          .map(p => ({ id: p.user_id, name: personName(p.profile, 'user'), avatarUrl: p.profile?.avatar_url, status: p.status })),
       ]
     : [];
 

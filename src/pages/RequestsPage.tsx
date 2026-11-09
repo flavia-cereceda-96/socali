@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { personName } from '@/lib/personName';
 import { maybeShowPushPrompt } from '@/lib/pushPrompt';
 import { useNavigate } from 'react-router-dom';
 import { useEvents, DbEvent, DbEventWithCreator } from '@/hooks/useEvents';
@@ -94,7 +95,7 @@ const RequestsPage = () => {
   };
 
   const getActivityText = (item: ActivityItem) => {
-    const name = item.source_profile?.username || 'Someone';
+    const name = personName(item.source_profile, 'Someone');
     const eventTitle = item.event?.title || 'an event';
     switch (item.type) {
       case 'invitation':
@@ -266,7 +267,7 @@ const RequestsPage = () => {
             </h2>
             <div className="mb-6 flex flex-col gap-3">
               {pendingGroupInvites.map(item => {
-                const creatorName = item.source_profile?.username || 'Someone';
+                const creatorName = personName(item.source_profile, 'Someone');
                 const groupName = item.group?.name || 'a group';
                 return (
                   <motion.div

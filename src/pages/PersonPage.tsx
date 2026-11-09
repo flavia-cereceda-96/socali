@@ -1,23 +1,25 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEvents } from '@/hooks/useEvents';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CalendarPlus, Clock, MapPin, Sparkles } from 'lucide-react';
+import { ArrowLeft, MoreHorizontal, UserMinus, Flag, ShieldBan, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { UserAvatar } from '@/components/UserAvatar';
-import { GroupAvatar } from '@/components/GroupAvatar';
-import { BucketList } from '@/components/BucketList';
-import { useFriendBucketListId } from '@/hooks/useBucketList';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { SafetyMenu } from '@/components/SafetyMenu';
 import { useBlocks, useSafetyActions } from '@/hooks/useSafety';
+import { CalMascot } from '@/components/CalMascot';
+import { IdentityBlock, StatTile, SectionHeader, MemoryGrid, UpcomingList, attended, todayStr } from '@/components/profile/ProfileBits';
+import { personName } from '@/lib/personName';
 import { toast } from 'sonner';
 
 const PersonPage = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [meId, setMeId] = useState<string | null>(null);
+  const [safetyOpen, setSafetyOpen] = useState<'report' | 'block' | null>(null);
   const { data: blocks = [] } = useBlocks();
   const { unblock } = useSafetyActions();
 
@@ -31,7 +33,7 @@ const PersonPage = () => {
       if (!userId) return null;
       const { data } = await supabase
         .from('profiles')
-        .select('user_id, username, avatar_url, bio, invite_to')
+        .select('user_id, username, display_name, avatar_url, bio, invite_to')
         .eq('user_id', userId)
         .maybeSingle();
       return data as any;
@@ -39,83 +41,51 @@ const PersonPage = () => {
     enabled: !!userId,
   });
 
-  const { data: publicStats } = useQuery({
-    queryKey: ['public-user-stats', userId],
-    queryFn: async () => {
-      if (!userId) return { events_attended: 0, friends_count: 0 };
-      const { data } = await supabase.rpc('get_public_user_stats' as any, { _user_id: userId });
-      const row = Array.isArray(data) ? data[0] : data;
-      return {
-        events_attended: Number(row?.events_attended ?? 0),
-        friends_count: Number(row?.friends_count ?? 0),
-      };
-    },
-    enabled: !!userId,
-  });
-
-  // Use existing events query (viewer's own visible events) to compute shared & upcoming together
-  const { data: events = [] } = useEvents();
-
-  // Friend bucket list (lazily created)
-  const { data: bucketListId } = useFriendBucketListId(userId);
-
-  // Shared and other groups
-  const { data: groupData } = useQuery({
-    queryKey: ['person-groups', userId, meId],
+  const { data: friendship } = useQuery({
+    queryKey: ['friendship', userId, meId],
     enabled: !!userId && !!meId,
     queryFn: async () => {
-      if (!userId || !meId) return { shared: [], theirOther: [] };
-      // Their accepted groups
-      const { data: theirMems } = await supabase
-        .from('group_members')
-        .select('group_id')
-        .eq('user_id', userId)
-        .eq('membership_status', 'accepted');
-      const theirGroupIds = (theirMems || []).map(m => m.group_id);
-      if (theirGroupIds.length === 0) return { shared: [], theirOther: [] };
+      const { data } = await supabase
+        .from('friends')
+        .select('id, status, user_id')
+        .or(`and(user_id.eq.${meId},friend_id.eq.${userId}),and(user_id.eq.${userId},friend_id.eq.${meId})`)
+        .maybeSingle();
+      return data;
+    },
+  });
+  const isFriend = friendship?.status === 'accepted';
 
-      // My accepted groups
-      const { data: myMems } = await supabase
-        .from('group_members')
-        .select('group_id')
-        .eq('user_id', meId)
-        .eq('membership_status', 'accepted');
-      const myGroupIds = new Set((myMems || []).map(m => m.group_id));
+  const { data: events = [] } = useEvents();
 
-      const { data: groups } = await supabase
-        .from('groups')
-        .select('id, name, emoji, avatar_url')
-        .in('id', theirGroupIds);
-      const all = (groups || []) as any[];
-      return {
-        shared: all.filter(g => myGroupIds.has(g.id)),
-        theirOther: all.filter(g => !myGroupIds.has(g.id)),
-      };
+  const { data: sharedGroups = 0 } = useQuery({
+    queryKey: ['person-shared-groups', userId, meId],
+    enabled: !!userId && !!meId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('group_members')
+        .select('group_id, user_id')
+        .in('user_id', [userId!, meId!])
+        .eq('membership_status', 'accepted');
+      const mine = new Set((data || []).filter(m => m.user_id === meId).map(m => m.group_id));
+      return new Set((data || []).filter(m => m.user_id === userId && mine.has(m.group_id)).map(m => m.group_id)).size;
     },
   });
 
-  const shared = useMemo(() => {
-    if (!userId || !meId) return [];
-    return events.filter(e => {
-      const involvedIds = new Set<string>([e.created_by, ...e.participants.map(p => p.user_id)]);
-      return involvedIds.has(userId) && involvedIds.has(meId);
+  const today = todayStr();
+  const { upcoming, memories } = useMemo(() => {
+    if (!userId || !meId) return { upcoming: [], memories: [] };
+    const shared = events.filter(e => {
+      const ids = new Set([e.created_by, ...e.participants.filter(p => p.status !== 'declined').map(p => p.user_id)]);
+      return ids.has(userId) && ids.has(meId);
     });
-  }, [events, userId, meId]);
-
-  const upcomingTogether = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return shared
-      .filter(e => new Date(e.date + 'T00:00:00') >= today)
-      .sort((a, b) => a.date.localeCompare(b.date));
-  }, [shared]);
+    return {
+      upcoming: shared.filter(e => e.date >= today).sort((a, b) => a.date.localeCompare(b.date)),
+      memories: shared.filter(e => e.date < today && attended(e, userId) && attended(e, meId)).sort((a, b) => b.date.localeCompare(a.date)),
+    };
+  }, [events, userId, meId, today]);
 
   if (profileLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-sm text-muted-foreground">Loading...</p>
-      </div>
-    );
+    return <div className="flex min-h-screen items-center justify-center"><p className="text-sm text-muted-foreground">Loading...</p></div>;
   }
 
   if (!profile) {
@@ -129,198 +99,105 @@ const PersonPage = () => {
     );
   }
 
-  const formatTime = (t: string) => {
-    const [h, m] = t.split(':');
-    const hour = parseInt(h);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const h12 = hour % 12 || 12;
-    return `${h12}:${m} ${ampm}`;
+  const name = personName(profile);
+  const firstName = name.split(' ')[0];
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['friendship'] });
+    queryClient.invalidateQueries({ queryKey: ['friends'] });
   };
+
+  const addFriend = async () => {
+    if (!meId || !userId) return;
+    const { error } = await supabase.from('friends').insert({ user_id: meId, friend_id: userId });
+    if (error) { toast.error(error.message); return; }
+    toast.success('Friend request sent! 📨');
+    refresh();
+  };
+
+  const removeFriend = async () => {
+    if (!friendship) return;
+    if (!window.confirm(`Remove ${name} from your friends?`)) return;
+    const { error } = await supabase.from('friends').delete().eq('id', friendship.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Friend removed');
+    refresh();
+  };
+
+  const isMe = meId === userId;
 
   return (
     <div className="min-h-screen pb-[calc(7rem+env(safe-area-inset-bottom))]">
       <div className="mx-auto max-w-md px-4 pt-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="mb-6 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back
-        </button>
-
-        {/* Profile header */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center text-center mb-8"
-        >
-          <UserAvatar avatarUrl={profile.avatar_url} username={profile.username} size="xl" />
-          <h1 className="mt-3 text-2xl font-bold text-foreground">{profile.username}</h1>
-          <SafetyMenu type="profile" contentId={profile.user_id} authorId={profile.user_id} currentUserId={meId} />
-          {profile.bio && (
-            <p className="mt-2 text-sm text-foreground/80 max-w-xs leading-relaxed">{profile.bio}</p>
-          )}
-        </motion.div>
-
-        {/* Stats */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="grid grid-cols-3 gap-3 mb-8"
-        >
-          <div className="rounded-2xl p-3 shadow-card text-center" style={{ backgroundColor: 'hsl(var(--primary))', color: '#ffffff' }}>
-            <p className="text-2xl font-bold">{shared.length}</p>
-            <p className="text-[11px] opacity-90 mt-0.5">Events together</p>
-          </div>
-          <div className="rounded-2xl p-3 shadow-card text-center" style={{ backgroundColor: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' }}>
-            <p className="text-2xl font-bold">{publicStats?.events_attended ?? '—'}</p>
-            <p className="text-[11px] opacity-90 mt-0.5">Events attended</p>
-          </div>
-          <div className="rounded-2xl p-3 shadow-card text-center" style={{ backgroundColor: 'hsl(var(--peach))', color: '#C2410C' }}>
-            <p className="text-2xl font-bold">{publicStats?.friends_count ?? '—'}</p>
-            <p className="text-[11px] opacity-90 mt-0.5">Friends</p>
-          </div>
-        </motion.div>
-
-        {/* Bucket list */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.09 }}
-          className="mb-8"
-        >
-          <BucketList
-            bucketListId={bucketListId}
-            currentUserId={meId}
-            inviteFriendId={userId}
-            inviteFriendName={profile.username}
-          />
-        </motion.div>
-
-        {/* Plans together */}
-        <motion.section
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-8"
-        >
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-            Plans together
-          </h2>
-          {upcomingTogether.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No upcoming plans together yet</p>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {upcomingTogether.map(e => (
-                <button
-                  key={e.id}
-                  onClick={() => navigate(`/event/${e.id}`)}
-                  className="flex gap-3 rounded-2xl bg-card p-4 shadow-card text-left hover:shadow-elevated transition-shadow"
-                >
-                  <div
-                    className="flex flex-col items-center justify-center rounded-xl px-3 py-2 min-w-[52px]"
-                    style={{ backgroundColor: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' }}
-                  >
-                    <span className="text-xs font-semibold uppercase">
-                      {new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
-                    </span>
-                    <span className="text-lg font-bold">
-                      {new Date(e.date + 'T00:00:00').getDate()}
-                    </span>
-                  </div>
-                  <div className="flex flex-1 flex-col gap-1.5 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">{e.emoji}</span>
-                      <span className="font-semibold text-foreground truncate">{e.title}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      {e.time && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatTime(e.time)}</span>}
-                      {e.location && <span className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3" />{e.location}</span>}
-                    </div>
-                  </div>
+        <div className="mb-4 flex items-center justify-between">
+          <button onClick={() => navigate(-1)} className="flex h-11 w-11 items-center justify-center rounded-2xl bg-muted text-foreground" aria-label="Back">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          {!isMe && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex h-11 w-11 items-center justify-center rounded-2xl bg-muted text-foreground" aria-label="More options">
+                  <MoreHorizontal className="h-5 w-5" />
                 </button>
-              ))}
-            </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {isFriend && <DropdownMenuItem onSelect={removeFriend}><UserMinus className="mr-2 h-4 w-4" />Remove friend</DropdownMenuItem>}
+                <DropdownMenuItem onSelect={() => setSafetyOpen('block')}><ShieldBan className="mr-2 h-4 w-4" />Block</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setSafetyOpen('report')}><Flag className="mr-2 h-4 w-4" />Report</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
-        </motion.section>
+        </div>
+        {/* Reused report/block dialogs */}
+        <SafetyMenu type="profile" contentId={profile.user_id} authorId={profile.user_id} currentUserId={meId} hideTrigger open={safetyOpen} onOpenChange={setSafetyOpen} />
 
-        {/* Groups */}
-        <motion.section
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.12 }}
-          className="mb-8"
-        >
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-            Groups
-          </h2>
-          {(groupData?.shared.length ?? 0) === 0 ? (
-            <p className="text-sm text-muted-foreground">No groups in common</p>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-7">
+          <IdentityBlock avatarUrl={profile.avatar_url} userId={profile.user_id} name={name} username={profile.username} subtitle={isFriend ? 'Friends' : undefined} bio={profile.bio} />
+
+          {!isFriend ? (
+            !isMe && (
+              friendship ? (
+                <Button disabled variant="secondary" className="h-12 w-full rounded-2xl">Request pending</Button>
+              ) : (
+                <Button onClick={addFriend} className="h-12 w-full gap-2 rounded-2xl bg-foreground text-background hover:bg-foreground/90">
+                  <UserPlus className="h-5 w-5" /> Add friend
+                </Button>
+              )
+            )
           ) : (
-            <div className="-mx-4 px-4 overflow-x-auto scrollbar-hide">
-              <div className="flex gap-4 pb-1">
-                {groupData?.shared.map((g: any) => (
-                  <button
-                    key={g.id}
-                    onClick={() => navigate(`/people/groups/${g.id}`)}
-                    className="flex flex-col items-center gap-1.5 w-16 flex-shrink-0"
-                  >
-                    <GroupAvatar avatarUrl={g.avatar_url} emoji={g.emoji} name={g.name} size="lg" />
-                    <span className="text-xs text-foreground truncate max-w-full">{g.name}</span>
-                  </button>
-                ))}
+            <>
+              <button
+                onClick={() => navigate('/create', { state: { inviteFriendId: userId, inviteFriendName: name } })}
+                className="h-12 w-full rounded-2xl bg-accent text-sm font-bold text-accent-foreground"
+              >
+                Invite {firstName} to a plan
+              </button>
+
+              <div className="grid grid-cols-3 gap-3">
+                <StatTile value={upcoming.length} label="coming up" bg="--primary" fg="--primary-foreground" />
+                <StatTile value={memories.length} label="hangouts together" bg="--secondary" fg="--secondary-foreground" />
+                <StatTile value={sharedGroups} label="shared groups" bg="--accent-soft" fg="--accent-soft-foreground" />
               </div>
-            </div>
+
+              {upcoming.length > 0 && (
+                <section>
+                  <SectionHeader title="Coming up together" />
+                  <UpcomingList events={upcoming} />
+                </section>
+              )}
+
+              <section>
+                <SectionHeader title="Memories together" />
+                {memories.length > 0 ? (
+                  <MemoryGrid events={memories} viewerId={meId} />
+                ) : (
+                  <div className="flex flex-col items-center gap-2 rounded-[20px] bg-muted p-6 text-center">
+                    <CalMascot mood="sleepy" size={56} />
+                    <p className="text-sm text-muted-foreground">Your past plans with {firstName} will show up here.</p>
+                  </div>
+                )}
+              </section>
+            </>
           )}
-
-          {(groupData?.theirOther.length ?? 0) > 0 && (
-            <div className="mt-5">
-              <h3 className="mb-2 text-xs font-medium text-muted-foreground">Their other groups</h3>
-              <div className="-mx-4 px-4 overflow-x-auto scrollbar-hide">
-                <div className="flex gap-4 pb-1 opacity-80">
-                  {groupData?.theirOther.map((g: any) => (
-                    <div key={g.id} className="flex flex-col items-center gap-1.5 w-16 flex-shrink-0">
-                      <GroupAvatar avatarUrl={g.avatar_url} emoji={g.emoji} name={g.name} size="lg" />
-                      <span className="text-xs text-foreground truncate max-w-full">{g.name}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </motion.section>
-
-        {/* Invite preferences */}
-        {profile.invite_to && (
-          <motion.section
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="mb-8"
-          >
-            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Invite them to
-            </h2>
-            <div className="flex items-start gap-2 rounded-2xl border border-border bg-secondary/40 px-4 py-3">
-              <Sparkles className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-              <p className="text-sm text-foreground/90 leading-relaxed">{profile.invite_to}</p>
-            </div>
-          </motion.section>
-        )}
-
-        {/* Action */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <Button
-            onClick={() => navigate('/create', { state: { inviteFriendId: userId, inviteFriendName: profile.username } })}
-            className="w-full gap-2 h-12 text-base"
-          >
-            <CalendarPlus className="h-5 w-5" />
-            Create an event with {profile.username}
-          </Button>
         </motion.div>
       </div>
     </div>

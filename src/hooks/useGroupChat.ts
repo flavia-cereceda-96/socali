@@ -48,7 +48,7 @@ export function useGroupMessages(groupId: string | undefined) {
       if (userIds.length > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('user_id, username, avatar_url')
+          .select('user_id, username, display_name, avatar_url')
           .in('user_id', userIds);
         (profiles || []).forEach((p: any) => profileMap.set(p.user_id, { username: p.username, avatar_url: p.avatar_url }));
       }

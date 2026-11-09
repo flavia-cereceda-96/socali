@@ -767,6 +767,7 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string
+          display_name: string | null
           email: string
           email_notifications: boolean | null
           id: string
@@ -788,6 +789,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          display_name?: string | null
           email: string
           email_notifications?: boolean | null
           id?: string
@@ -809,6 +811,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          display_name?: string | null
           email?: string
           email_notifications?: boolean | null
           id?: string
@@ -1065,6 +1068,7 @@ export type Database = {
           event_id: string
           event_time: string
           inviter_avatar: string
+          inviter_display_name: string
           inviter_id: string
           inviter_username: string
           location: string
@@ -1155,6 +1159,7 @@ export type Database = {
         Returns: {
           avatar_url: string
           bio: string
+          display_name: string
           user_id: string
           username: string
         }[]

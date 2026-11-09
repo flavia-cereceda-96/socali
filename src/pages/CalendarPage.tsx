@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
+import { personName } from '@/lib/personName';
 import { useEvents, useFriends } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -257,7 +258,7 @@ const CalendarPage = () => {
                   className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-sm font-medium text-foreground"
                 >
                   <UserAvatar avatarUrl={friend?.avatar_url} username={friend?.username} size="sm" />
-                  {friend?.username || 'Unknown'}
+                  {personName(friend, 'Unknown')}
                   <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: tint }} />
                   <button onClick={() => removeFriend(fId)} className="ml-0.5 text-muted-foreground hover:text-foreground">
                     <X className="h-3 w-3" />

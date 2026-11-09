@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { personName } from '@/lib/personName';
 import { SafetyMenu } from '@/components/SafetyMenu';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,14 +33,14 @@ export const EventComments = ({ eventId }: EventCommentsProps) => {
       const userIds = [...new Set(data.map(c => c.user_id))];
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('user_id, username, avatar_url')
+        .select('user_id, username, display_name, avatar_url')
         .in('user_id', userIds);
 
       const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
 
       return data.map(c => ({
         ...c,
-        username: profileMap.get(c.user_id)?.username || 'Unknown',
+        username: personName(profileMap.get(c.user_id), 'Unknown'),
         avatar_url: profileMap.get(c.user_id)?.avatar_url || null,
       }));
     },
@@ -97,7 +98,7 @@ export const EventComments = ({ eventId }: EventCommentsProps) => {
       if (mentions.length > 0) {
         const { data: mentionedProfiles } = await supabase
           .from('profiles')
-          .select('user_id, username')
+          .select('user_id, username, display_name')
           .in('username', mentions);
 
         if (mentionedProfiles && mentionedProfiles.length > 0) {

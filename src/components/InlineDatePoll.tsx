@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { personName } from '@/lib/personName';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Check, X } from 'lucide-react';
@@ -153,7 +154,7 @@ export function InlineDatePoll({ eventId, userId, pollDeadline, participantProfi
                     <UserAvatar
                       key={v.id}
                       avatarUrl={p?.avatar_url || null}
-                      username={p?.username || '?'}
+                      username={personName(p, '?')}
                       size="sm"
                       className="h-4 w-4 text-[8px] ring-2 ring-card -ml-1 first:ml-0"
                     />

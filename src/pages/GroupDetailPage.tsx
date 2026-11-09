@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { personName } from '@/lib/personName';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, X, Plus, ArrowRight, Camera, Trash2, Pencil, Shield, ShieldOff, MoreVertical } from 'lucide-react';
@@ -115,7 +116,7 @@ const GroupDetailPage = () => {
   const handlePromote = async (userId: string, username: string) => {
     try {
       await setRole.mutateAsync({ groupId: group.id, userId, role: 'admin' });
-      toast.success(`@${username} is now an admin`);
+      toast.success(`${username} is now an admin`);
     } catch (err: any) {
       toast.error(err.message || 'Failed to promote');
     }
@@ -124,7 +125,7 @@ const GroupDetailPage = () => {
   const handleDemote = async (userId: string, username: string) => {
     try {
       await setRole.mutateAsync({ groupId: group.id, userId, role: 'member' });
-      toast.success(`@${username} is no longer an admin`);
+      toast.success(`${username} is no longer an admin`);
     } catch (err: any) {
       toast.error(err.message || 'Failed to demote');
     }
@@ -294,7 +295,7 @@ const GroupDetailPage = () => {
                 >
                   <UserAvatar avatarUrl={m.avatar_url} username={m.username} size="md" />
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground truncate">@{m.username}</p>
+                    <p className="font-semibold text-foreground truncate">{personName(m)}</p>
                   </div>
                   {memberIsAdmin && (
                     <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
@@ -313,11 +314,11 @@ const GroupDetailPage = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         {memberIsAdmin ? (
-                          <DropdownMenuItem onClick={() => handleDemote(m.user_id, m.username)}>
+                          <DropdownMenuItem onClick={() => handleDemote(m.user_id, personName(m))}>
                             <ShieldOff className="mr-2 h-4 w-4" /> Remove admin
                           </DropdownMenuItem>
                         ) : (
-                          <DropdownMenuItem onClick={() => handlePromote(m.user_id, m.username)}>
+                          <DropdownMenuItem onClick={() => handlePromote(m.user_id, personName(m))}>
                             <Shield className="mr-2 h-4 w-4" /> Make admin
                           </DropdownMenuItem>
                         )}
@@ -340,7 +341,7 @@ const GroupDetailPage = () => {
                 >
                   <UserAvatar avatarUrl={m.avatar_url} username={m.username} size="md" />
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground truncate">@{m.username}</p>
+                    <p className="font-semibold text-foreground truncate">{personName(m)}</p>
                   </div>
                   <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-600">
                     Pending

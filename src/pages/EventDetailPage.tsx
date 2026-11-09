@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { personName } from '@/lib/personName';
 import { maybeShowPushPrompt } from '@/lib/pushPrompt';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEvents, DbEventWithCreator, useFriends, DbProfile } from '@/hooks/useEvents';
@@ -341,7 +342,7 @@ const EventDetailPage = () => {
     {
       id: 'creator',
       user_id: event.created_by,
-      username: event.creator_profile?.username || 'Unknown',
+      username: personName(event.creator_profile, 'Unknown'),
       avatar_url: event.creator_profile?.avatar_url || null,
       status: normalizeRsvp((event as any).creator_rsvp || 'confirmed'),
       isCreator: true,
@@ -350,7 +351,7 @@ const EventDetailPage = () => {
     ...event.participants.map(p => ({
       id: p.id,
       user_id: p.user_id,
-      username: p.profile?.username || 'Unknown',
+      username: personName(p.profile, 'Unknown'),
       avatar_url: p.profile?.avatar_url || null,
       status: normalizeRsvp(p.status),
       isCreator: false,
@@ -475,8 +476,8 @@ const EventDetailPage = () => {
                       const isCo = (p as any).role === 'co-admin';
                       return (
                         <div key={p.id} className="flex items-center gap-2 rounded-lg bg-card px-2 py-1.5">
-                          <UserAvatar username={p.profile?.username || '?'} avatarUrl={p.profile?.avatar_url || null} size="sm" />
-                          <span className="flex-1 truncate text-sm font-medium">@{p.profile?.username || 'unknown'}</span>
+                          <UserAvatar username={personName(p.profile, '?')} avatarUrl={p.profile?.avatar_url || null} size="sm" />
+                          <span className="flex-1 truncate text-sm font-medium">{personName(p.profile, 'unknown')}</span>
                           {isCo && (
                             <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' }}>
                               Co-admin
@@ -489,7 +490,7 @@ const EventDetailPage = () => {
                             className="h-7 gap-1 text-xs"
                             onClick={() => setRoleDialog({
                               userId: p.user_id,
-                              username: p.profile?.username || 'user',
+                              username: personName(p.profile, 'user'),
                               promote: !isCo,
                             })}
                           >
@@ -598,11 +599,11 @@ const EventDetailPage = () => {
               pollDeadline={(event as any).poll_deadline}
               participantProfiles={Object.fromEntries([
                 [event.created_by, {
-                  username: event.creator_profile?.username || 'Unknown',
+                  username: personName(event.creator_profile, 'Unknown'),
                   avatar_url: event.creator_profile?.avatar_url || null,
                 }],
                 ...event.participants.map(p => [p.user_id, {
-                  username: p.profile?.username || 'Unknown',
+                  username: personName(p.profile, 'Unknown'),
                   avatar_url: p.profile?.avatar_url || null,
                 }]),
               ])}
@@ -624,11 +625,11 @@ const EventDetailPage = () => {
             confirmedOptionId={(event as any).confirmed_what_option_id}
             participantProfiles={Object.fromEntries([
               [event.created_by, {
-                username: event.creator_profile?.username || 'Unknown',
+                username: personName(event.creator_profile, 'Unknown'),
                 avatar_url: event.creator_profile?.avatar_url || null,
               }],
               ...event.participants.map(p => [p.user_id, {
-                username: p.profile?.username || 'Unknown',
+                username: personName(p.profile, 'Unknown'),
                 avatar_url: p.profile?.avatar_url || null,
               }]),
             ])}
