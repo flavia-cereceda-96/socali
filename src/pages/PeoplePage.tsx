@@ -116,12 +116,7 @@ const PeoplePage = () => {
       const query = searchQuery.trim();
       const lower = query.toLowerCase();
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .or(`username.ilike.%${query}%,email.ilike.%${query}%`)
-        .neq('user_id', user.id)
-        .limit(20);
+      const { data, error } = await supabase.rpc('search_profiles', { _query: query });
 
       if (error) { toast.error(error.message); return; }
 

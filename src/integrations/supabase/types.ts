@@ -1144,10 +1144,20 @@ export type Database = {
         Args: { _status?: string; _token: string }
         Returns: string
       }
+      profile_related: { Args: { _other: string }; Returns: boolean }
       purge_account_data: { Args: { _user_id: string }; Returns: undefined }
       review_user_report: {
         Args: { _action: string; _report_id: string }
         Returns: undefined
+      }
+      search_profiles: {
+        Args: { _query: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          user_id: string
+          username: string
+        }[]
       }
     }
     Enums: {
