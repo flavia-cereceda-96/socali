@@ -40,6 +40,7 @@ const OnboardingPage = () => {
   const [username, setUsername] = useState('');
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle');
   const [email, setEmail] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [usage, setUsage] = useState<string[]>([]);
@@ -153,7 +154,7 @@ const OnboardingPage = () => {
         email,
         password,
         options: {
-          data: { username, usage },
+          data: { username, usage, display_name: displayName.trim().slice(0, 40) || undefined },
           emailRedirectTo: authOrigin(),
         },
       });
@@ -625,6 +626,19 @@ const OnboardingPage = () => {
             {errors.username && usernameStatus !== 'taken' && usernameStatus !== 'available' && (
               <p className="text-xs text-destructive">{errors.username}</p>
             )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="displayName">What should friends call you?</Label>
+            <Input
+              id="displayName"
+              value={displayName}
+              onChange={e => setDisplayName(e.target.value.slice(0, 40))}
+              placeholder="e.g. Mica"
+              maxLength={40}
+              autoComplete="nickname"
+            />
+            <p className="text-xs text-muted-foreground">Optional. Shown instead of your @username.</p>
           </div>
 
           {/* Email */}
