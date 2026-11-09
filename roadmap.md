@@ -39,6 +39,6 @@
 
 # Display names & profiles
 
-- [ ] Optional display name shown everywhere, set in Edit profile and onboarding.
-- [ ] Rebuild own Profile page in new style.
-- [ ] Rebuild other person's profile page in new style.
+- [x] Optional display name shown everywhere, set in Edit profile and onboarding.
+- [x] Rebuild own Profile page in new style.
+- [x] Rebuild other person's profile page in new style.
