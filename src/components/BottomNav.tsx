@@ -1,21 +1,24 @@
-import { Fragment } from 'react';
 import { Home, CalendarDays, Users, User, Plus } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { usePendingFriendCount } from '@/hooks/useEvents';
 
-const tabs = [
-  { path: '/', icon: Home, label: 'Home', match: (p: string, _s: string) => p === '/' },
-  { path: '/calendar', icon: CalendarDays, label: 'Calendar', match: (p: string) => p.startsWith('/calendar') },
+const INK = '#1F1640';
+
+type Tab = { path: string; icon: typeof Home; label: string; match: (p: string) => boolean };
+
+const left: Tab[] = [
+  { path: '/', icon: Home, label: 'Home', match: (p) => p === '/' },
+  { path: '/calendar', icon: CalendarDays, label: 'Calendar', match: (p) => p.startsWith('/calendar') },
+];
+const right: Tab[] = [
   {
     path: '/people?tab=friends',
     icon: Users,
     label: 'Friends',
-    match: (p: string, s: string) =>
-      p === '/people' || p.startsWith('/person') || p.startsWith('/people/groups'),
+    match: (p) => p === '/people' || p.startsWith('/person') || p.startsWith('/people/groups'),
   },
-  { path: '/profile', icon: User, label: 'Profile', match: (p: string) => p.startsWith('/profile') },
+  { path: '/profile', icon: User, label: 'Profile', match: (p) => p.startsWith('/profile') },
 ];
 
 export function BottomNav() {
@@ -23,59 +26,56 @@ export function BottomNav() {
   const navigate = useNavigate();
   const { data: pendingFriends = 0 } = usePendingFriendCount();
 
-  const getBadgeCount = (path: string) => {
-    if (path.startsWith('/people?tab=friends')) return pendingFriends;
-    return 0;
+  const renderTab = (tab: Tab) => {
+    const active = tab.match(location.pathname);
+    const badge = tab.label === 'Friends' ? pendingFriends : 0;
+    return (
+      <button
+        key={tab.label}
+        onClick={() => navigate(tab.path)}
+        aria-label={tab.label}
+        aria-current={active ? 'page' : undefined}
+        className="relative flex h-11 w-14 items-center justify-center"
+      >
+        {active && (
+          <motion.span
+            layoutId="nav-pill"
+            className="absolute inset-0 rounded-2xl"
+            style={{ backgroundColor: '#6FEBA0' }}
+            transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+          />
+        )}
+        <span className="relative">
+          <tab.icon className="h-6 w-6" strokeWidth={2} style={{ color: active ? INK : '#FFFFFF' }} />
+          {badge > 0 && (
+            <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-destructive-foreground">
+              {badge > 9 ? '9+' : badge}
+            </span>
+          )}
+        </span>
+      </button>
+    );
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background pb-[env(safe-area-inset-bottom)]">
-      <div className="mx-auto flex max-w-md items-stretch justify-around px-1 pt-1.5 pb-1.5">
-        {tabs.map((tab, idx) => {
-          const active = tab.match(location.pathname, location.search);
-          const badgeCount = getBadgeCount(tab.path);
-          return (
-            <Fragment key={tab.label}>
-            <button
-              onClick={() => navigate(tab.path)}
-              className={cn(
-                'relative flex flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1 text-[11px] transition-colors',
-                active ? 'text-[#5B4FD9]' : 'text-muted-foreground'
-              )}
-            >
-              <div className="relative">
-                <tab.icon
-                  className="h-[26px] w-[26px]"
-                  strokeWidth={active ? 2 : 1.75}
-                  fill={active ? 'currentColor' : 'none'}
-                />
-                {badgeCount > 0 && (
-                  <span className="absolute -right-1.5 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#FF3040] px-1 text-[10px] font-bold leading-none text-white">
-                    {badgeCount > 9 ? '9+' : badgeCount}
-                  </span>
-                )}
-              </div>
-              <span className={cn('font-medium', active && 'text-[#5B4FD9]')}>{tab.label}</span>
-              {active && (
-                <motion.div
-                  layoutId="tab-indicator"
-                  className="absolute -top-[7px] h-[2px] w-8 rounded-full bg-[#5B4FD9]"
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                />
-              )}
-            </button>
-            </Fragment>
-          );
-        })}
+    <nav
+      className="fixed left-3 right-3 z-50 mx-auto max-w-md"
+      style={{ bottom: 'calc(env(safe-area-inset-bottom) + 20px)' }}
+    >
+      <div
+        className="flex h-[68px] items-center justify-around rounded-3xl px-2 shadow-elevated"
+        style={{ backgroundColor: INK }}
+      >
+        {left.map(renderTab)}
         <button
           onClick={() => navigate('/create')}
-          aria-label="Create event"
-          className="relative flex flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1 text-[11px] transition-colors"
-          style={{ color: 'hsl(var(--primary))' }}
+          aria-label="Create"
+          className="flex h-[52px] w-[52px] items-center justify-center rounded-full transition-transform active:scale-95"
+          style={{ backgroundColor: '#D4F06A' }}
         >
-          <Plus className="h-[26px] w-[26px]" strokeWidth={2.25} />
-          <span className="font-medium">Create</span>
+          <Plus className="h-6 w-6" strokeWidth={2.5} style={{ color: INK }} />
         </button>
+        {right.map(renderTab)}
       </div>
     </nav>
   );

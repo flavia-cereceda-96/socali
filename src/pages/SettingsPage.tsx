@@ -132,7 +132,7 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-screen pb-[calc(7rem+env(safe-area-inset-bottom))]">
       <div className="mx-auto max-w-md px-4 pt-12">
         <div className="mb-6 flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="rounded-lg p-2 text-muted-foreground hover:bg-secondary">

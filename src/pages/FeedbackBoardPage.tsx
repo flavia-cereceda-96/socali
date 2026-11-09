@@ -239,7 +239,7 @@ const FeedbackBoardPage = () => {
   };
 
   return (
-    <div className="min-h-screen pb-28 bg-background">
+    <div className="min-h-screen pb-[calc(7rem+env(safe-area-inset-bottom))] bg-background">
       <div className="mx-auto max-w-md px-4 pt-10">
         <div className="flex items-center gap-3 mb-4">
           <button onClick={() => navigate('/')} className="p-2 -ml-2 rounded-full hover:bg-muted">

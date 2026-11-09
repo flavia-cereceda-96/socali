@@ -203,7 +203,7 @@ export function ChatEventCreator({ friends, initial, submitting, onCreate, onMor
   );
 
   return (
-    <div className="flex min-h-screen flex-col pb-24">
+    <div className="flex min-h-screen flex-col pb-[calc(7rem+env(safe-area-inset-bottom))]">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-4 pt-12">
         <div className="mb-4 flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="rounded-lg p-2 text-muted-foreground hover:bg-secondary">
