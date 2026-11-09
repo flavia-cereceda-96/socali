@@ -21,6 +21,7 @@ interface InviteInfo {
   cover_image: string | null;
   inviter_id: string;
   inviter_username: string | null;
+  inviter_display_name?: string | null;
   inviter_avatar: string | null;
 }
 
@@ -113,7 +114,7 @@ const InviteEventPage = () => {
     month: 'long',
     day: 'numeric',
   });
-  const inviterName = info.inviter_username ? `@${info.inviter_username}` : 'Someone';
+  const inviterName = info.inviter_display_name?.trim() ? info.inviter_display_name : info.inviter_username ? `@${info.inviter_username}` : 'Someone';
 
   return (
     <div className="min-h-screen bg-background pb-12">
