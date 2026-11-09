@@ -15,6 +15,7 @@ import { EmailNotificationsPrompt } from '@/components/EmailNotificationsPrompt'
 import { AvatarPrompt } from '@/components/AvatarPrompt';
 import { WeekStrip } from '@/components/home/WeekStrip';
 import { ComingUp } from '@/components/home/ComingUp';
+import { YourPeople } from '@/components/home/YourPeople';
 import { InlineDatePoll } from '@/components/InlineDatePoll';
 import { InlineWhatPoll } from '@/components/InlineWhatPoll';
 import { useNavigate } from 'react-router-dom';
@@ -420,6 +421,7 @@ const Index = () => {
               )}
             </div>
 
+            <YourPeople events={events} userId={userId} />
           </>
         )}
       </div>
