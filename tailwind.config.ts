@@ -18,6 +18,13 @@ export default {
         body: ["var(--font-body)"],
       },
       colors: {
+        lilac: "hsl(var(--lilac))",
+        peach: "hsl(var(--peach))",
+        "mint-strong": "hsl(var(--mint-strong))",
+        "accent-soft": {
+          DEFAULT: "hsl(var(--accent-soft))",
+          foreground: "hsl(var(--accent-soft-foreground))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
