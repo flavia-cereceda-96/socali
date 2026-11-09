@@ -16,6 +16,7 @@ import { CoachMark } from '@/components/CoachMark';
 import { InviteFriendsSheet } from '@/components/InviteFriendsSheet';
 import { cn } from '@/lib/utils';
 import { AppHeader } from '@/components/AppHeader';
+import CalMascot from '@/components/CalMascot';
 
 const PeoplePage = () => {
   const navigate = useNavigate();
@@ -392,9 +393,12 @@ const PeoplePage = () => {
           <p className="text-sm text-muted-foreground">Loading...</p>
         ) : friends.length === 0 ? (
           outgoingPending.length === 0 && (
-            <p className="text-center text-muted-foreground py-12">
-              No friends yet — search by username above to add some! 👆
-            </p>
+            <div className="flex flex-col items-center py-12">
+              <CalMascot mood="sleepy" size={96} />
+              <p className="pt-2 text-center text-muted-foreground">
+                No friends yet — search by username above to add some! 👆
+              </p>
+            </div>
           )
         ) : (
           <>

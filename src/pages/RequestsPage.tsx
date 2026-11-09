@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import { MapPin, Clock, Check, HelpCircle, X, MessageSquare, UserPlus, AtSign, Bell, CheckCircle2, XCircle, CircleHelp, Users, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CoachMark } from '@/components/CoachMark';
+import CalMascot from '@/components/CalMascot';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -359,7 +360,10 @@ const RequestsPage = () => {
 
         {pendingInvitations.length === 0 && pendingGroupInvites.length === 0 && otherActivities.length === 0 && (
           <div data-coach="activity-empty" className="relative">
-            <p className="text-center text-muted-foreground py-12">No new activity yet ✨</p>
+            <div className="flex flex-col items-center py-12">
+              <CalMascot mood="sleepy" size={96} />
+              <p className="pt-2 text-center text-muted-foreground">No new activity yet ✨</p>
+            </div>
             <CoachMark
               id="activity-empty"
               text="Friend requests and event updates live here"

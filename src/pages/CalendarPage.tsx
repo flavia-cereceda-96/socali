@@ -14,6 +14,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { WeeksCalendar } from '@/components/WeeksCalendar';
 import { CalendarDayTimeline } from '@/components/CalendarDayTimeline';
 import { buildFourWeeks, calendarDateKey } from '@/lib/calendarDisplay';
+import CalMascot from '@/components/CalMascot';
 import { addDays, format } from 'date-fns';
 
 // Exact hex per spec, applied at 70% opacity via inline style
@@ -291,6 +292,12 @@ const CalendarPage = () => {
 
         <WeeksCalendar days={view === 'fourweeks' ? fourWeekDays : monthDays} events={events} today={today} selectedDate={selectedDate} direction={direction} onOpenDay={openDay} getBusyPlans={getFriendEventsForDate} month={view === 'month' ? viewMonth : undefined} />
         <CalendarDayTimeline date={selectedDate} events={dayEvents} busyPlans={dayFriendEvents} userId={userId} friendName={id => friends.find(friend => friend.user_id === id)?.username || 'Friend'} onOpenEvent={id => navigate(`/event/${id}`)} onCreate={() => navigate(`/create?date=${calendarDateKey(selectedDate)}`)} />
+        {events.length === 0 && (
+          <div className="flex flex-col items-center pt-4 pb-8">
+            <CalMascot mood="sleepy" size={96} />
+            <p className="pt-2 text-sm text-muted-foreground">Nothing on your calendar yet</p>
+          </div>
+        )}
       </div>
 
     </div>
