@@ -270,11 +270,7 @@ const OnboardingPage = () => {
     }
     setSearching(true);
     const t = setTimeout(async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('user_id, username, avatar_url')
-        .ilike('username', `%${q}%`)
-        .limit(15);
+      const { data, error } = await supabase.rpc('search_profiles', { _query: q });
       setSearching(false);
       if (error) return;
       const filtered = (data || []).filter(p => p.user_id !== authedUserId);
