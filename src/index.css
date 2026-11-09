@@ -4,51 +4,60 @@
 
 @layer base {
   :root {
-    /* Off-white page background #FAFAFE */
-    --background: 240 50% 99%;
-    --foreground: 258 45% 13%;
+    /* Cali palette — page #FFFFFF, ink #1F1640 */
+    --background: 0 0% 100%;
+    --foreground: 253 49% 17%;
 
     --card: 0 0% 100%;
-    --card-foreground: 258 45% 13%;
+    --card-foreground: 253 49% 17%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 258 45% 13%;
+    --popover-foreground: 253 49% 17%;
 
-    /* Purple primary #B8A0FF, dark #6B45F5 used as foreground-on-light */
-    --primary: 252 100% 81%;
+    /* Brand / Cal purple #5B34E8 */
+    --primary: 253 80% 56%;
     --primary-foreground: 0 0% 100%;
 
-    /* Light purple surface #EBE5FF */
-    --secondary: 252 100% 95%;
-    --secondary-foreground: 252 90% 62%;
+    /* Mint #C9F7DD / text #14783F; strong mint #6FEBA0 */
+    --secondary: 146 74% 88%;
+    --secondary-foreground: 146 71% 27%;
+    --mint-strong: 144 76% 68%;
 
-    --muted: 252 100% 97%;
-    --muted-foreground: 258 19% 45%;
+    /* Muted surface #F4F2FA, muted text #5E5873 */
+    --muted: 255 44% 97%;
+    --muted-foreground: 253 13% 40%;
 
-    /* Light pink accent */
-    --accent: 340 100% 88%;
-    --accent-foreground: 340 60% 30%;
+    /* Lime #D4F06A / ink; soft lime #F2FBD3 / #4F6300 */
+    --accent: 73 82% 68%;
+    --accent-foreground: 253 49% 17%;
+    --accent-soft: 74 84% 91%;
+    --accent-soft-foreground: 72 100% 19%;
+
+    /* Sticker colours */
+    --lilac: 252 100% 81%;
+    --peach: 12 100% 90%;
 
     --destructive: 0 72% 56%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 252 100% 90%;
-    --input: 252 100% 90%;
-    --ring: 252 90% 62%;
+    /* Borders #ECE8F5 */
+    --border: 258 39% 93%;
+    --input: 258 39% 93%;
+    --ring: 253 80% 56%;
 
-    --radius: 1rem;
+    --radius: 1.25rem;
 
     /* Custom tokens */
-    --status-suggested: 340 100% 80%;
+    --status-suggested: 12 100% 90%;
     --status-maybe: 252 100% 81%;
-    --status-confirmed: 143 71% 36%;
+    --status-confirmed: 146 71% 27%;
     --status-declined: 0 60% 55%;
 
-    --surface-warm: 252 100% 95%;
+    --surface-warm: 255 44% 97%;
     --surface-glow: 252 100% 81%;
 
-    --shadow-card: 0 2px 12px -2px hsl(252 90% 62% / 0.08);
-    --shadow-elevated: 0 8px 30px -8px hsl(252 90% 62% / 0.18);
+    --shadow-card: 0 6px 18px rgba(31, 22, 64, 0.06);
+    --shadow-elevated: 0 10px 30px rgba(31, 22, 64, 0.12);
 
     --font-display: 'DM Sans', system-ui, sans-serif;
     --font-body: 'DM Sans', system-ui, sans-serif;
@@ -121,6 +130,7 @@
 @layer utilities {
   .shadow-card {
     box-shadow: var(--shadow-card);
+    border: 1px solid hsl(var(--border));
   }
   .shadow-elevated {
     box-shadow: var(--shadow-elevated);
