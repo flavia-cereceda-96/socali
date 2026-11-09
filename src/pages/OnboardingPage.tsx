@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { personName } from '@/lib/personName';
 import CalMascot from '@/components/CalMascot';
 import calendarInviteImg from '@/assets/calendar-invite-flat.jpg';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
@@ -412,7 +413,7 @@ const OnboardingPage = () => {
                     <div key={p.user_id} className="flex items-center gap-3 p-3">
                       <UserAvatar avatarUrl={p.avatar_url} username={p.username ?? undefined} userId={p.user_id} size="md" />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold">{p.username || 'User'}</p>
+                        <p className="truncate text-sm font-semibold">{personName(p, 'User')}</p>
                         <p className="truncate text-xs text-muted-foreground">@{p.username}</p>
                       </div>
                       <button
