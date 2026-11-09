@@ -39,6 +39,12 @@
     --peach-soft: 12 100% 95%;
     --peach-foreground: 12 63% 37%;
 
+    /* Deep green body text on mint #24503A */
+    --on-mint: 150 38% 23%;
+
+    /* Inline form error text #B3261E */
+    --danger: 3 71% 41%;
+
     --destructive: 0 72% 56%;
     --destructive-foreground: 0 0% 100%;
 
@@ -60,6 +66,7 @@
 
     --shadow-card: 0 6px 18px rgba(31, 22, 64, 0.06);
     --shadow-elevated: 0 10px 30px rgba(31, 22, 64, 0.12);
+    --shadow-sticker: 0 10px 24px rgba(15, 90, 51, 0.16);
 
     --font-display: 'DM Sans', system-ui, sans-serif;
     --font-body: 'DM Sans', system-ui, sans-serif;
@@ -102,6 +109,11 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Sticker-style tokens used on light surfaces; kept readable in dark mode */
+    --on-mint: 146 40% 78%;
+    --danger: 3 78% 62%;
+    --shadow-sticker: 0 10px 24px rgba(0, 0, 0, 0.4);
   }
 }
 
