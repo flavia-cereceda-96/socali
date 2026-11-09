@@ -42,3 +42,8 @@
 - [x] Optional display name shown everywhere, set in Edit profile and onboarding.
 - [x] Rebuild own Profile page in new style.
 - [x] Rebuild other person's profile page in new style.
+
+# Sticker-style welcome & login
+
+- [ ] Welcome page: mint background, tilted plan-sticker collage with Cal, headline, ink Get started.
+- [ ] Login page: mint header with Cal "Welcome back!" bubble, labelled fields, ink Log in button.
