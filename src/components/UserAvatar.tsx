@@ -20,7 +20,7 @@ const sizeClasses = {
 
 function initials(name?: string) {
   if (!name) return '?';
-  const parts = name.trim().split(/[\s._-]+/).filter(Boolean);
+  const parts = name.trim().replace(/^@+/, '').split(/[\s._-]+/).filter(Boolean);
   return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase() || '?';
 }
 
@@ -55,7 +55,7 @@ export function UserAvatar({ avatarUrl, username, userId, size = 'md', className
         className
       )}
     >
-      {username ? username[0].toUpperCase() : '?'}
+      {username ? initials(username) : '?'}
     </div>
   );
 }
