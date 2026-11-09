@@ -7,15 +7,16 @@ import { GroupAvatar } from '@/components/GroupAvatar';
 import { supabase } from '@/integrations/supabase/client';
 import { UserAvatar } from '@/components/UserAvatar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Bell, Camera, Settings as SettingsIcon, Pencil, Clock, MapPin, X, Sparkles } from 'lucide-react';
+import { Camera, Settings as SettingsIcon, X, Plus, ChevronRight } from 'lucide-react';
+import { IdentityBlock, StatTile, SectionHeader, MemoryGrid, attended, eventPeople, todayStr } from '@/components/profile/ProfileBits';
+import { publicAppUrl } from '@/lib/appUrl';
+import { shareAppLink } from '@/lib/nativeLinks';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
-import { BucketListsRow } from '@/components/BucketListsRow';
-import { useUnreadActivityCount } from '@/hooks/useActivity';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -25,10 +26,10 @@ const ProfilePage = () => {
   const { data: friends = [] } = useFriends();
   const { data: groups = [] } = useGroups();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { data: unreadActivity = 0 } = useUnreadActivityCount();
 
   const [editing, setEditing] = useState(false);
   const [username, setUsername] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [inviteTo, setInviteTo] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -44,65 +45,62 @@ const ProfilePage = () => {
   useEffect(() => {
     if (profile) {
       setUsername(profile.username || '');
+      setDisplayName((profile as any).display_name || '');
       setBio((profile as any).bio || '');
       setInviteTo((profile as any).invite_to || '');
       setAvatarUrl((profile as any).avatar_url || null);
     }
   }, [profile]);
 
-  // ===== Stats =====
+  const today = todayStr();
   const stats = useMemo(() => {
     if (!userId) return { created: 0, attended: 0, friends: friends.length };
-    const created = events.filter(e => e.created_by === userId).length;
-    const attended = events.filter(e => {
-      if (e.created_by === userId) return true;
-      const me = e.participants.find(p => p.user_id === userId);
-      return me?.status === 'confirmed';
-    }).length;
-    return { created, attended, friends: friends.length };
+    return {
+      created: events.filter(e => e.created_by === userId).length,
+      attended: events.filter(e => attended(e, userId)).length,
+      friends: friends.length,
+    };
   }, [events, userId, friends]);
 
-  // ===== Top friends by shared events =====
-  const topFriends = useMemo(() => {
-    if (!userId) return [];
-    const counts: Record<string, { count: number; profile: any }> = {};
-    events.forEach(e => {
-      const involved = new Set<string>([e.created_by, ...e.participants.map(p => p.user_id)]);
-      if (!involved.has(userId)) return;
-      // build profile map for this event
-      const profMap: Record<string, any> = {};
-      if (e.creator_profile) profMap[e.created_by] = { username: e.creator_profile.username, avatar_url: e.creator_profile.avatar_url, user_id: e.created_by };
-      e.participants.forEach(p => {
-        if (p.profile) profMap[p.user_id] = p.profile;
-      });
-      involved.forEach(uid => {
-        if (uid === userId) return;
-        if (!counts[uid]) counts[uid] = { count: 0, profile: profMap[uid] || { user_id: uid } };
-        counts[uid].count += 1;
-        if (!counts[uid].profile && profMap[uid]) counts[uid].profile = profMap[uid];
+  // Shared plans per friend (all time) and past plans this year
+  const { topFriends, mostSeen } = useMemo(() => {
+    const friendIds = new Set(friends.map(f => f.user_id));
+    const all: Record<string, number> = {};
+    const year: Record<string, number> = {};
+    const thisYear = String(new Date().getFullYear());
+    if (userId) events.forEach(e => {
+      if (!attended(e, userId)) return;
+      eventPeople(e, userId).filter(p => p.status === 'confirmed' && friendIds.has(p.id)).forEach(p => {
+        all[p.id] = (all[p.id] || 0) + 1;
+        if (e.date < today && e.date.startsWith(thisYear)) year[p.id] = (year[p.id] || 0) + 1;
       });
     });
-    return Object.values(counts)
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-  }, [events, userId]);
+    const sorted = [...friends].sort((a, b) => (all[b.user_id] || 0) - (all[a.user_id] || 0));
+    const bestId = Object.entries(year).sort((a, b) => b[1] - a[1])[0]?.[0];
+    return { topFriends: sorted, mostSeen: friends.find(f => f.user_id === bestId) || null };
+  }, [events, friends, userId, today]);
 
-  // ===== Upcoming (confirmed) =====
-  const upcoming = useMemo(() => {
+  const memories = useMemo(() => {
     if (!userId) return [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return events
-      .filter(e => {
-        const d = new Date(e.date + 'T00:00:00');
-        if (d < today) return false;
-        if (e.created_by === userId) return true;
-        const me = e.participants.find(p => p.user_id === userId);
-        return me?.status === 'confirmed';
-      })
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .slice(0, 3);
-  }, [events, userId]);
+    return events.filter(e => e.date < today && attended(e, userId)).sort((a, b) => b.date.localeCompare(a.date));
+  }, [events, userId, today]);
+  const [showAllMemories, setShowAllMemories] = useState(false);
+
+  const usageLabels: Record<string, string> = { spouse: 'dates with my partner', friends: 'group hangs', own: 'my own plans' };
+  const downFor = String((profile as any)?.usage || '').split(',').map(s => usageLabels[s.trim()]).filter(Boolean);
+  const hardPass = String((profile as any)?.hard_pass || '').trim();
+
+  const shareProfile = async () => {
+    if (!userId) return;
+    try {
+      await shareAppLink({ title: 'Join me on C A L I', text: "Let's plan things together on C A L I ✨", url: publicAppUrl(`/welcome?ref=${userId}`) });
+    } catch { /* cancelled */ }
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
+    navigate('/welcome');
+  };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -139,6 +137,7 @@ const ProfilePage = () => {
         .from('profiles')
         .update({
           username: username.trim(),
+          display_name: displayName.trim().slice(0, 40) || null,
           bio: bio.trim() || null,
           invite_to: inviteTo.trim() || null,
         } as any)
@@ -160,214 +159,116 @@ const ProfilePage = () => {
     );
   }
 
-  const formatTime = (t: string) => {
-    const [h, m] = t.split(':');
-    const hour = parseInt(h);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const h12 = hour % 12 || 12;
-    return `${h12}:${m} ${ampm}`;
-  };
+  const shownName = personName({ display_name: (profile as any)?.display_name, username: profile?.username }, '');
+  const footer = [
+    { label: 'Settings', onClick: () => navigate('/settings') },
+    { label: 'Feedback & ideas', onClick: () => navigate('/feedback') },
+    { label: 'Help & privacy', onClick: () => navigate('/privacy') },
+  ];
 
   return (
     <div className="min-h-screen pb-[calc(7rem+env(safe-area-inset-bottom))]">
       <div className="mx-auto max-w-md px-4 pt-12">
-        <div className="mb-6 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate(-1)} className="rounded-lg p-2 text-muted-foreground hover:bg-secondary">
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-            <motion.h1
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="text-2xl font-bold text-foreground"
-            >
-              Profile
-            </motion.h1>
-          </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => navigate('/requests')}
-              className="relative rounded-lg p-2 text-muted-foreground hover:bg-secondary"
-              aria-label="Notifications"
-            >
-              <Bell className="h-5 w-5" />
-              {unreadActivity > 0 && (
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-[#FF3040]" />
-              )}
-            </button>
-            <button
-              onClick={() => setEditing(true)}
-              className="rounded-lg p-2 text-muted-foreground hover:bg-secondary"
-              aria-label="Edit profile"
-            >
-              <Pencil className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => navigate('/settings')}
-              className="rounded-lg p-2 text-muted-foreground hover:bg-secondary"
-              aria-label="Settings"
-            >
-              <SettingsIcon className="h-5 w-5" />
-            </button>
-          </div>
+        <div className="mb-2 flex justify-end">
+          <button onClick={() => navigate('/settings')} className="flex h-11 w-11 items-center justify-center rounded-2xl bg-muted text-foreground" aria-label="Settings">
+            <SettingsIcon className="h-5 w-5" />
+          </button>
         </div>
 
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-          {/* Header */}
-          <div className="flex flex-col items-center text-center">
-            <button
-              type="button"
-              onClick={() => setAvatarPreviewOpen(true)}
-              className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
-              aria-label="View profile picture"
-            >
-              <UserAvatar avatarUrl={avatarUrl} username={username} size="xl" />
-            </button>
-            <h2 className="mt-3 text-xl font-bold text-foreground">{username}</h2>
-            {bio && (
-              <p className="mt-2 text-sm text-foreground/80 leading-relaxed max-w-xs">{bio}</p>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-7">
+          <div>
+            <IdentityBlock avatarUrl={avatarUrl} userId={userId || undefined} name={shownName} username={profile?.username || ''} bio={(profile as any)?.bio} onAvatarClick={() => setAvatarPreviewOpen(true)} />
+            {(downFor.length > 0 || hardPass) && (
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                {downFor.length > 0 && (
+                  <span className="rounded-full bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent-soft-foreground">Down for: {downFor.join(', ')}</span>
+                )}
+                {hardPass && (
+                  <span className="rounded-full px-3 py-1.5 text-xs font-semibold" style={{ backgroundColor: 'hsl(var(--peach-soft))', color: 'hsl(var(--peach-foreground))' }}>Hard pass: {hardPass}</span>
+                )}
+              </div>
             )}
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-2xl p-3 shadow-card text-center" style={{ backgroundColor: 'hsl(var(--primary))', color: '#ffffff' }}>
-              <p className="text-2xl font-bold">{stats.created}</p>
-              <p className="text-[11px] opacity-90 mt-0.5">Events created</p>
-            </div>
-            <div className="rounded-2xl p-3 shadow-card text-center" style={{ backgroundColor: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' }}>
-              <p className="text-2xl font-bold">{stats.attended}</p>
-              <p className="text-[11px] mt-0.5 opacity-90">Events attended</p>
-            </div>
-            <div className="rounded-2xl p-3 shadow-card text-center" style={{ backgroundColor: 'hsl(var(--peach))', color: '#C2410C' }}>
-              <p className="text-2xl font-bold">{stats.friends}</p>
-              <p className="text-[11px] mt-0.5 opacity-90">Friends</p>
-            </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button onClick={() => setEditing(true)} className="h-12 rounded-2xl bg-muted text-sm font-semibold text-foreground">Edit profile</button>
+            <button onClick={shareProfile} className="h-12 rounded-2xl bg-foreground text-sm font-semibold text-background">Share profile</button>
           </div>
 
-          {/* Top friends */}
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-3">
+              <StatTile value={stats.created} label="plans made" bg="--primary" fg="--primary-foreground" />
+              <StatTile value={stats.attended} label="hangouts" bg="--secondary" fg="--secondary-foreground" />
+              <StatTile value={stats.friends} label="friends" bg="--accent" fg="--accent-foreground" />
+            </div>
+            {mostSeen && (
+              <button onClick={() => navigate(`/person/${mostSeen.user_id}`)} className="flex w-full items-center gap-2 rounded-2xl bg-muted px-4 py-3 text-left text-sm text-muted-foreground">
+                Most seen this year:
+                <UserAvatar avatarUrl={mostSeen.avatar_url} username={personName(mostSeen)} userId={mostSeen.user_id} size="xs" />
+                <span className="font-semibold text-foreground">{personName(mostSeen)}</span>
+              </button>
+            )}
+          </div>
+
           {topFriends.length > 0 && (
             <section>
-              <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                Your top friends
-              </h3>
-              <div className="-mx-4 px-4 overflow-x-auto scrollbar-hide">
-                <div className="flex gap-4 pb-1">
-                  {topFriends.map((f: any) => {
-                    const name = personName(f.profile, '');
-                    const first = name.charAt(0).toUpperCase() + name.slice(1);
-                    return (
-                      <button
-                        key={f.profile?.user_id || name}
-                        onClick={() => f.profile?.user_id && navigate(`/person/${f.profile.user_id}`)}
-                        className="flex flex-col items-center gap-1.5 w-16 flex-shrink-0"
-                      >
-                        <UserAvatar avatarUrl={f.profile?.avatar_url} username={name} size="lg" />
-                        <span className="text-xs text-foreground truncate max-w-full">{first}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </section>
-          )}
-
-          {/* Groups */}
-          <section>
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Your groups
-            </h3>
-            {groups.length === 0 ? (
-              <button
-                onClick={() => navigate('/people/groups/new')}
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
-                No groups yet — create one!
-              </button>
-            ) : (
-              <div className="-mx-4 px-4 overflow-x-auto scrollbar-hide">
-                <div className="flex gap-4 pb-1">
-                  {groups.map((g: any) => (
-                    <button
-                      key={g.id}
-                      onClick={() => navigate(`/people/groups/${g.id}`)}
-                      className="flex flex-col items-center gap-1.5 w-16 flex-shrink-0"
-                    >
-                      <GroupAvatar avatarUrl={g.avatar_url} emoji={g.emoji} name={g.name} size="lg" />
-                      <span className="text-xs text-foreground truncate max-w-full">{g.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </section>
-
-          {/* Coming up */}
-          <section>
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Coming up
-            </h3>
-            {upcoming.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No confirmed plans yet ✨</p>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {upcoming.map(e => (
-                  <button
-                    key={e.id}
-                    onClick={() => navigate(`/event/${e.id}`)}
-                    className="flex gap-3 rounded-2xl bg-card p-4 shadow-card text-left hover:shadow-elevated transition-shadow"
-                  >
-                    <div
-                      className="flex flex-col items-center justify-center rounded-xl px-3 py-2 min-w-[52px]"
-                      style={{ backgroundColor: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' }}
-                    >
-                      <span className="text-xs font-semibold uppercase">
-                        {new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
-                      </span>
-                      <span className="text-lg font-bold">
-                        {new Date(e.date + 'T00:00:00').getDate()}
-                      </span>
-                    </div>
-                    <div className="flex flex-1 flex-col gap-1.5 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{e.emoji}</span>
-                        <span className="font-semibold text-foreground truncate">{e.title}</span>
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        {e.time && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatTime(e.time)}</span>}
-                        {e.location && <span className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3" />{e.location}</span>}
-                      </div>
-                    </div>
+              <SectionHeader title="Top friends" />
+              <div className="flex gap-3">
+                {topFriends.slice(0, 4).map(f => (
+                  <button key={f.user_id} onClick={() => navigate(`/person/${f.user_id}`)} className="flex w-16 flex-col items-center gap-1.5">
+                    <UserAvatar avatarUrl={f.avatar_url} username={personName(f)} userId={f.user_id} className="h-14 w-14 ring-2 ring-accent ring-offset-2 ring-offset-background" />
+                    <span className="max-w-full truncate text-xs text-foreground">{personName(f).split(' ')[0]}</span>
                   </button>
                 ))}
-              </div>
-            )}
-          </section>
-
-          <BucketListsRow />
-
-          {/* Invite preferences */}
-          {inviteTo && (
-            <section>
-              <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                Invite me to
-              </h3>
-              <div className="flex items-start gap-2 rounded-2xl border border-border bg-secondary/40 px-4 py-3">
-                <Sparkles className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                <p className="text-sm text-foreground/90 leading-relaxed">{inviteTo}</p>
+                {topFriends.length > 4 && (
+                  <button onClick={() => navigate('/people')} className="flex w-16 flex-col items-center gap-1.5">
+                    <span className="flex h-14 w-14 items-center justify-center rounded-full bg-muted text-xs font-bold text-foreground">+{topFriends.length - 4}</span>
+                    <span className="text-xs text-muted-foreground">all</span>
+                  </button>
+                )}
               </div>
             </section>
           )}
-          <button
-            onClick={() => navigate('/feedback')}
-            className="flex w-full items-center gap-3 rounded-2xl bg-muted p-3 text-left transition-colors hover:bg-border"
-          >
-            <span className="text-xl">💡</span>
-            <span className="flex-1 text-sm text-foreground/80">
-              Got feedback or feature ideas? <span className="font-medium text-foreground">Let us know</span>
-            </span>
-            <span className="text-sm text-muted-foreground">›</span>
-          </button>
+
+          <section>
+            <SectionHeader title="Groups" />
+            <div className="-mx-4 overflow-x-auto px-4 scrollbar-hide">
+              <div className="flex gap-3 pb-1">
+                {groups.map((g: any) => (
+                  <button key={g.id} onClick={() => navigate(`/people/groups/${g.id}`)} className="flex w-16 shrink-0 flex-col items-center gap-1.5">
+                    <GroupAvatar avatarUrl={g.avatar_url} emoji={g.emoji} name={g.name} size="lg" />
+                    <span className="max-w-full truncate text-xs text-foreground">{g.name}</span>
+                  </button>
+                ))}
+                <button onClick={() => navigate('/people/groups/new')} className="flex w-16 shrink-0 flex-col items-center gap-1.5">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-dashed border-border text-muted-foreground"><Plus className="h-5 w-5" /></span>
+                  <span className="text-xs text-muted-foreground">New</span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          {memories.length > 0 && (
+            <section>
+              <SectionHeader title="Memories" action={memories.length > 4 && (
+                <button onClick={() => setShowAllMemories(v => !v)} className="text-sm font-semibold text-primary">{showAllMemories ? 'Show less' : 'See all'}</button>
+              )} />
+              <MemoryGrid events={showAllMemories ? memories : memories.slice(0, 4)} viewerId={userId} />
+            </section>
+          )}
+
+          <ul className="divide-y divide-border overflow-hidden rounded-[20px] bg-muted">
+            {footer.map(item => (
+              <li key={item.label}>
+                <button onClick={item.onClick} className="flex w-full items-center justify-between px-4 py-3.5 text-left text-sm font-medium text-foreground">
+                  {item.label}<ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </li>
+            ))}
+            <li>
+              <button onClick={logout} className="w-full px-4 py-3.5 text-left text-sm font-semibold text-destructive">Log out</button>
+            </li>
+          </ul>
         </motion.div>
 
         <AnimatePresence>
@@ -451,6 +352,17 @@ const ProfilePage = () => {
               </div>
 
               <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="displayName">Display name</Label>
+                  <Input
+                    id="displayName"
+                    value={displayName}
+                    onChange={e => setDisplayName(e.target.value.slice(0, 40))}
+                    maxLength={40}
+                    placeholder="What should friends call you?"
+                  />
+                  <p className="text-xs text-muted-foreground">Optional. Shown instead of your @username.</p>
+                </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="username">Username</Label>
                   <Input
