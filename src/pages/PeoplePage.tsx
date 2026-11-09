@@ -198,7 +198,7 @@ const PeoplePage = () => {
   };
 
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-screen pb-[calc(7rem+env(safe-area-inset-bottom))]">
       <CoachMark
         id="people-search"
         text="Search a username to add friends"

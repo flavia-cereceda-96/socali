@@ -194,7 +194,7 @@ const CalendarPage = () => {
   const monthLabel = view === 'month' ? viewMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : `${format(fourWeekDays[0], 'd MMM')} – ${format(fourWeekDays[27], 'd MMM yyyy')}`;
 
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-screen pb-[calc(7rem+env(safe-area-inset-bottom))]">
       <CoachMark
         id="calendar-grid"
         text="Tap any day to see or add plans"

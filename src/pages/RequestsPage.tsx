@@ -156,7 +156,7 @@ const RequestsPage = () => {
   }
 
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-screen pb-[calc(7rem+env(safe-area-inset-bottom))]">
       <div className="mx-auto max-w-md px-4 pt-12">
         <motion.h1
           initial={{ opacity: 0, y: -10 }}

@@ -357,7 +357,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-screen pb-[calc(7rem+env(safe-area-inset-bottom))]">
       <AppHeader title="C A L I" />
       <EmailNotificationsPrompt userId={userId} />
       <CoachMark
