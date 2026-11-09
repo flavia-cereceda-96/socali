@@ -13,7 +13,8 @@ import { HomeHero } from '@/components/home/HomeHero';
 import { NeedsYouCard } from '@/components/home/NeedsYouCard';
 import { EmailNotificationsPrompt } from '@/components/EmailNotificationsPrompt';
 import { AvatarPrompt } from '@/components/AvatarPrompt';
-import { BucketListsRow } from '@/components/BucketListsRow';
+import { WeekStrip } from '@/components/home/WeekStrip';
+import { ComingUp } from '@/components/home/ComingUp';
 import { InlineDatePoll } from '@/components/InlineDatePoll';
 import { InlineWhatPoll } from '@/components/InlineWhatPoll';
 import { useNavigate } from 'react-router-dom';
@@ -373,6 +374,8 @@ const Index = () => {
 
         <HomeHero event={allListedEvents[0]} userId={userId} friendRank={friendRank} />
         <NeedsYouCard events={events} userId={userId} />
+        <WeekStrip events={events} userId={userId} />
+        <ComingUp events={allListedEvents.slice(1, 5)} userId={userId} friendRank={friendRank} groupHints={groupHints as any} />
 
         {hasNoEvents ? (
           <HomeEmptyState usage={profile?.usage} />
@@ -417,63 +420,6 @@ const Index = () => {
               )}
             </div>
 
-            {/* Next 7 days */}
-            <motion.h2
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.15 }}
-              className={sectionHeaderCls}
-            >
-              Next 7 days
-            </motion.h2>
-            {renderFriendsRow(weekEvents)}
-            <div className="flex flex-col gap-3 mb-8">
-              {weekEvents.length > 0 ? (
-                renderDayGroups(weekEvents)
-              ) : (
-                <>
-                  {todayEvents.length === 0 && (
-                    <div className="flex justify-center pt-4 pb-1">
-                      <CalMascot mood="sleepy" size={96} />
-                    </div>
-                  )}
-                  <p className="text-sm text-muted-foreground">Nothing planned this week yet ✨</p>
-                </>
-              )}
-            </div>
-
-            <BucketListsRow />
-
-            {/* Next 30 days */}
-            <motion.h2
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className={sectionHeaderCls}
-            >
-              Next 30 days
-            </motion.h2>
-            {renderFriendsRow(monthEvents)}
-            <div className="mb-3 grid grid-cols-2 gap-2">
-              <div className="rounded-xl px-3 py-2 shadow-card" style={{ backgroundColor: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' }}>
-                <p className="text-[10px] font-medium opacity-90">Plans</p>
-                <p className="text-lg font-bold leading-tight">{monthEvents.length}</p>
-              </div>
-              <div className="rounded-xl px-3 py-2 shadow-card" style={{ backgroundColor: '#FFE4E1', color: '#C0392B' }}>
-                <p className="text-[10px] font-medium opacity-90">Pending reply</p>
-                <p className="text-lg font-bold leading-tight">{monthEvents.filter(e => {
-                  const myP = e.participants.find(p => p.user_id === userId);
-                  return myP?.status === 'pending' || myP?.status === 'suggested';
-                }).length}</p>
-              </div>
-            </div>
-            <div className="flex flex-col gap-3 mb-8">
-              {monthEvents.length > 0 ? (
-                renderDayGroups(monthEvents)
-              ) : (
-                <p className="text-sm text-muted-foreground">Nothing planned yet — a good time to make plans!</p>
-              )}
-            </div>
           </>
         )}
       </div>

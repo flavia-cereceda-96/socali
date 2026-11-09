@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/UserAvatar';
 import { CoachMark } from '@/components/CoachMark';
@@ -63,7 +63,13 @@ const CalendarPage = () => {
   const weekStart = useWeekStart();
   const wsIdx = weekStartIndex(weekStart) as 0 | 1;
 
-  const [viewMonth, setViewMonth] = useState<Date>(() => new Date(today.getFullYear(), today.getMonth(), 1));
+  const [searchParams] = useSearchParams();
+  const initialDate = useMemo(() => {
+    const q = searchParams.get('date');
+    const m = q && /^(\d{4})-(\d{2})-(\d{2})$/.exec(q);
+    return m ? new Date(+m[1], +m[2] - 1, +m[3]) : today;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const [viewMonth, setViewMonth] = useState<Date>(() => new Date(initialDate.getFullYear(), initialDate.getMonth(), 1));
   const [view, setView] = useState<'fourweeks' | 'month'>('month');
   const [anchor, setAnchor] = useState(today);
   const fourWeekDays = useMemo(() => buildFourWeeks(anchor, wsIdx), [anchor, wsIdx]);
@@ -72,7 +78,7 @@ const CalendarPage = () => {
     return user?.id;
   }});
   const [direction, setDirection] = useState<1 | -1>(1);
-  const [selectedDate, setSelectedDate] = useState<Date>(today);
+  const [selectedDate, setSelectedDate] = useState<Date>(initialDate);
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [query, setQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
