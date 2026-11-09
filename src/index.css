@@ -109,6 +109,11 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Sticker-style tokens used on light surfaces; kept readable in dark mode */
+    --on-mint: 146 40% 78%;
+    --danger: 3 78% 62%;
+    --shadow-sticker: 0 10px 24px rgba(0, 0, 0, 0.4);
   }
 }
 
