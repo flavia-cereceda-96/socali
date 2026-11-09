@@ -43,6 +43,13 @@
       "when": 1793459982274,
       "tag": "0005_push_categories",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794262216949,
+      "tag": "0006_tighten_rls_policies",
+      "breakpoints": true
     }
   ]
 }
