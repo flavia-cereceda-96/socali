@@ -2,12 +2,15 @@ import { useState, useMemo, useEffect } from 'react';
 import { useEvents, DbEventWithCreator } from '@/hooks/useEvents';
 import { useEventGroupHints } from '@/hooks/useGroups';
 import { UserAvatar } from '@/components/UserAvatar';
+import { AvatarGroup } from '@/components/AvatarGroup';
 import { motion } from 'framer-motion';
 import { MapPin, Clock } from 'lucide-react';
 import { HomeEmptyState } from '@/components/HomeEmptyState';
 import CalMascot from '@/components/CalMascot';
 import { CoachMark } from '@/components/CoachMark';
-import { AppHeader } from '@/components/AppHeader';
+import { HomeHeader } from '@/components/home/HomeHeader';
+import { HomeHero } from '@/components/home/HomeHero';
+import { NeedsYouCard } from '@/components/home/NeedsYouCard';
 import { EmailNotificationsPrompt } from '@/components/EmailNotificationsPrompt';
 import { AvatarPrompt } from '@/components/AvatarPrompt';
 import { BucketListsRow } from '@/components/BucketListsRow';
@@ -126,6 +129,14 @@ const Index = () => {
 
   const hasNoEvents = events.length === 0;
 
+  // Viewer's top friends = people they share the most plans with
+  const friendRank: Record<string, number> = {};
+  events.forEach(e => {
+    const ids = [e.created_by, ...e.participants.map(p => p.user_id)];
+    if (!ids.includes(userId as string)) return;
+    ids.forEach(id => { if (id && id !== userId) friendRank[id] = (friendRank[id] ?? 0) + 1; });
+  });
+
   const renderEventCard = (event: DbEventWithCreator, i: number, grouped = false) => {
     const timeDisplay = getTimeDisplay(event);
     const myP = event.participants.find(p => p.user_id === userId);
@@ -214,28 +225,19 @@ const Index = () => {
           </div>
           <div className="flex items-center justify-between gap-2 mt-0.5">
             {(() => {
-              if (event.participants.length === 0) return <span />;
               return (
-                <div className="flex items-center gap-1">
-                  {event.participants.slice(0, 5).map(p => (
-                    <button
-                      key={p.id}
-                      onClick={(e) => { e.stopPropagation(); navigate(`/person/${p.user_id}`); }}
-                      className="-ml-1 first:ml-0"
-                      aria-label={`View @${p.profile?.username || 'user'}`}
-                    >
-                      <UserAvatar
-                        avatarUrl={p.profile?.avatar_url}
-                        username={p.profile?.username}
-                        size="sm"
-                        className={`h-6 w-6 text-[10px] ring-2 ring-card transition ${p.status === 'confirmed' ? '' : 'grayscale opacity-60'}`}
-                      />
-                    </button>
-                  ))}
-                  {event.participants.length > 5 && (
-                    <span className="ml-1 text-[10px] text-muted-foreground">+{event.participants.length - 5}</span>
-                  )}
-                </div>
+                <AvatarGroup
+                  size="sm"
+                  viewerIsOrganiser={event.created_by === userId}
+                  friendRank={friendRank}
+                  title={event.title}
+                  people={event.participants.map(p => ({
+                    id: p.user_id,
+                    name: p.profile?.username || 'user',
+                    avatarUrl: p.profile?.avatar_url,
+                    status: p.status,
+                  }))}
+                />
               );
             })()}
             <div className="flex items-center gap-1.5">
@@ -358,7 +360,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen pb-[calc(7rem+env(safe-area-inset-bottom))]">
-      <AppHeader title="C A L I" />
+      <HomeHeader />
       <EmailNotificationsPrompt userId={userId} />
       <CoachMark
         id="home-fab"
@@ -367,56 +369,15 @@ const Index = () => {
         placement="top"
       />
       <div className="mx-auto max-w-md px-4 pt-4">
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-          <p className="text-sm font-medium text-muted-foreground">{greeting}</p>
-          <h1 className="text-2xl font-bold text-foreground">Your Week</h1>
-        </motion.div>
-
         <AvatarPrompt userId={userId} />
+
+        <HomeHero event={allListedEvents[0]} userId={userId} friendRank={friendRank} />
+        <NeedsYouCard events={events} userId={userId} />
 
         {hasNoEvents ? (
           <HomeEmptyState usage={profile?.usage} />
         ) : (
           <>
-            {/* Scorecards */}
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 }}
-              className="mb-6 grid grid-cols-3 gap-3"
-            >
-              <div className="rounded-2xl p-4 shadow-card" style={{ backgroundColor: 'hsl(var(--primary))', color: '#ffffff' }}>
-                <p className="text-xs font-medium opacity-90">Today</p>
-                <p className="text-2xl font-bold mt-1">{todayCount}</p>
-                <p className="text-[11px] opacity-80">plan{todayCount !== 1 ? 's' : ''}</p>
-              </div>
-              <div className="rounded-2xl p-4 shadow-card" style={{ backgroundColor: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' }}>
-                <p className="text-xs font-medium">Next 7 days</p>
-                <p className="text-2xl font-bold mt-1">{weekCount}</p>
-                <p className="text-[11px] opacity-80">plans</p>
-              </div>
-              <div className="rounded-2xl p-4 shadow-card" style={{ backgroundColor: '#FFD6E5', color: '#B83268' }}>
-                <p className="text-xs font-medium">Pending</p>
-                <p className="text-2xl font-bold mt-1">{pendingCount}</p>
-                <p className="text-[11px] opacity-80">reply needed</p>
-              </div>
-            </motion.div>
-
-            {/* Feedback Board entry point */}
-            <motion.button
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.07 }}
-              onClick={() => navigate('/feedback')}
-              className="w-full mb-6 rounded-2xl bg-muted/60 hover:bg-muted transition-colors p-3 flex items-center gap-3 text-left"
-            >
-              <span className="text-xl">💡</span>
-              <span className="text-sm text-foreground/80 flex-1">
-                Got feedback or feature ideas? <span className="font-medium text-foreground">Let us know</span>
-              </span>
-              <span className="text-muted-foreground text-sm">›</span>
-            </motion.button>
-
             {tbdEvents.length > 0 && (
               <>
                 <motion.h2

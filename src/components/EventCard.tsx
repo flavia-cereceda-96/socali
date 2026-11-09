@@ -48,7 +48,11 @@ export function EventCard({ event, index = 0 }: { event: SocialEvent; index?: nu
             <span className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3" />{event.location}</span>
           )}
         </div>
-        <AvatarGroup friends={event.participants.map(p => p.friend)} />
+        <AvatarGroup
+          size="sm"
+          title={event.title}
+          people={event.participants.map(p => ({ id: p.friend.id, name: p.friend.name, avatarUrl: p.friend.avatar, status: p.status }))}
+        />
       </div>
     </motion.div>
   );

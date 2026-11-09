@@ -357,6 +357,16 @@ const ProfilePage = () => {
               </div>
             </section>
           )}
+          <button
+            onClick={() => navigate('/feedback')}
+            className="flex w-full items-center gap-3 rounded-2xl bg-muted p-3 text-left transition-colors hover:bg-border"
+          >
+            <span className="text-xl">💡</span>
+            <span className="flex-1 text-sm text-foreground/80">
+              Got feedback or feature ideas? <span className="font-medium text-foreground">Let us know</span>
+            </span>
+            <span className="text-sm text-muted-foreground">›</span>
+          </button>
         </motion.div>
 
         <AnimatePresence>
