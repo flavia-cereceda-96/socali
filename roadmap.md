@@ -35,4 +35,4 @@
 - [x] Login: matching flat illustration with distinct animation and composition.
 
 ## Home top rebuild
-- [ ] Greeting header, hero next-plan card with Cal, Needs you card; remove scorecards + feedback banner (feedback link to Profile)
+- [x] Greeting header, hero next-plan card with Cal, Needs you card; remove scorecards + feedback banner (feedback link to Profile)
