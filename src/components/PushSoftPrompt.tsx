@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import CalMascot from '@/components/CalMascot';
 import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer';
 import { PUSH_PROMPT_EVENT, enableNativePush, recordSoftPromptAccepted, recordSoftPromptDismissed } from '@/lib/pushPrompt';
 
@@ -32,7 +32,9 @@ export function PushSoftPrompt() {
   };
   return <Drawer open={open} onOpenChange={o => { if (!o && !busy) notNow(); }}>
     <DrawerContent className="px-6 pb-8 pt-4">
-      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary"><Bell className="h-6 w-6" /></div>
+      <div className="mb-3 flex justify-center">
+        <CalMascot mood="excited" size={80} animate />
+      </div>
       <DrawerTitle className="text-center text-lg font-bold">{t('push.softPromptTitle')}</DrawerTitle>
       <div className="mt-5 flex flex-col gap-2">
         <Button onClick={turnOn} disabled={busy}>{t('push.turnOn')}</Button>

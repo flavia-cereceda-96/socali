@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { mascotSuccessToast } from '@/components/MascotToast';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { LocationPicker, LocationValue } from '@/components/LocationPicker';
@@ -139,7 +140,8 @@ const EventDetailPage = () => {
           .eq('id', myParticipation.id);
         if (error) { toast.error(error.message); return; }
       }
-      toast.success('RSVP updated');
+      if (value === 'confirmed') mascotSuccessToast('RSVP updated');
+      else toast.success('RSVP updated');
       void maybeShowPushPrompt();
       queryClient.invalidateQueries({ queryKey: ['events'] });
       setRsvpSheetOpen(false);

@@ -7,6 +7,7 @@ import { UserAvatar } from '@/components/UserAvatar';
 import { Check, X, ThumbsUp, ThumbsDown, Plus, ExternalLink, Trash2, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { mascotSuccessToast } from '@/components/MascotToast';
 import { cn } from '@/lib/utils';
 import { handleExternalLink } from '@/lib/nativeLinks';
 import { SafetyMenu } from '@/components/SafetyMenu';
@@ -146,7 +147,7 @@ export function WhatPoll({
           }))
         );
       }
-      toast.success("Activity confirmed! 🎉");
+      mascotSuccessToast("Activity confirmed! 🎉");
       qc.invalidateQueries({ queryKey: ['events'] });
       setConfirming(null);
       onConfirmed?.();
