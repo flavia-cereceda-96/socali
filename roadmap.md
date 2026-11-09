@@ -36,3 +36,9 @@
 
 ## Home top rebuild
 - [x] Greeting header, hero next-plan card with Cal, Needs you card; remove scorecards + feedback banner (feedback link to Profile)
+
+# Display names & profiles
+
+- [ ] Optional display name shown everywhere, set in Edit profile and onboarding.
+- [ ] Rebuild own Profile page in new style.
+- [ ] Rebuild other person's profile page in new style.

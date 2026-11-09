@@ -323,7 +323,7 @@ const PeoplePage = () => {
                     👤
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground">{profile.username}</p>
+                    <p className="font-semibold text-foreground">{personName(profile)}</p>
                     <p className="text-xs text-muted-foreground">{profile.email}</p>
                     {profile.bio && (
                       <p className="text-xs truncate" style={{ color: 'hsl(var(--secondary-foreground))' }}>{profile.bio}</p>
@@ -411,9 +411,9 @@ const PeoplePage = () => {
                   onClick={() => navigate(`/person/${friend.user_id}`)}
                   className="flex items-center gap-4 rounded-2xl bg-card p-4 shadow-card cursor-pointer hover:bg-accent/50 transition-[background-color] duration-100 ease-out"
                 >
-                  <UserAvatar avatarUrl={friend.avatar_url} username={friend.username} size="lg" />
+                  <UserAvatar avatarUrl={friend.avatar_url} username={personName(friend)} size="lg" />
                   <div className="flex-1 min-w-0">
-                    <ClickableName userId={friend.user_id} name={friend.username} className="font-semibold" />
+                    <ClickableName userId={friend.user_id} name={personName(friend)} className="font-semibold" />
                     <p className="text-xs text-muted-foreground">{friend.email}</p>
                     {friend.bio && (
                       <p className="text-xs truncate" style={{ color: 'hsl(var(--secondary-foreground))' }}>{friend.bio}</p>

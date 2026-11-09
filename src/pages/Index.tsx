@@ -162,7 +162,7 @@ const Index = () => {
     }
     event.participants.forEach(p => {
       participantProfiles[p.user_id] = {
-        username: p.profile?.username,
+        username: personName(p.profile, ''),
         avatar_url: p.profile?.avatar_url,
       };
     });
@@ -307,7 +307,7 @@ const Index = () => {
       if (e.created_by && e.created_by !== userId && creatorRsvp === 'confirmed' && !seen.has(e.created_by)) {
         seen.set(e.created_by, {
           user_id: e.created_by,
-          username: e.creator_profile?.username,
+          username: personName(e.creator_profile, ''),
           avatar_url: e.creator_profile?.avatar_url,
         });
       }
@@ -315,7 +315,7 @@ const Index = () => {
         if (p.user_id !== userId && p.status === 'confirmed' && !seen.has(p.user_id)) {
           seen.set(p.user_id, {
             user_id: p.user_id,
-            username: p.profile?.username,
+            username: personName(p.profile, ''),
             avatar_url: p.profile?.avatar_url,
           });
         }

@@ -35,7 +35,7 @@ Deno.serve(async req => {
     }
     const { data: tokens, error: tokenError } = await admin.from('user_push_tokens').select('id,token,platform').eq('user_id', item.user_id);
     if (tokenError) throw tokenError;
-    const actor = item.source_user_id ? (await admin.from('profiles').select('username').eq('user_id', item.source_user_id).maybeSingle()).data?.username : undefined;
+    const actor = item.source_user_id ? (await admin.from('profiles').select('username, display_name').eq('user_id', item.source_user_id).maybeSingle()).data as any)?.display_name?.trim() || undefined ?? undefined : undefined;
     const event = item.event_id ? (await admin.from('events').select('title').eq('id', item.event_id).maybeSingle()).data?.title : undefined;
     const group = item.group_id ? (await admin.from('groups').select('name').eq('id', item.group_id).maybeSingle()).data?.name : undefined;
     const notification = buildNotification(item.type, actor, event, group, profile?.preferred_language);

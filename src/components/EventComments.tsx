@@ -40,7 +40,7 @@ export const EventComments = ({ eventId }: EventCommentsProps) => {
 
       return data.map(c => ({
         ...c,
-        username: profileMap.get(c.user_id)?.username || 'Unknown',
+        username: personName(profileMap.get(c.user_id), 'Unknown'),
         avatar_url: profileMap.get(c.user_id)?.avatar_url || null,
       }));
     },
