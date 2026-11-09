@@ -44,7 +44,7 @@ function Face({ person, size }: { person: Attendee; size: 'lg' | 'sm' }) {
           className="flex h-full w-full items-center justify-center rounded-full font-semibold text-foreground"
           style={{ backgroundColor: `hsl(var(${avatarColorVar(person.id)}))`, fontSize: size === 'lg' ? 12 : 10 }}
         >
-          {(person.name || '?').slice(0, 2).toUpperCase()}
+          {(person.name || '?').replace(/^@+/, '').slice(0, 2).toUpperCase() || '?'}
         </span>
       )}
     </span>
