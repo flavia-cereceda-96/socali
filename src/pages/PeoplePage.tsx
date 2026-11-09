@@ -368,7 +368,7 @@ const PeoplePage = () => {
                   />
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-foreground truncate">
-                      @{personName(req.profile, 'unknown')}
+                      {personName(req.profile, 'unknown')}
                     </p>
                     <p className="text-xs italic text-muted-foreground">Pending...</p>
                   </div>

@@ -477,7 +477,7 @@ const EventDetailPage = () => {
                       return (
                         <div key={p.id} className="flex items-center gap-2 rounded-lg bg-card px-2 py-1.5">
                           <UserAvatar username={personName(p.profile, '?')} avatarUrl={p.profile?.avatar_url || null} size="sm" />
-                          <span className="flex-1 truncate text-sm font-medium">@{personName(p.profile, 'unknown')}</span>
+                          <span className="flex-1 truncate text-sm font-medium">{personName(p.profile, 'unknown')}</span>
                           {isCo && (
                             <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' }}>
                               Co-admin
