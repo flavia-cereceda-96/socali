@@ -112,7 +112,7 @@ const SplashPage = () => {
           <Sticker
             delay={0.16}
             rotate={5}
-            className="absolute right-0 top-[132px] w-[196px] rounded-[20px] bg-accent p-4 text-accent-foreground shadow-sticker"
+            className="absolute right-0 top-[112px] w-[196px] rounded-[20px] bg-accent p-4 text-accent-foreground shadow-sticker"
           >
             <p className="text-[11px] font-bold tracking-[0.14em] opacity-70">FRI</p>
             <p className="mt-1 text-[19px] font-bold leading-tight">Gig night</p>
@@ -122,7 +122,7 @@ const SplashPage = () => {
           <Sticker
             delay={0.27}
             rotate={-3}
-            className="absolute bottom-[96px] left-1 w-[236px] rounded-[20px] bg-primary p-4 text-primary-foreground shadow-sticker"
+            className="absolute bottom-[78px] left-0 w-[228px] rounded-[20px] bg-primary p-4 text-primary-foreground shadow-sticker"
           >
             <p className="text-[11px] font-bold tracking-[0.14em] text-mint-strong">SUN</p>
             <p className="mt-1 text-[19px] font-bold leading-tight">Sunset hike</p>
