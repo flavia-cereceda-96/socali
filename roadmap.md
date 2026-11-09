@@ -45,5 +45,5 @@
 
 # Sticker-style welcome & login
 
-- [ ] Welcome page: mint background, tilted plan-sticker collage with Cal, headline, ink Get started.
-- [ ] Login page: mint header with Cal "Welcome back!" bubble, labelled fields, ink Log in button.
+- [x] Welcome page: mint background, tilted plan-sticker collage with Cal, headline, ink Get started.
+- [x] Login page: mint header with Cal "Welcome back!" bubble, labelled fields, ink Log in button.
