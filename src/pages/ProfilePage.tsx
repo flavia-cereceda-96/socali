@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
+import { personName } from '@/lib/personName';
 import { useNavigate } from 'react-router-dom';
 import { useProfile, useEvents, useFriends } from '@/hooks/useEvents';
 import { useGroups } from '@/hooks/useGroups';
@@ -253,7 +254,7 @@ const ProfilePage = () => {
               <div className="-mx-4 px-4 overflow-x-auto scrollbar-hide">
                 <div className="flex gap-4 pb-1">
                   {topFriends.map((f: any) => {
-                    const name = f.profile?.username || '';
+                    const name = personName(f.profile, '');
                     const first = name.charAt(0).toUpperCase() + name.slice(1);
                     return (
                       <button

@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { personName } from '@/lib/personName';
 import { useEvents, DbEventWithCreator } from '@/hooks/useEvents';
 import { useEventGroupHints } from '@/hooks/useGroups';
 import { UserAvatar } from '@/components/UserAvatar';
@@ -234,7 +235,7 @@ const Index = () => {
                   title={event.title}
                   people={event.participants.map(p => ({
                     id: p.user_id,
-                    name: p.profile?.username || 'user',
+                    name: personName(p.profile, 'user'),
                     avatarUrl: p.profile?.avatar_url,
                     status: p.status,
                   }))}

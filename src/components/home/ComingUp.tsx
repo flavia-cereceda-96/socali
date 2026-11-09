@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { personName } from '@/lib/personName';
 import type { DbEventWithCreator } from '@/hooks/useEvents';
 import { AvatarGroup, Attendee } from '@/components/AvatarGroup';
 import { orderAttendees } from '@/lib/avatarRules';
@@ -34,8 +35,8 @@ export function ComingUp({
           const hosting = e.created_by === userId;
           const group = groupHints[e.id];
           const people: Attendee[] = [
-            ...(!hosting ? [{ id: e.created_by, name: e.creator_profile?.username || 'organiser', avatarUrl: e.creator_profile?.avatar_url, status: (e as any).creator_rsvp || 'confirmed' }] : []),
-            ...e.participants.filter(p => p.user_id !== userId).map(p => ({ id: p.user_id, name: p.profile?.username || 'user', avatarUrl: p.profile?.avatar_url, status: p.status })),
+            ...(!hosting ? [{ id: e.created_by, name: personName(e.creator_profile, 'organiser'), avatarUrl: e.creator_profile?.avatar_url, status: (e as any).creator_rsvp || 'confirmed' }] : []),
+            ...e.participants.filter(p => p.user_id !== userId).map(p => ({ id: p.user_id, name: personName(p.profile, 'user'), avatarUrl: p.profile?.avatar_url, status: p.status })),
           ];
           let summary: string | undefined;
           if (group) {

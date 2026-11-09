@@ -11,7 +11,7 @@ export interface ActivityItem {
   group_id?: string | null;
   is_read: boolean;
   created_at: string;
-  source_profile?: { username: string; avatar_url: string | null };
+  source_profile?: { username: string; display_name?: string | null; avatar_url: string | null };
   event?: { title: string; emoji: string };
   group?: { id: string; name: string; emoji: string; avatar_url: string | null };
   comment_content?: string;

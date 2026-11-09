@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { personName } from '@/lib/personName';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ChevronUp, ChevronDown, MessageSquare, Plus, X, Search, Info } from 'lucide-react';
@@ -335,7 +336,7 @@ const FeedbackBoardPage = () => {
                     )}
                     <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
                       <UserAvatar avatarUrl={author?.avatar_url} username={author?.username} size="sm" />
-                      <span>{author?.username || 'Someone'}</span>
+                      <span>{personName(author, 'Someone')}</span>
                       <span>·</span>
                       <span>{formatDate(f.created_at)}</span>
                       <span>·</span>
@@ -510,7 +511,7 @@ function CommentsThread({
             <UserAvatar avatarUrl={author?.avatar_url} username={author?.username} size="sm" />
             <div className="flex-1 min-w-0">
               <div className="text-xs text-muted-foreground">
-                <span className="font-medium text-foreground">{author?.username || 'Someone'}</span>
+                <span className="font-medium text-foreground">{personName(author, 'Someone')}</span>
                 <span> · {formatDate(c.created_at)}</span>
               </div>
               <p className="text-sm text-foreground whitespace-pre-wrap">{c.content}</p>
@@ -553,7 +554,7 @@ function CommentsThread({
                       Developer response
                     </Badge>
                     <span className="text-xs text-foreground/70">
-                      {author?.username || 'Team'} · {formatDate(c.created_at)}
+                      {personName(author, 'Team')} · {formatDate(c.created_at)}
                     </span>
                   </div>
                   <p className="text-sm text-foreground whitespace-pre-wrap">{c.content}</p>

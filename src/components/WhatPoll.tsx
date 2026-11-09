@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { personName } from '@/lib/personName';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -235,7 +236,7 @@ export function WhatPoll({
                         <UserAvatar
                           key={v.id}
                           avatarUrl={p?.avatar_url || null}
-                          username={p?.username || '?'}
+                          username={personName(p, '?')}
                           size="sm"
                           className="h-6 w-6 text-[10px] ring-2 ring-card -ml-1 first:ml-0"
                         />

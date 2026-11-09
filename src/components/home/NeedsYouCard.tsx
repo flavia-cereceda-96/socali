@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { personName } from '@/lib/personName';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
@@ -90,7 +91,7 @@ export function NeedsYouCard({ events, userId }: { events: DbEventWithCreator[];
             <button onClick={() => navigate(`/event/${e.id}`)} className="block text-left">
               <p className="font-semibold text-foreground">{e.title}</p>
               <p className="text-sm text-muted-foreground">
-                {e.creator_profile?.username || 'Someone'} invited you. Are you in?
+                {personName(e.creator_profile, 'Someone')} invited you. Are you in?
               </p>
             </button>
             <div className="mt-2 flex gap-2">

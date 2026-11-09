@@ -32,6 +32,7 @@ export interface DbParticipant {
   decline_note: string | null;
   profile?: {
     username: string;
+    display_name?: string | null;
     email: string;
     user_id: string;
     avatar_url: string | null;
@@ -41,6 +42,7 @@ export interface DbParticipant {
 export interface DbEventWithCreator extends DbEvent {
   creator_profile?: {
     username: string;
+    display_name?: string | null;
     avatar_url: string | null;
   };
 }
@@ -49,6 +51,7 @@ export interface DbProfile {
   id: string;
   user_id: string;
   username: string;
+  display_name?: string | null;
   email: string;
   usage: string;
   avatar_url: string | null;
@@ -120,7 +123,7 @@ export function useEvents() {
         const creatorProfile = profileMap.get(e.created_by);
         return {
           ...e,
-          creator_profile: creatorProfile ? { username: creatorProfile.username, avatar_url: creatorProfile.avatar_url } : undefined,
+          creator_profile: creatorProfile ? { username: creatorProfile.username, display_name: creatorProfile.display_name, avatar_url: creatorProfile.avatar_url } : undefined,
           participants: participants
             .filter(p => p.event_id === e.id)
             .map(p => ({

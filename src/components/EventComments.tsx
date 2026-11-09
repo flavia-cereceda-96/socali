@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { personName } from '@/lib/personName';
 import { SafetyMenu } from '@/components/SafetyMenu';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';

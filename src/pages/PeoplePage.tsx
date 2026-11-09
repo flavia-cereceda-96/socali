@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { personName } from '@/lib/personName';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFriends, useFriendRequests } from '@/hooks/useEvents';
 import { useGroups } from '@/hooks/useGroups';
@@ -256,7 +257,7 @@ const PeoplePage = () => {
                     👤
                   </div>
                   <div className="flex-1 min-w-0">
-                    <ClickableName userId={req.user_id} name={req.profile?.username || 'Unknown'} className="font-semibold" />
+                    <ClickableName userId={req.user_id} name={personName(req.profile, 'Unknown')} className="font-semibold" />
                     <p className="text-xs text-muted-foreground">{req.profile?.email}</p>
                   </div>
                   <div className="flex gap-1.5">
@@ -367,7 +368,7 @@ const PeoplePage = () => {
                   />
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-foreground truncate">
-                      @{req.profile?.username || 'unknown'}
+                      @{personName(req.profile, 'unknown')}
                     </p>
                     <p className="text-xs italic text-muted-foreground">Pending...</p>
                   </div>
