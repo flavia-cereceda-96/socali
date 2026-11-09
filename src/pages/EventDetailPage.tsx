@@ -478,7 +478,7 @@ const EventDetailPage = () => {
                           <UserAvatar username={p.profile?.username || '?'} avatarUrl={p.profile?.avatar_url || null} size="sm" />
                           <span className="flex-1 truncate text-sm font-medium">@{p.profile?.username || 'unknown'}</span>
                           {isCo && (
-                            <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}>
+                            <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' }}>
                               Co-admin
                             </span>
                           )}
@@ -705,7 +705,7 @@ const EventDetailPage = () => {
                     {!a.isCreator && (a as any).role === 'co-admin' && (
                       <span
                         className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium"
-                        style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}
+                        style={{ backgroundColor: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' }}
                       >
                         <Shield className="h-3 w-3" /> Co-admin
                       </span>

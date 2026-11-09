@@ -173,7 +173,7 @@ const Index = () => {
         ) : (
           <div
             className="flex flex-col items-center justify-center rounded-xl px-3 py-2 min-w-[52px]"
-            style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}
+            style={{ backgroundColor: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' }}
           >
             <span className="text-xs font-semibold uppercase">
               {new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
@@ -251,7 +251,7 @@ const Index = () => {
                 className="rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap"
                 style={
                   allConfirmed
-                    ? { backgroundColor: '#CFFCE3', color: '#1A9E55' }
+                    ? { backgroundColor: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' }
                     : { backgroundColor: '#FFF1B8', color: '#996500' }
                 }
               >
@@ -281,7 +281,7 @@ const Index = () => {
           transition={{ delay: 0.05 + gi * 0.04 }}
           className="flex gap-3 rounded-2xl bg-card p-4 shadow-card"
         >
-          <div className="flex flex-col items-center justify-center self-stretch rounded-xl px-3 py-2 min-w-[52px]" style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}>
+          <div className="flex flex-col items-center justify-center self-stretch rounded-xl px-3 py-2 min-w-[52px]" style={{ backgroundColor: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' }}>
             <span className="text-xs font-semibold uppercase">{d.toLocaleDateString('en-US', { weekday: 'short' })}</span>
             <span className="text-lg font-bold">{d.getDate()}</span>
             <span className="mt-1 text-[10px] font-semibold opacity-80">{g.length} plans</span>
@@ -385,12 +385,12 @@ const Index = () => {
               transition={{ delay: 0.05 }}
               className="mb-6 grid grid-cols-3 gap-3"
             >
-              <div className="rounded-2xl p-4 shadow-card" style={{ backgroundColor: '#6B45F5', color: '#ffffff' }}>
+              <div className="rounded-2xl p-4 shadow-card" style={{ backgroundColor: 'hsl(var(--primary))', color: '#ffffff' }}>
                 <p className="text-xs font-medium opacity-90">Today</p>
                 <p className="text-2xl font-bold mt-1">{todayCount}</p>
                 <p className="text-[11px] opacity-80">plan{todayCount !== 1 ? 's' : ''}</p>
               </div>
-              <div className="rounded-2xl p-4 shadow-card" style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}>
+              <div className="rounded-2xl p-4 shadow-card" style={{ backgroundColor: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' }}>
                 <p className="text-xs font-medium">Next 7 days</p>
                 <p className="text-2xl font-bold mt-1">{weekCount}</p>
                 <p className="text-[11px] opacity-80">plans</p>
@@ -494,7 +494,7 @@ const Index = () => {
             </motion.h2>
             {renderFriendsRow(monthEvents)}
             <div className="mb-3 grid grid-cols-2 gap-2">
-              <div className="rounded-xl px-3 py-2 shadow-card" style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}>
+              <div className="rounded-xl px-3 py-2 shadow-card" style={{ backgroundColor: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' }}>
                 <p className="text-[10px] font-medium opacity-90">Plans</p>
                 <p className="text-lg font-bold leading-tight">{monthEvents.length}</p>
               </div>

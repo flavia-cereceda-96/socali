@@ -230,15 +230,15 @@ const ProfilePage = () => {
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-2xl p-3 shadow-card text-center" style={{ backgroundColor: '#6B45F5', color: '#ffffff' }}>
+            <div className="rounded-2xl p-3 shadow-card text-center" style={{ backgroundColor: 'hsl(var(--primary))', color: '#ffffff' }}>
               <p className="text-2xl font-bold">{stats.created}</p>
               <p className="text-[11px] opacity-90 mt-0.5">Events created</p>
             </div>
-            <div className="rounded-2xl p-3 shadow-card text-center" style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}>
+            <div className="rounded-2xl p-3 shadow-card text-center" style={{ backgroundColor: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' }}>
               <p className="text-2xl font-bold">{stats.attended}</p>
               <p className="text-[11px] mt-0.5 opacity-90">Events attended</p>
             </div>
-            <div className="rounded-2xl p-3 shadow-card text-center" style={{ backgroundColor: '#FFE0CC', color: '#C2410C' }}>
+            <div className="rounded-2xl p-3 shadow-card text-center" style={{ backgroundColor: 'hsl(var(--peach))', color: '#C2410C' }}>
               <p className="text-2xl font-bold">{stats.friends}</p>
               <p className="text-[11px] mt-0.5 opacity-90">Friends</p>
             </div>
@@ -318,7 +318,7 @@ const ProfilePage = () => {
                   >
                     <div
                       className="flex flex-col items-center justify-center rounded-xl px-3 py-2 min-w-[52px]"
-                      style={{ backgroundColor: '#CFFCE3', color: '#1A9E55' }}
+                      style={{ backgroundColor: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' }}
                     >
                       <span className="text-xs font-semibold uppercase">
                         {new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
