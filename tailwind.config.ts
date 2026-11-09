@@ -22,6 +22,7 @@ export default {
         peach: "hsl(var(--peach))",
         "mint-strong": "hsl(var(--mint-strong))",
         "on-mint": "hsl(var(--on-mint))",
+        danger: "hsl(var(--danger))",
         "accent-soft": {
           DEFAULT: "hsl(var(--accent-soft))",
           foreground: "hsl(var(--accent-soft-foreground))",

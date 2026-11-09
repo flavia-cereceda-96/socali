@@ -42,6 +42,9 @@
     /* Deep green body text on mint #24503A */
     --on-mint: 150 38% 23%;
 
+    /* Inline form error text #B3261E */
+    --danger: 3 71% 41%;
+
     --destructive: 0 72% 56%;
     --destructive-foreground: 0 0% 100%;
 
