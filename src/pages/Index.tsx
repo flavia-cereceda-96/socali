@@ -5,6 +5,7 @@ import { UserAvatar } from '@/components/UserAvatar';
 import { motion } from 'framer-motion';
 import { MapPin, Clock } from 'lucide-react';
 import { HomeEmptyState } from '@/components/HomeEmptyState';
+import CalMascot from '@/components/CalMascot';
 import { CoachMark } from '@/components/CoachMark';
 import { AppHeader } from '@/components/AppHeader';
 import { EmailNotificationsPrompt } from '@/components/EmailNotificationsPrompt';
@@ -446,7 +447,12 @@ const Index = () => {
               {todayEvents.length > 0 ? (
                 renderDayGroups(todayEvents)
               ) : (
-                <p className="text-sm text-muted-foreground">Nothing on today — enjoy the free time! 🌿</p>
+                <>
+                  <div className="flex justify-center pt-4 pb-1">
+                    <CalMascot mood="sleepy" size={96} />
+                  </div>
+                  <p className="text-sm text-muted-foreground">Nothing on today — enjoy the free time! 🌿</p>
+                </>
               )}
             </div>
 
@@ -464,7 +470,14 @@ const Index = () => {
               {weekEvents.length > 0 ? (
                 renderDayGroups(weekEvents)
               ) : (
-                <p className="text-sm text-muted-foreground">Nothing planned this week yet ✨</p>
+                <>
+                  {todayEvents.length === 0 && (
+                    <div className="flex justify-center pt-4 pb-1">
+                      <CalMascot mood="sleepy" size={96} />
+                    </div>
+                  )}
+                  <p className="text-sm text-muted-foreground">Nothing planned this week yet ✨</p>
+                </>
               )}
             </div>
 
